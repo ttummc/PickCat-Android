@@ -75,6 +75,7 @@ import dao3.pickcat.core.ui.UserAvatar
 import dao3.pickcat.core.ui.absoluteUrl
 import dao3.pickcat.core.ui.avatarUrl
 import dao3.pickcat.core.ui.compactNumber
+import dao3.pickcat.core.ui.wideContentPadding
 import dao3.pickcat.core.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -147,7 +148,12 @@ fun SettingsScreen(
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 32.dp),
+            contentPadding = PaddingValues(
+                start = wideContentPadding(760.dp),
+                end = wideContentPadding(760.dp),
+                top = 8.dp,
+                bottom = 32.dp,
+            ),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item {

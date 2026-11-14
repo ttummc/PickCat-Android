@@ -37,6 +37,7 @@ import dao3.pickcat.core.ui.ErrorState
 import dao3.pickcat.core.ui.LoadingState
 import dao3.pickcat.core.ui.PagedFooter
 import dao3.pickcat.core.ui.TopicCard
+import dao3.pickcat.core.ui.wideContentPadding
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -155,7 +156,12 @@ fun CollectionScreen(
             )
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
+                contentPadding = PaddingValues(
+                    start = wideContentPadding(920.dp),
+                    end = wideContentPadding(920.dp),
+                    top = 8.dp,
+                    bottom = 24.dp,
+                ),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 item {

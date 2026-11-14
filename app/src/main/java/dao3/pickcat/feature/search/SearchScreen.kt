@@ -67,6 +67,7 @@ import dao3.pickcat.core.ui.SectionHeader
 import dao3.pickcat.core.ui.TopicCard
 import dao3.pickcat.core.ui.UserRow
 import dao3.pickcat.core.ui.WorkCard
+import dao3.pickcat.core.ui.wideContentPadding
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -335,7 +336,12 @@ private fun SearchResults(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp, top = 4.dp),
+        contentPadding = PaddingValues(
+            start = wideContentPadding(840.dp),
+            end = wideContentPadding(840.dp),
+            bottom = 24.dp,
+            top = 4.dp,
+        ),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         when (state.tab) {

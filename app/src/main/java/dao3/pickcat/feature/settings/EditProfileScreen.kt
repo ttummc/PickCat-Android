@@ -49,6 +49,7 @@ import dao3.pickcat.core.ui.ErrorState
 import dao3.pickcat.core.ui.LoadingState
 import dao3.pickcat.core.ui.PickCatTextField
 import dao3.pickcat.core.ui.UserAvatar
+import dao3.pickcat.core.ui.wideContentPadding
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -224,7 +225,7 @@ fun EditProfileScreen(
                     .fillMaxSize()
                     .padding(padding)
                     .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
+                    .padding(horizontal = wideContentPadding(720.dp), vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Row(

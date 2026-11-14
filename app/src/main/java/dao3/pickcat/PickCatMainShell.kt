@@ -12,11 +12,16 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChatBubbleOutline
@@ -25,6 +30,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material.icons.outlined.Forum
 import androidx.compose.material.icons.outlined.Home
@@ -71,6 +77,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import dao3.pickcat.core.network.UserRef
 import dao3.pickcat.feature.composer.ComposerScreen
 import dao3.pickcat.feature.forum.CategoryScreen
 import dao3.pickcat.feature.forum.ForumScreen
@@ -309,6 +316,7 @@ fun PickCatMainShell(
                 if (widthSizeClass == WindowWidthSizeClass.Expanded) {
                     WorksTwoPane(
                         onSearch = { navController.navigate(Routes.SEARCH) },
+                        onOpenAuthor = { author -> navController.navigate(Routes.profile(author.id)) },
                     )
                 } else {
                     WorksScreen(
@@ -453,6 +461,11 @@ fun PickCatMainShell(
                 NavigationRail(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                 ) {
+                    Text(
+                        "PickCat",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp),
+                    )
                     destinations.forEach { destination ->
                         val selected = selectedRoute == destination.route
                         NavigationRailItem(
@@ -477,6 +490,15 @@ fun PickCatMainShell(
                             ),
                         )
                     }
+                    Spacer(Modifier.weight(1f))
+                    NavigationRailItem(
+                        selected = selectedRoute == Routes.SETTINGS,
+                        onClick = { navController.navigate(Routes.SETTINGS) },
+                        icon = {
+                            Icon(Icons.Default.Settings, contentDescription = null)
+                        },
+                        label = { Text("设置") },
+                    )
                 }
                 Box(Modifier.weight(1f)) {
                     CompositionLocalProvider(LocalTabReselect provides reselectEvents) {
@@ -486,7 +508,7 @@ fun PickCatMainShell(
                         visible = !isOnline,
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(start = 16.dp, end = 16.dp, bottom = 84.dp),
+                            .padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
                     )
                 }
             }
@@ -550,63 +572,74 @@ private fun ForumTwoPane(
     onSearch: () -> Unit,
 ) {
     var selectedTopicId by rememberSaveable { mutableStateOf<String?>(null) }
-    Row(Modifier.fillMaxSize()) {
-        Box(Modifier.weight(0.46f)) {
-            ForumScreen(
-                onOpenTopic = { topic -> selectedTopicId = topic.id },
-                onOpenCategory = onOpenCategory,
-                onCompose = onCompose,
-                onSearch = onSearch,
-            )
-        }
-        VerticalDivider()
-        Box(Modifier.weight(0.54f)) {
-            if (selectedTopicId == null) {
-                EmptyState(
-                    title = "选择一个帖子",
-                    description = "左侧列表与右侧讨论会在大屏上同时显示。",
-                    icon = Icons.Default.ChatBubbleOutline,
-                    modifier = Modifier.fillMaxSize().padding(top = 80.dp),
-                )
-            } else {
-                TopicDetailScreen(
-                    topicId = selectedTopicId.orEmpty(),
-                    postNumber = null,
-                    onBack = { selectedTopicId = null },
+    BackHandler(enabled = selectedTopicId != null) { selectedTopicId = null }
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val listWidth = if (maxWidth >= 1000.dp) 380.dp else 320.dp
+        Row(Modifier.fillMaxSize()) {
+            Box(Modifier.width(listWidth).fillMaxHeight()) {
+                ForumScreen(
+                    onOpenTopic = { topic -> selectedTopicId = topic.id },
                     onOpenCategory = onOpenCategory,
+                    onCompose = onCompose,
+                    onSearch = onSearch,
                 )
+            }
+            VerticalDivider()
+            Box(Modifier.weight(1f).fillMaxHeight()) {
+                if (selectedTopicId == null) {
+                    EmptyState(
+                        title = "选择一个帖子",
+                        description = "左侧列表和右侧讨论同时显示。",
+                        icon = Icons.Default.ChatBubbleOutline,
+                        modifier = Modifier.fillMaxSize().padding(top = 48.dp),
+                    )
+                } else {
+                    TopicDetailScreen(
+                        topicId = selectedTopicId.orEmpty(),
+                        postNumber = null,
+                        onBack = { selectedTopicId = null },
+                        onOpenCategory = onOpenCategory,
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun WorksTwoPane(onSearch: () -> Unit) {
+private fun WorksTwoPane(
+    onSearch: () -> Unit,
+    onOpenAuthor: (UserRef) -> Unit,
+) {
     var selectedWorkId by rememberSaveable { mutableStateOf<String?>(null) }
-    Row(Modifier.fillMaxSize()) {
-        Box(Modifier.weight(0.46f)) {
-            WorksScreen(
-                onOpenWork = { work -> selectedWorkId = work.id },
-                onSearch = onSearch,
-            )
-        }
-        VerticalDivider()
-        Box(Modifier.weight(0.54f)) {
-            if (selectedWorkId == null) {
-                EmptyState(
-                    title = "选择一个作品",
-                    description = "左侧列表与右侧详情会在大屏上同时显示。",
-                    icon = Icons.Default.VideoLibrary,
-                    modifier = Modifier.fillMaxSize().padding(top = 80.dp),
-                )
-            } else {
-                WorkDetailScreen(
-                    workId = selectedWorkId.orEmpty(),
-                    onBack = { selectedWorkId = null },
-                    onOpenAuthor = {},
+    BackHandler(enabled = selectedWorkId != null) { selectedWorkId = null }
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val listWidth = if (maxWidth >= 1000.dp) 380.dp else 320.dp
+        Row(Modifier.fillMaxSize()) {
+            Box(Modifier.width(listWidth).fillMaxHeight()) {
+                WorksScreen(
                     onOpenWork = { work -> selectedWorkId = work.id },
-                    embedded = true,
+                    onSearch = onSearch,
                 )
+            }
+            VerticalDivider()
+            Box(Modifier.weight(1f).fillMaxHeight()) {
+                if (selectedWorkId == null) {
+                    EmptyState(
+                        title = "选择一个作品",
+                        description = "左侧列表和右侧详情同时显示。",
+                        icon = Icons.Default.VideoLibrary,
+                        modifier = Modifier.fillMaxSize().padding(top = 48.dp),
+                    )
+                } else {
+                    WorkDetailScreen(
+                        workId = selectedWorkId.orEmpty(),
+                        onBack = { selectedWorkId = null },
+                        onOpenAuthor = onOpenAuthor,
+                        onOpenWork = { work -> selectedWorkId = work.id },
+                        embedded = true,
+                    )
+                }
             }
         }
     }

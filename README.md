@@ -125,6 +125,7 @@ The Android client does not display pending content as published. It shows a rev
 ## Documentation
 
 - [Site parity audit](docs/SITE-PARITY-AUDIT.md)
+- [Tablet experience audit](docs/TABLET-AUDIT.md)
 - [UI audit](docs/UI-AUDIT.md)
 - [UI simplification audit](docs/UI-SIMPLIFY-AUDIT.md)
 - [Contribution policy](CONTRIBUTING.md)

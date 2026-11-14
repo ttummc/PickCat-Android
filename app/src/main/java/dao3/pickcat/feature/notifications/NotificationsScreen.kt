@@ -76,6 +76,7 @@ import dao3.pickcat.core.ui.NotificationListSkeleton
 import dao3.pickcat.core.ui.PagedFooter
 import dao3.pickcat.core.ui.UserAvatar
 import dao3.pickcat.core.ui.relativeTime
+import dao3.pickcat.core.ui.wideContentPadding
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -316,7 +317,12 @@ fun NotificationsScreen(
                 NotificationPageState.CONTENT -> LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 32.dp),
+                    contentPadding = PaddingValues(
+                        start = wideContentPadding(760.dp),
+                        end = wideContentPadding(760.dp),
+                        top = 8.dp,
+                        bottom = 32.dp,
+                    ),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(filteredItems, key = { it.id }) { item ->

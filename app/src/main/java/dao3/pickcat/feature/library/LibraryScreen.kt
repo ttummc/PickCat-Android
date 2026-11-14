@@ -1,4 +1,4 @@
-package dao3.pickcat.feature.library
+﻿package dao3.pickcat.feature.library
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -38,6 +38,7 @@ import dao3.pickcat.core.ui.EmptyState
 import dao3.pickcat.core.ui.LoadingState
 import dao3.pickcat.core.ui.TopicCard
 import dao3.pickcat.core.ui.WorkCard
+import dao3.pickcat.core.ui.wideContentPadding
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -162,7 +163,11 @@ fun LibraryScreen(
                         )
                     } else {
                         LazyColumn(
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                            contentPadding = PaddingValues(
+                                start = wideContentPadding(920.dp),
+                                end = wideContentPadding(920.dp),
+                                top = 4.dp,
+                            ),
                         ) {
                             item {
                                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -188,7 +193,11 @@ fun LibraryScreen(
                         EmptyState(title = "还没有发过帖子")
                     } else {
                         LazyColumn(
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                            contentPadding = PaddingValues(
+                                start = wideContentPadding(920.dp),
+                                end = wideContentPadding(920.dp),
+                                top = 4.dp,
+                            ),
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
                             items(state.topics, key = { it.id }) { topic ->

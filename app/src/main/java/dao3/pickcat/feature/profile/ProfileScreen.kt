@@ -111,6 +111,7 @@ import dao3.pickcat.core.ui.avatarUrl
 import dao3.pickcat.core.ui.compactNumber
 import dao3.pickcat.core.ui.plainTextFromHtml
 import dao3.pickcat.core.ui.relativeTime
+import dao3.pickcat.core.ui.wideContentPadding
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -467,7 +468,11 @@ fun ProfileScreen(
             else -> LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(bottom = 24.dp),
+                contentPadding = PaddingValues(
+                    start = wideContentPadding(920.dp),
+                    end = wideContentPadding(920.dp),
+                    bottom = 24.dp,
+                ),
             ) {
                 item {
                     ProfileHeader(

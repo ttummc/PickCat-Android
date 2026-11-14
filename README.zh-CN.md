@@ -108,6 +108,7 @@ sdk.dir=C\:\\Users\\<user>\\AppData\\Local\\Android\\Sdk
 更详细的官网功能对照和开发审计：
 
 - [SITE-PARITY-AUDIT.zh-CN.md](docs/SITE-PARITY-AUDIT.zh-CN.md)
+- [TABLET-AUDIT.zh-CN.md](docs/TABLET-AUDIT.zh-CN.md)
 - [UI-AUDIT.zh-CN.md](docs/UI-AUDIT.zh-CN.md)
 - [UI-SIMPLIFY-AUDIT.zh-CN.md](docs/UI-SIMPLIFY-AUDIT.zh-CN.md)
 
