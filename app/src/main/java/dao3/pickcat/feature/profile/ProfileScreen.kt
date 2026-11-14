@@ -116,7 +116,6 @@ import dao3.pickcat.core.ui.avatarUrl
 import dao3.pickcat.core.ui.compactNumber
 import dao3.pickcat.core.ui.plainTextFromHtml
 import dao3.pickcat.core.ui.relativeTime
-import dao3.pickcat.core.ui.wideContentPadding
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -492,11 +491,7 @@ fun ProfileScreen(
                         contentPadding = if (isWide) {
                             PaddingValues(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 24.dp)
                         } else {
-                            PaddingValues(
-                                start = wideContentPadding(920.dp),
-                                end = wideContentPadding(920.dp),
-                                bottom = 24.dp,
-                            )
+                            PaddingValues(bottom = 24.dp)
                         },
                     ) {
                         if (!isWide) {
