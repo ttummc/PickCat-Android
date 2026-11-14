@@ -1,4 +1,4 @@
-﻿package dao3.pickcat
+package dao3.pickcat
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -506,7 +506,7 @@ fun PickCatMainShell(
             bottomBar = {
                 if (isTopLevel) {
                     NavigationBar(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     ) {
                         destinations.forEach { destination ->
                             val selected = selectedRoute == destination.route

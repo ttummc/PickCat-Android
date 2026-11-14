@@ -33,6 +33,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -474,7 +475,7 @@ fun ErrorState(
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
         )
         if (onRetry != null) {
-            TextButton(onClick = onRetry) {
+            FilledTonalButton(onClick = onRetry) {
                 Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
                 Text("重试")
@@ -505,7 +506,8 @@ fun SectionHeader(
     ) {
         Text(
             title,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.weight(1f),
         )
         action?.invoke()
