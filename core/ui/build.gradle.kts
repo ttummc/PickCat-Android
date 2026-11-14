@@ -1,11 +1,11 @@
-plugins {
+﻿plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.compose.compiler)
 }
 
 android {
     namespace = "dao3.pickcat.core.ui"
-    compileSdk = 37
+    compileSdk = 36
 
     defaultConfig {
         minSdk = 26

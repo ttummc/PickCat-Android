@@ -25,7 +25,7 @@
 - Kotlin 2.2.10
 - AGP 9.5.1
 - Gradle 9.9.1
-- compileSdk 37，minSdk 26
+- compileSdk 36，minSdk 26
 - Jetpack Compose + Material 3
 - OkHttp + kotlinx.serialization
 - DataStore
@@ -44,7 +44,7 @@ core/ui/              Material 3 主题、通用组件、HTML 原生渲染
 
 ## 构建
 
-需要 JDK 25 或更高版本、Android SDK Platform 37。
+需要 JDK 25 或更高版本、Android SDK Platform 36。
 
 ```bash
 ./gradlew :app:assembleDebug

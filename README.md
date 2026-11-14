@@ -38,7 +38,7 @@ This project is under active development. Core browsing, publishing, notificatio
 - Kotlin 2.2.10
 - Android Gradle Plugin 9.5.1
 - Gradle 9.9.1
-- compileSdk 37, minSdk 26
+- compileSdk 36, minSdk 26
 - Jetpack Compose with Material 3
 - OkHttp and kotlinx.serialization
 - DataStore
@@ -60,7 +60,7 @@ The app uses a small `AppContainer` service locator instead of Hilt. Persistence
 Requirements:
 
 - JDK 25 or newer
-- Android SDK Platform 37
+- Android SDK Platform 36
 - The Gradle wrapper included in this repository
 
 ```bash
