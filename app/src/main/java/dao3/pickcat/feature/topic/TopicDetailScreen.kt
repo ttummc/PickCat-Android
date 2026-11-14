@@ -627,7 +627,7 @@ fun TopicDetailScreen(
     if (target != null) {
         AlertDialog(
             onDismissRequest = { reportTarget = null },
-            title = { Text("举报这条回复") },
+            title = { Text("举报回复") },
             text = {
                 Column(
                     Modifier

@@ -239,7 +239,7 @@ fun EditProfileScreen(
                             style = MaterialTheme.typography.titleLarge,
                         )
                         Text(
-                            "用户名修改需要验证码，请在网页端完成",
+                            "用户名修改请在网页端完成",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -251,7 +251,6 @@ fun EditProfileScreen(
                     modifier = Modifier.fillMaxWidth(),
                     label = "地区",
                     placeholder = "例如：中国香港",
-                    supportingText = "最多 40 字",
                     singleLine = true,
                 )
                 PickCatTextField(

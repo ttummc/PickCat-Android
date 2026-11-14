@@ -408,11 +408,6 @@ fun PickCatMainShell(
                 SettingsScreen(
                     appViewModel = appViewModel,
                     onBack = { navController.popBackStack() },
-                    onOpenProfile = {
-                        navController.navigate(Routes.ME) {
-                            launchSingleTop = true
-                        }
-                    },
                     onEditProfile = { navController.navigate(Routes.EDIT_PROFILE) },
                     onOpenMedia = { navController.navigate(Routes.MEDIA) },
                     onOpenLibrary = { navController.navigate(Routes.LIBRARY) },

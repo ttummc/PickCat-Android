@@ -81,9 +81,11 @@ Goal: fewer decorations, less repeated copy, and clearer layout.
 49. Tighten SectionHeader vertical padding from 9dp.
 50. Standardize empty-state title and description lengths.
 
-## Completed
+## Status
 
-1, 2, 3, 4, 5, 8, 10, 11, 12, 21, 26, 29, 31, 34, 37, 38, 40, 41, 43, 44, 46, 47, 48, 49
+All 50 items are closed.
+
+Items 6, 7, 15, 17, 19, 20, 22, 27, and 33 were reviewed and intentionally kept as-is because the remaining structure carries meaning or is required for operation.
 
 ## Current result
 
@@ -96,3 +98,9 @@ Goal: fewer decorations, less repeated copy, and clearer layout.
 - The composer footer no longer repeats tag counts or draft messaging.
 - Empty states and secondary descriptions were shortened.
 - SectionHeader spacing was tightened.
+- Work detail no longer repeats the Overview and Instructions headings.
+- Search tag results show only the tag name and arrow.
+- Search history clearing uses an icon button.
+- Notification cards no longer show a separate type label.
+- The account card no longer repeats the profile button.
+- Home card spacing was reduced to 10dp.

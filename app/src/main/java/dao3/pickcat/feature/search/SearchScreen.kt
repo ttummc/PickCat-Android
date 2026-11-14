@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -263,7 +264,12 @@ fun SearchScreen(
                                         style = MaterialTheme.typography.titleSmall,
                                         modifier = Modifier.weight(1f),
                                     )
-                                    TextButton(onClick = appViewModel::clearSearchHistory) { Text("清除") }
+                                    IconButton(onClick = appViewModel::clearSearchHistory) {
+                                        Icon(
+                                            Icons.Default.DeleteSweep,
+                                            contentDescription = "清除搜索历史",
+                                        )
+                                    }
                                 }
                                 androidx.compose.foundation.layout.FlowRow(
                                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
@@ -465,21 +471,11 @@ private fun TagResultRow(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(end = 10.dp),
             )
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    "#${tag.name}",
-                    style = MaterialTheme.typography.titleSmall,
-                )
-                if (!tag.description.isNullOrBlank()) {
-                    Text(
-                        tag.description.orEmpty(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-            }
+            Text(
+                "#${tag.name}",
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.weight(1f),
+            )
             Icon(
                 Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,

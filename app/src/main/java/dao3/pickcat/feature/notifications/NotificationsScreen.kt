@@ -87,21 +87,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-private val TYPE_LABELS = mapOf(
-    "REPLY_CREATED" to "回复了你的帖子",
-    "WORK_COMMENT_REPLY_CREATED" to "回复了你的作品评论",
-    "USER_MENTIONED" to "在帖子里提到了你",
-    "WORK_COMMENT_MENTIONED" to "在作品评论里提到了你",
-    "MANAGEMENT_ACTION" to "管理操作",
-    "POST_LIKED" to "赞了你的帖子",
-    "TOPIC_EVENT" to "帖子动态",
-    "USER_FOLLOWED" to "关注了你",
-    "LEVEL_CERTIFICATION" to "等级认证",
-    "WORK_COMMENT_CREATED" to "评论了你的作品",
-    "WORK_LIKED" to "赞了你的作品",
-    "WORK_COMMENT_LIKED" to "赞了你的评论",
-)
-
 private enum class NotificationPageState { LOADING, ERROR, EMPTY, CONTENT }
 
 private enum class NotificationFilter(val label: String) {
@@ -325,9 +310,7 @@ fun NotificationsScreen(
                     onRetry = viewModel::refresh,
                 )
                 NotificationPageState.EMPTY -> EmptyState(
-                    title = if (filter == NotificationFilter.ALL) "没有通知" else "这个分类还没有通知",
-                    description = if (filter == NotificationFilter.ALL) "有互动时会出现在这里。"
-                    else "切换到其他分类看看。",
+                    title = if (filter == NotificationFilter.ALL) "没有通知" else "暂无此类通知",
                     icon = Icons.Default.Notifications,
                 )
                 NotificationPageState.CONTENT -> LazyColumn(
@@ -394,21 +377,13 @@ private fun NotificationRow(
                 UserAvatar(item.actor, 38.dp)
             }
             Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         item.actor?.username ?: "系统",
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = if (item.read) FontWeight.Medium else FontWeight.SemiBold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
                     )
-                    Text(
-                        TYPE_LABELS[item.type] ?: item.type,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
                 val target = item.topic?.title ?: item.work?.workName
                 if (!target.isNullOrBlank()) {
                     Row(verticalAlignment = Alignment.Top) {

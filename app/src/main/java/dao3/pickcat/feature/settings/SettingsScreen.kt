@@ -106,7 +106,6 @@ class SettingsViewModel : ViewModel() {
 fun SettingsScreen(
     appViewModel: AppViewModel,
     onBack: () -> Unit,
-    onOpenProfile: () -> Unit,
     onEditProfile: () -> Unit,
     onOpenMedia: () -> Unit,
     onOpenLibrary: () -> Unit,
@@ -176,11 +175,6 @@ fun SettingsScreen(
                                     }
                                 } else {
                                     Text("登录后可以发帖、点赞和查看通知")
-                                }
-                            },
-                            trailingContent = {
-                                if (user != null) {
-                                    TextButton(onClick = onOpenProfile) { Text("查看主页") }
                                 }
                             },
                         )

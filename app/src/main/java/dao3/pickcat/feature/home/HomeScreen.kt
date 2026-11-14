@@ -315,7 +315,7 @@ fun HomeScreen(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 104.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 item(key = "home-greeting") {
                     HomeGreeting(
@@ -343,8 +343,6 @@ fun HomeScreen(
                         EmptyState(
                             title = "还没有内容",
                             description = "稍后再来看看。",
-                            actionLabel = "去发帖",
-                            onAction = onCompose,
                         )
                     }
                     else -> {

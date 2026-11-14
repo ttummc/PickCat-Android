@@ -457,7 +457,6 @@ fun WorkDetailScreen(
                                 ),
                             ) {
                                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Text("简介", style = MaterialTheme.typography.titleSmall)
                                     Text(
                                         work.description.orEmpty(),
                                         style = MaterialTheme.typography.bodyMedium,
@@ -474,7 +473,6 @@ fun WorkDetailScreen(
                                 ),
                             ) {
                                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Text("操作说明", style = MaterialTheme.typography.titleSmall)
                                     Text(
                                         work.operation.orEmpty(),
                                         style = MaterialTheme.typography.bodyMedium,
