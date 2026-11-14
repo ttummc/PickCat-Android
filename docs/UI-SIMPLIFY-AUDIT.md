@@ -1,96 +1,98 @@
-# PickCat UI 精简审计
+# PickCat UI Simplification Audit
 
-目标：更简洁、更少装饰、更清晰的排版。以下 50 条按页面分组。
+English | [Chinese](UI-SIMPLIFY-AUDIT.zh-CN.md)
 
-## 顶部与导航
+Goal: fewer decorations, less repeated copy, and clearer layout.
 
-1. 删除论坛顶栏副标题“所有话题，按分类归档”。
-2. 删除作品顶栏副标题“KittenN 与 BoxPlay 社区作品”。
-3. 删除首页顶栏下的分割线。
-4. 删除论坛顶栏下的分割线。
-5. 删除作品顶栏下的分割线。
-6. 删除通知顶栏下的装饰性层级。
-7. 减少底部导航的说明性文案。
-8. 统一所有页面标题为单行，不再堆叠副标题。
-9. 设置页不再重复显示“PickCat Android 原生版”和介绍段落。
-10. 移除“关于”里重复的技术栈说明。
+## Top bars and navigation
 
-## 首页
+1. Remove the Forum subtitle “All topics, organized by category.”
+2. Remove the Works subtitle “KittenN and BoxPlay community works.”
+3. Remove the divider below the Home top bar.
+4. Remove the divider below the Forum top bar.
+5. Remove the divider below the Works top bar.
+6. Remove decorative layers below the Notifications top bar.
+7. Reduce explanatory copy in bottom navigation.
+8. Use a single-line title on every page instead of stacked subtitles.
+9. Stop repeating the app-name introduction in Settings.
+10. Remove duplicate technology-stack copy from About.
 
-11. 首页问候语只保留必要的用户名。
-12. 缩短首页空状态描述。
-13. 首页不再重复“发帖”按钮文案。
-14. 首页卡片间距从 12dp 收紧为 10dp。
-15. 首页移除多余的分区标题装饰。
+## Home
 
-## 论坛与分类
+11. Keep only the username in the Home greeting.
+12. Shorten the Home empty-state description.
+13. Remove repeated composer button copy on Home.
+14. Tighten Home card spacing from 12dp to 10dp.
+15. Remove decorative section-header treatments on Home.
 
-16. 论坛分类和排序保持单行。
-17. 分类页不再重复“排序”说明。
-18. 分类页空状态只保留一句描述。
-19. 主题卡片移除重复的统计图标说明。
-20. 取消分类入口的二级说明文字。
+## Forum and categories
 
-## 作品
+16. Keep category and sort controls on one line.
+17. Remove repeated sort explanations from Category.
+18. Reduce the Category empty state to one sentence.
+19. Remove repeated stat-icon explanations from topic cards.
+20. Remove secondary descriptions from the category entry.
 
-21. 作品页空状态缩短。
-22. 作品卡片移除多余的作者行重复信息。
-23. 作品详情简介卡不再保留标题“简介”。
-24. 作品详情操作说明卡不再保留标题“操作说明”。
-25. 作者其他作品只在有数据时展示。
+## Works
 
-## 帖子详情
+21. Shorten the Works empty state.
+22. Remove repeated author information from work cards.
+23. Remove the “Overview” heading from Work detail.
+24. Remove the “Instructions” heading from Work detail.
+25. Show “More by this author” only when data exists.
 
-26. 移除收藏文本与收藏图标重复。
-27. 回复区顶部只保留必要统计。
-28. 举报弹窗标题缩短。
-29. 评论输入框不再重复“支持 Markdown”说明。
-30. 回复失败提示统一为短句。
+## Topic detail
 
-## 搜索
+26. Remove the duplicate bookmark label next to the bookmark icon.
+27. Keep only essential statistics above replies.
+28. Shorten the report dialog title.
+29. Remove the “Markdown supported” hint from the reply field.
+30. Use short messages for reply failures.
 
-31. 搜索页去掉重复的“开始搜索”说明。
-32. 标签结果只显示名称和跳转箭头。
-33. 搜索结果分区标题精简。
-34. 搜索空结果只保留一句提示。
-35. 清除搜索历史按钮改成图标或短文本。
+## Search
 
-## 通知
+31. Remove the repeated “start searching” explanation.
+32. Show only the name and arrow in tag results.
+33. Simplify search section headings.
+34. Reduce the no-results state to one sentence.
+35. Turn clear-history into an icon or short label.
 
-36. 通知卡片仅保留头像、内容、时间。
-37. 未读只保留圆点。
-38. 移除通知类型小图标。
-39. 通知空状态缩短。
-40. 通知分类只保留官网五项。
+## Notifications
 
-## 设置与个人资料
+36. Keep only avatar, content, and time in notification cards.
+37. Keep one unread dot only.
+38. Remove notification-type icons.
+39. Shorten notification empty states.
+40. Keep the five notification categories used by the site.
 
-41. 移除不可点击的头像预设画廊。
-42. 账号卡片不再显示重复的“查看主页”按钮。
-43. 关于卡片只保留版本和登录方式。
-44. 移除“后台通知”长说明，保留一行。
-45. 编辑资料页减少说明文字。
-46. 个人主页标签数从 8 个减少为 6 个。
+## Settings and profile
 
-## 编辑器与通用
+41. Remove the non-clickable avatar preset gallery.
+42. Remove the duplicate “View profile” button from the account card.
+43. Keep only version and sign-in method in About.
+44. Shorten the background-notification description to one line.
+45. Reduce explanatory copy on Edit profile.
+46. Reduce the profile tab count from 8 to 6.
 
-47. 移除编辑器底部“草稿会自动保存”。
-48. 移除编辑器底部重复的“已选 N 个分类”。
-49. SectionHeader 上下间距从 9dp 收紧。
-50. 统一空状态的标题和描述长度。
+## Composer and shared UI
 
-## 已完成
+47. Remove the “Drafts save automatically” footer.
+48. Remove the repeated “N tags selected” footer.
+49. Tighten SectionHeader vertical padding from 9dp.
+50. Standardize empty-state title and description lengths.
 
-1、2、3、4、5、8、10、11、12、21、26、29、31、34、37、38、40、41、43、44、46、47、48、49
+## Completed
 
-## 当前结果
+1, 2, 3, 4, 5, 8, 10, 11, 12, 21, 26, 29, 31, 34, 37, 38, 40, 41, 43, 44, 46, 47, 48, 49
 
-- 首页、论坛、作品顶栏统一为单行标题
-- 移除首页、论坛、作品顶栏分割线
-- 个人主页标签从 8 个减少为 7 个，关注/粉丝合并为“关系”
-- 通知卡片移除类型小图标
-- 设置页移除不可点击的头像预设画廊
-- 关于卡片去掉重复技术栈说明
-- 发帖页移除底部重复标签计数和草稿提示
-- 多页空状态缩短文案
-- SectionHeader 间距收紧
+## Current result
+
+- Home, Forum, and Works top bars are single-line titles.
+- Dividers below Home, Forum, and Works top bars were removed.
+- Profile tabs were reduced from 8 to 7; Following and Followers were merged into Relation.
+- Notification cards no longer show type icons.
+- The non-clickable avatar preset gallery was removed from Settings.
+- Duplicate technology-stack copy was removed from About.
+- The composer footer no longer repeats tag counts or draft messaging.
+- Empty states and secondary descriptions were shortened.
+- SectionHeader spacing was tightened.

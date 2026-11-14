@@ -1,12 +1,14 @@
-# 贡献政策
+# Contribution policy
 
-本项目不接受外部贡献。
+English | [Chinese](CONTRIBUTING.zh-CN.md)
 
-- 不接收 Pull Request
-- 不接收代码、文档、设计、翻译或其他形式的贡献
-- 不接受通过 Issue 提交的补丁或实现方案
-- 仓库中的源码仅按 [LICENSE](LICENSE) 授权使用
+This repository does not accept external contributions.
 
-本项目采用 PolyForm Noncommercial 1.0.0，禁止商业使用。它属于源码公开项目，不是 OSI 定义的开源项目。
+- Pull requests are not accepted.
+- Code, documentation, design, translation, and other contributions are not accepted.
+- Patches or implementation plans submitted through issues are not accepted.
+- The source code is available only under the terms of [LICENSE](LICENSE).
 
-如果你发现安全或隐私问题，请不要公开提交敏感信息，先通过仓库所有者公开的安全联系方式联系。
+The project uses the PolyForm Noncommercial License 1.0.0 and prohibits commercial use. It is source-available, not an OSI-approved open-source project.
+
+For security or privacy issues, do not post sensitive details publicly. Contact the repository owner through a public security contact channel first.
