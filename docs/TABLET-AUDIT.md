@@ -17,7 +17,7 @@ Status values:
 | 1 | Keep the rail free of branding and app-name headers | Done |
 | 2 | Keep Settings out of the rail and reach it from Profile | Done |
 | 3 | Use one selected-state visual across rail and bottom bar | Done |
-| 4 | Verify rail item height, spacing, and touch targets | Reviewed |
+| 4 | Center the rail items vertically and verify touch targets | Done |
 | 5 | Handle display cutouts and status-bar insets around the rail | Next |
 | 6 | Decide whether the rail should expand on medium widths | Next |
 | 7 | Position the offline banner above content instead of the bottom bar | Done |

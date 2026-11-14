@@ -460,6 +460,7 @@ fun PickCatMainShell(
                 NavigationRail(
                     containerColor = MaterialTheme.colorScheme.surface,
                 ) {
+                    Spacer(Modifier.weight(1f))
                     destinations.forEach { destination ->
                         val selected = selectedRoute == destination.route
                         NavigationRailItem(
@@ -484,6 +485,7 @@ fun PickCatMainShell(
                             ),
                         )
                     }
+                    Spacer(Modifier.weight(1f))
                 }
                 Box(Modifier.weight(1f)) {
                     CompositionLocalProvider(LocalTabReselect provides reselectEvents) {
