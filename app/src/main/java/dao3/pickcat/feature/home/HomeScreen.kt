@@ -84,7 +84,6 @@ import dao3.pickcat.core.ui.UserAvatar
 import dao3.pickcat.core.ui.avatarUrl
 import dao3.pickcat.core.ui.greeting
 import dao3.pickcat.core.ui.rememberFabVisibleOnScroll
-import dao3.pickcat.core.ui.wideContentPadding
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -316,8 +315,8 @@ fun HomeScreen(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
-                    start = wideContentPadding(840.dp),
-                    end = wideContentPadding(840.dp),
+                    start = 16.dp,
+                    end = 16.dp,
                     top = 12.dp,
                     bottom = 104.dp,
                 ),

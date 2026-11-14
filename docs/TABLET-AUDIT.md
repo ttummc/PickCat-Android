@@ -27,7 +27,7 @@ Status values:
 
 | # | Item | Status |
 | --- | --- | --- |
-| 9 | Cap the Home feed at a readable line length | Done |
+| 9 | Use the full content width beside the rail on Home | Done |
 | 10 | Cap Settings content width | Done |
 | 11 | Cap Notifications content width | Done |
 | 12 | Cap Search results width | Done |
@@ -89,7 +89,8 @@ Status values:
 
 - Minimal navigation rail with icon-and-label items and a shared surface background
 - Offline banner moved above content
-- Readability caps for Home, Settings, Notifications, Search, and Profile
+- Home uses the full width beside the rail, matching the Play Store-style layout
+- Readability caps for Settings, Notifications, Search, and Profile
 - Readability caps for Edit profile, collection detail, and personal library
 - Fixed list widths for Forum and Works two-pane layouts
 - Back handling and selection preservation in both two-pane views
