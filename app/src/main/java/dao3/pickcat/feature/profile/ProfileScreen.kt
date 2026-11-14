@@ -481,7 +481,7 @@ fun ProfileScreen(
                             onFollow = viewModel::toggleFollow,
                             onSettings = onOpenSettings,
                             badges = state.badges,
-                            modifier = Modifier.width(320.dp).fillMaxHeight(),
+                            modifier = Modifier.width(300.dp).fillMaxHeight(),
                         )
                         VerticalDivider()
                     }
@@ -775,16 +775,21 @@ private fun ProfileSidebar(
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+            .padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Card(
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(
+                topStart = 20.dp,
+                topEnd = 20.dp,
+                bottomStart = 0.dp,
+                bottomEnd = 0.dp,
+            ),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
             ),
         ) {
-            Box(Modifier.fillMaxWidth().height(140.dp)) {
+            Box(Modifier.fillMaxWidth().height(120.dp)) {
                 if (!profile.backgroundFileId.isNullOrBlank()) {
                     PickCatImage(
                         url = "https://pickcat.dao3.fun/api/v1/files/${profile.backgroundFileId}",
@@ -801,17 +806,19 @@ private fun ProfileSidebar(
                 }
             }
         }
-        UserAvatar(
-            name = profile.username,
-            url = avatarUrl(profile),
-            size = 76.dp,
-            modifier = Modifier
-                .offset(y = (-36).dp)
-                .border(4.dp, MaterialTheme.colorScheme.surface, CircleShape),
-        )
+        Box(Modifier.fillMaxWidth().height(36.dp)) {
+            UserAvatar(
+                name = profile.username,
+                url = avatarUrl(profile),
+                size = 64.dp,
+                modifier = Modifier
+                    .offset(y = (-28).dp)
+                    .border(3.dp, MaterialTheme.colorScheme.surface, CircleShape),
+            )
+        }
         Text(
             profile.username,
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -844,7 +851,7 @@ private fun ProfileSidebar(
                 profile.bio.orEmpty(),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 4,
+                maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
             )
         }
@@ -867,14 +874,14 @@ private fun ProfileSidebar(
             shape = MaterialTheme.shapes.medium,
             color = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {
-            Column(Modifier.padding(12.dp)) {
+            Column(Modifier.padding(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     ProfileStat(compactNumber(profile.stats.followers), "粉丝", Modifier.weight(1f))
                     StatDivider()
                     ProfileStat(compactNumber(profile.stats.following), "关注", Modifier.weight(1f))
                 }
                 HorizontalDivider(
-                    modifier = Modifier.padding(vertical = 10.dp),
+                    modifier = Modifier.padding(vertical = 8.dp),
                     color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
                 )
                 Row(verticalAlignment = Alignment.CenterVertically) {
