@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -34,9 +35,11 @@ import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
@@ -599,9 +602,12 @@ fun ProfileScreen(
                                 )
                             }
                         } else {
-                            items(state.activities, key = { "activity-${it.id}" }) { activity ->
+                            itemsIndexed(state.activities, key = { _, activity -> "activity-${activity.id}" }) { index, activity ->
                                 Box(Modifier.animateItem()) {
-                                    ActivityRow(activity)
+                                    ActivityRow(
+                                        activity = activity,
+                                        isLast = index == state.activities.lastIndex,
+                                    )
                                 }
                             }
                         }
@@ -1267,31 +1273,92 @@ private fun WorkGrid(
 }
 
 @Composable
-private fun ActivityRow(activity: ProfileActivity) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 9.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            activity.kind.take(2),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.width(34.dp),
-        )
-        Text(
-            activity.title,
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        Text(
-            relativeTime(activity.occurredAt),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+private fun ActivityRow(activity: ProfileActivity, isLast: Boolean) {
+    val isLike = activity.kind.contains("LIKE")
+    val isReply = activity.kind.contains("REPLY")
+    val isPost = activity.kind.contains("POST") || activity.kind.contains("TOPIC")
+    val isFollow = activity.kind.contains("FOLLOW")
+    val icon = when {
+        isLike -> Icons.Default.FavoriteBorder
+        isReply -> Icons.Default.ChatBubbleOutline
+        isPost -> Icons.Default.Article
+        isFollow -> Icons.Default.PersonAdd
+        else -> Icons.Default.Star
     }
-    HorizontalDivider(Modifier.padding(horizontal = 16.dp))
+    val container = when {
+        isLike -> MaterialTheme.colorScheme.primaryContainer
+        isReply -> MaterialTheme.colorScheme.tertiaryContainer
+        isPost -> MaterialTheme.colorScheme.secondaryContainer
+        isFollow -> MaterialTheme.colorScheme.surfaceContainerHighest
+        else -> MaterialTheme.colorScheme.surfaceContainerHighest
+    }
+    val content = when {
+        isLike -> MaterialTheme.colorScheme.onPrimaryContainer
+        isReply -> MaterialTheme.colorScheme.onTertiaryContainer
+        isPost -> MaterialTheme.colorScheme.onSecondaryContainer
+        isFollow -> MaterialTheme.colorScheme.onSurfaceVariant
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    val label = when {
+        isLike -> "点赞"
+        isReply -> "回复"
+        isPost -> "发布"
+        isFollow -> "关注"
+        else -> "动态"
+    }
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Surface(shape = CircleShape, color = container) {
+                Box(Modifier.size(36.dp), contentAlignment = Alignment.Center) {
+                    Icon(
+                        icon,
+                        contentDescription = label,
+                        tint = content,
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+            if (!isLast) {
+                Box(
+                    Modifier
+                        .padding(top = 4.dp)
+                        .width(1.dp)
+                        .height(22.dp)
+                        .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)),
+                )
+            }
+        }
+        Spacer(Modifier.width(12.dp))
+        Column(
+            modifier = Modifier.weight(1f).padding(bottom = 14.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                activity.title,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    relativeTime(activity.occurredAt),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+    }
 }
 
 @Composable
