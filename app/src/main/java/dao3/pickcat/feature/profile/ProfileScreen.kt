@@ -475,7 +475,12 @@ fun ProfileScreen(
             )
             else -> {
                 val isWide = LocalConfiguration.current.screenWidthDp >= 900
-                Row(Modifier.fillMaxSize().padding(padding)) {
+                Row(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .padding(top = if (isWide) 12.dp else 0.dp),
+                ) {
                     if (isWide) {
                         ProfileSidebar(
                             profile = state.profile!!,
