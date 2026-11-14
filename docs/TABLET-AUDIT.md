@@ -85,6 +85,15 @@ Status values:
 | 49 | Add a tablet testing matrix to CI or manual QA | Next |
 | 50 | Test RTL and long localized labels on wide screens | Next |
 
+## Profile layout
+
+| # | Item | Status |
+| --- | --- | --- |
+| 51 | Use a fixed profile summary sidebar on wide screens | Done |
+| 52 | Keep cover, avatar, bio, stats, edit action, and badges in the sidebar | Done |
+| 53 | Keep all profile tabs and tab content in the right column | Done |
+| 54 | Hide the phone header when the sidebar is visible | Done |
+
 ## First batch completed
 
 - Minimal navigation rail with icon-and-label items and a shared surface background

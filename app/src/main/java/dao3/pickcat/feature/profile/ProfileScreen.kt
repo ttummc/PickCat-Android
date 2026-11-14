@@ -6,9 +6,12 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,6 +26,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -75,6 +79,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -465,26 +470,48 @@ fun ProfileScreen(
                 onRetry = viewModel::loadProfile,
                 modifier = Modifier.padding(padding),
             )
-            else -> LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(
-                    start = wideContentPadding(920.dp),
-                    end = wideContentPadding(920.dp),
-                    bottom = 24.dp,
-                ),
-            ) {
-                item {
-                    ProfileHeader(
-                        profile = state.profile!!,
-                        isSelf = isSelf,
-                        following = state.following,
-                        followBusy = state.followBusy,
-                        onFollow = viewModel::toggleFollow,
-                        onSettings = onOpenSettings,
-                        onOpenMedia = onOpenMedia,
-                    )
-                }
+            else -> {
+                val isWide = LocalConfiguration.current.screenWidthDp >= 900
+                Row(Modifier.fillMaxSize().padding(padding)) {
+                    if (isWide) {
+                        ProfileSidebar(
+                            profile = state.profile!!,
+                            isSelf = isSelf,
+                            following = state.following,
+                            followBusy = state.followBusy,
+                            onFollow = viewModel::toggleFollow,
+                            onSettings = onOpenSettings,
+                            badges = state.badges,
+                            modifier = Modifier.width(320.dp).fillMaxHeight(),
+                        )
+                        VerticalDivider()
+                    }
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        contentPadding = if (isWide) {
+                            PaddingValues(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 24.dp)
+                        } else {
+                            PaddingValues(
+                                start = wideContentPadding(920.dp),
+                                end = wideContentPadding(920.dp),
+                                bottom = 24.dp,
+                            )
+                        },
+                    ) {
+                        if (!isWide) {
+                            item {
+                                ProfileHeader(
+                                    profile = state.profile!!,
+                                    isSelf = isSelf,
+                                    following = state.following,
+                                    followBusy = state.followBusy,
+                                    onFollow = viewModel::toggleFollow,
+                                    onSettings = onOpenSettings,
+                                    onOpenMedia = onOpenMedia,
+                                )
+                            }
+                        }
                 item {
                     PrimaryScrollableTabRow(
                         selectedTabIndex = state.tab.ordinal,
@@ -724,6 +751,8 @@ fun ProfileScreen(
             }
         }
     }
+    }
+    }
 
     if (state.editorOpen) {
         FeaturedEditorDialog(
@@ -733,6 +762,199 @@ fun ProfileScreen(
             onToggleWork = viewModel::toggleEditorWork,
             onSave = viewModel::saveFeatured,
         )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ProfileSidebar(
+    profile: UserProfile,
+    isSelf: Boolean,
+    following: Boolean,
+    followBusy: Boolean,
+    onFollow: () -> Unit,
+    onSettings: () -> Unit,
+    badges: List<BadgeGrant>,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Card(
+            shape = RoundedCornerShape(20.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            ),
+        ) {
+            Box(Modifier.fillMaxWidth().height(140.dp)) {
+                if (!profile.backgroundFileId.isNullOrBlank()) {
+                    PickCatImage(
+                        url = "https://pickcat.dao3.fun/api/v1/files/${profile.backgroundFileId}",
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        corner = 0.dp,
+                    )
+                } else {
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                    )
+                }
+            }
+        }
+        UserAvatar(
+            name = profile.username,
+            url = avatarUrl(profile),
+            size = 76.dp,
+            modifier = Modifier
+                .offset(y = (-36).dp)
+                .border(4.dp, MaterialTheme.colorScheme.surface, CircleShape),
+        )
+        Text(
+            profile.username,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+            ) {
+                Text(
+                    "Lv.${profile.level.current}",
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
+            profile.displayedBadge?.name?.let { badge ->
+                Text(
+                    badge,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        if (!profile.bio.isNullOrBlank()) {
+            Text(
+                profile.bio.orEmpty(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                "${relativeTime(profile.createdAt)}加入",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            if (!profile.region.isNullOrBlank()) {
+                Text(
+                    profile.region.orEmpty(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.surfaceContainerLow,
+        ) {
+            Column(Modifier.padding(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    ProfileStat(compactNumber(profile.stats.followers), "粉丝", Modifier.weight(1f))
+                    StatDivider()
+                    ProfileStat(compactNumber(profile.stats.following), "关注", Modifier.weight(1f))
+                }
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 10.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    ProfileStat(compactNumber(profile.stats.topics), "帖子", Modifier.weight(1f))
+                    StatDivider()
+                    ProfileStat(compactNumber(profile.stats.replies), "回复", Modifier.weight(1f))
+                }
+            }
+        }
+        if (isSelf) {
+            OutlinedButton(
+                onClick = onSettings,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text("编辑资料")
+            }
+        } else {
+            Button(
+                onClick = onFollow,
+                enabled = !followBusy,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                if (followBusy) {
+                    CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                } else {
+                    Text(if (following) "已关注" else "关注")
+                }
+            }
+        }
+        if (badges.isNotEmpty()) {
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+            )
+            Text("徽章", style = MaterialTheme.typography.titleSmall)
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                badges.take(6).forEach { grant ->
+                    Column(
+                        modifier = Modifier.width(64.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        if (!grant.badge?.image?.url.isNullOrBlank()) {
+                            PickCatImage(
+                                url = grant.badge?.image?.url,
+                                contentDescription = grant.badge?.name,
+                                modifier = Modifier.size(44.dp),
+                                corner = 22.dp,
+                            )
+                        } else {
+                            Icon(
+                                Icons.Default.Badge,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(40.dp),
+                            )
+                        }
+                        Text(
+                            grant.badge?.name ?: grant.badgeId,
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
