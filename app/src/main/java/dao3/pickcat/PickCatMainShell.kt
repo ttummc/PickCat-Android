@@ -13,11 +13,13 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
@@ -460,32 +462,37 @@ fun PickCatMainShell(
                 NavigationRail(
                     containerColor = MaterialTheme.colorScheme.surface,
                 ) {
-                    Spacer(Modifier.weight(1f))
-                    destinations.forEach { destination ->
-                        val selected = selectedRoute == destination.route
-                        NavigationRailItem(
-                            selected = selected,
-                            onClick = {
-                                if (selected) reselectEvents.tryEmit(Unit)
-                                else navigateTopLevel(destination.route)
-                            },
-                            icon = {
-                                DestinationIcon(
-                                    destination = destination,
+                    Box(
+                        modifier = Modifier.fillMaxHeight().fillMaxWidth(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            destinations.forEach { destination ->
+                                val selected = selectedRoute == destination.route
+                                NavigationRailItem(
                                     selected = selected,
+                                    onClick = {
+                                        if (selected) reselectEvents.tryEmit(Unit)
+                                        else navigateTopLevel(destination.route)
+                                    },
+                                    icon = {
+                                        DestinationIcon(
+                                            destination = destination,
+                                            selected = selected,
+                                        )
+                                    },
+                                    label = { Text(destination.label) },
+                                    colors = NavigationRailItemDefaults.colors(
+                                        selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                                        indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    ),
                                 )
-                            },
-                            label = { Text(destination.label) },
-                            colors = NavigationRailItemDefaults.colors(
-                                selectedIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                                selectedTextColor = MaterialTheme.colorScheme.onSurface,
-                                indicatorColor = MaterialTheme.colorScheme.secondaryContainer,
-                                unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                            ),
-                        )
+                            }
+                        }
                     }
-                    Spacer(Modifier.weight(1f))
                 }
                 Box(Modifier.weight(1f)) {
                     CompositionLocalProvider(LocalTabReselect provides reselectEvents) {
