@@ -1,0 +1,6 @@
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:inset="16%">
+    <bitmap
+        android:src="@drawable/pickcat_logo"
+        android:gravity="fill" />
+</inset>
