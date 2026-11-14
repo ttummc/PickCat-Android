@@ -30,7 +30,6 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material.icons.outlined.Forum
 import androidx.compose.material.icons.outlined.Home
@@ -459,13 +458,8 @@ fun PickCatMainShell(
         ) { outerPadding ->
             Row(Modifier.fillMaxSize().padding(outerPadding)) {
                 NavigationRail(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                    containerColor = MaterialTheme.colorScheme.surface,
                 ) {
-                    Text(
-                        "PickCat",
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp),
-                    )
                     destinations.forEach { destination ->
                         val selected = selectedRoute == destination.route
                         NavigationRailItem(
@@ -490,15 +484,6 @@ fun PickCatMainShell(
                             ),
                         )
                     }
-                    Spacer(Modifier.weight(1f))
-                    NavigationRailItem(
-                        selected = selectedRoute == Routes.SETTINGS,
-                        onClick = { navController.navigate(Routes.SETTINGS) },
-                        icon = {
-                            Icon(Icons.Default.Settings, contentDescription = null)
-                        },
-                        label = { Text("设置") },
-                    )
                 }
                 Box(Modifier.weight(1f)) {
                     CompositionLocalProvider(LocalTabReselect provides reselectEvents) {

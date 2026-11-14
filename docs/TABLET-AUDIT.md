@@ -14,8 +14,8 @@ Status values:
 
 | # | Item | Status |
 | --- | --- | --- |
-| 1 | Add a branded header to the navigation rail | Done |
-| 2 | Add a Settings entry at the bottom of the rail | Done |
+| 1 | Keep the rail free of branding and app-name headers | Done |
+| 2 | Keep Settings out of the rail and reach it from Profile | Done |
 | 3 | Use one selected-state visual across rail and bottom bar | Done |
 | 4 | Verify rail item height, spacing, and touch targets | Reviewed |
 | 5 | Handle display cutouts and status-bar insets around the rail | Next |
@@ -87,7 +87,7 @@ Status values:
 
 ## First batch completed
 
-- Navigation rail header and Settings entry
+- Minimal navigation rail with icon-and-label items and a shared surface background
 - Offline banner moved above content
 - Readability caps for Home, Settings, Notifications, Search, and Profile
 - Readability caps for Edit profile, collection detail, and personal library
