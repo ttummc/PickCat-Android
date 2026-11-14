@@ -87,6 +87,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
@@ -784,41 +785,45 @@ private fun ProfileSidebar(
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Card(
-            shape = RoundedCornerShape(
-                topStart = 20.dp,
-                topEnd = 20.dp,
-                bottomStart = 0.dp,
-                bottomEnd = 0.dp,
-            ),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            ),
-        ) {
-            Box(Modifier.fillMaxWidth().height(120.dp)) {
-                if (!profile.backgroundFileId.isNullOrBlank()) {
-                    PickCatImage(
-                        url = "https://pickcat.dao3.fun/api/v1/files/${profile.backgroundFileId}",
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        corner = 0.dp,
-                    )
-                } else {
-                    Box(
-                        Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.primaryContainer),
-                    )
+        Box(Modifier.fillMaxWidth().height(156.dp)) {
+            Card(
+                modifier = Modifier.fillMaxWidth().height(120.dp),
+                shape = RoundedCornerShape(
+                    topStart = 20.dp,
+                    topEnd = 20.dp,
+                    bottomStart = 0.dp,
+                    bottomEnd = 0.dp,
+                ),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                ),
+            ) {
+                Box(Modifier.fillMaxSize()) {
+                    if (!profile.backgroundFileId.isNullOrBlank()) {
+                        PickCatImage(
+                            url = "https://pickcat.dao3.fun/api/v1/files/${profile.backgroundFileId}",
+                            contentDescription = null,
+                            modifier = Modifier.fillMaxSize(),
+                            corner = 0.dp,
+                        )
+                    } else {
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                        )
+                    }
                 }
             }
-        }
-        Box(Modifier.fillMaxWidth().height(44.dp)) {
             UserAvatar(
                 name = profile.username,
                 url = avatarUrl(profile),
                 size = 72.dp,
                 modifier = Modifier
-                    .offset(y = (-28).dp)
+                    .align(Alignment.TopStart)
+                    .padding(start = 12.dp)
+                    .offset(y = 84.dp)
+                    .zIndex(1f)
                     .border(3.dp, MaterialTheme.colorScheme.surface, CircleShape),
             )
         }
