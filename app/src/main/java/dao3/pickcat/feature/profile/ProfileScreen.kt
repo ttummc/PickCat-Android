@@ -503,7 +503,6 @@ fun ProfileScreen(
                                     followBusy = state.followBusy,
                                     onFollow = viewModel::toggleFollow,
                                     onSettings = onOpenSettings,
-                                    onOpenMedia = onOpenMedia,
                                 )
                             }
                         }
@@ -806,44 +805,50 @@ private fun ProfileSidebar(
                 }
             }
         }
-        Box(Modifier.fillMaxWidth().height(36.dp)) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
             UserAvatar(
                 name = profile.username,
                 url = avatarUrl(profile),
-                size = 64.dp,
-                modifier = Modifier
-                    .offset(y = (-28).dp)
-                    .border(3.dp, MaterialTheme.colorScheme.surface, CircleShape),
+                size = 56.dp,
+                modifier = Modifier.border(3.dp, MaterialTheme.colorScheme.surface, CircleShape),
             )
-        }
-        Text(
-            profile.username,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Surface(
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.primaryContainer,
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
-                    "Lv.${profile.level.current}",
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    profile.username,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
-            }
-            profile.displayedBadge?.name?.let { badge ->
-                Text(
-                    badge,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                    ) {
+                        Text(
+                            "Lv.${profile.level.current}",
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        )
+                    }
+                    profile.displayedBadge?.name?.let { badge ->
+                        Text(
+                            badge,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
             }
         }
         if (!profile.bio.isNullOrBlank()) {
@@ -968,10 +973,9 @@ private fun ProfileHeader(
     followBusy: Boolean,
     onFollow: () -> Unit,
     onSettings: () -> Unit,
-    onOpenMedia: () -> Unit,
 ) {
     Column {
-        Box(Modifier.fillMaxWidth().height(156.dp)) {
+        Box(Modifier.fillMaxWidth().height(140.dp)) {
             if (!profile.backgroundFileId.isNullOrBlank()) {
                 PickCatImage(
                     url = "https://pickcat.dao3.fun/api/v1/files/${profile.backgroundFileId}",
@@ -987,99 +991,81 @@ private fun ProfileHeader(
                 )
             }
         }
-        Column(Modifier.padding(horizontal = 18.dp)) {
-            Row(verticalAlignment = Alignment.Bottom) {
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
                 UserAvatar(
                     name = profile.username,
                     url = avatarUrl(profile),
-                    size = 88.dp,
-                    modifier = Modifier
-                        .offset(y = (-42).dp)
-                        .border(4.dp, MaterialTheme.colorScheme.surface, CircleShape),
+                    size = 72.dp,
+                    modifier = Modifier.border(3.dp, MaterialTheme.colorScheme.surface, CircleShape),
                 )
-                Spacer(Modifier.weight(1f))
-                if (isSelf) {
-                    OutlinedButton(
-                        onClick = onSettings,
-                        modifier = Modifier.offset(y = (-10).dp),
-                    ) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                        )
-                        Spacer(Modifier.width(6.dp))
-                        Text("编辑资料")
-                    }
-                } else {
-                    Button(
-                        onClick = onFollow,
-                        enabled = !followBusy,
-                        modifier = Modifier.offset(y = (-10).dp),
-                    ) {
-                        if (followBusy) {
-                            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                        } else {
-                            Text(if (following) "已关注" else "关注")
-                        }
-                    }
-                }
-            }
-            Text(
-                profile.username,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer,
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     Text(
-                        "Lv.${profile.level.current}",
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        profile.username,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
-                }
-                profile.displayedBadge?.name?.let { badge ->
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.secondaryContainer,
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primaryContainer,
                         ) {
-                            Icon(
-                                Icons.Default.Badge,
-                                contentDescription = null,
-                                modifier = Modifier.size(13.dp),
-                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                            )
                             Text(
-                                badge,
+                                "Lv.${profile.level.current}",
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                                 style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
                             )
+                        }
+                        profile.displayedBadge?.name?.let { badge ->
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    Icon(
+                                        Icons.Default.Badge,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(13.dp),
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    )
+                                    Text(
+                                        badge,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    )
+                                }
+                            }
                         }
                     }
                 }
             }
             if (!profile.bio.isNullOrBlank()) {
-                Spacer(Modifier.height(8.dp))
                 Text(
                     profile.bio.orEmpty(),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Row(
-                modifier = Modifier.padding(top = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     "${relativeTime(profile.createdAt)}加入",
                     style = MaterialTheme.typography.labelSmall,
@@ -1094,7 +1080,7 @@ private fun ProfileHeader(
                 }
             }
             Surface(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp),
+                modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
             ) {
@@ -1109,6 +1095,32 @@ private fun ProfileHeader(
                     ProfileStat(compactNumber(profile.stats.topics), "帖子", Modifier.weight(1f))
                     StatDivider()
                     ProfileStat(compactNumber(profile.stats.replies), "回复", Modifier.weight(1f))
+                }
+            }
+            if (isSelf) {
+                OutlinedButton(
+                    onClick = onSettings,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(
+                        Icons.Default.Edit,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text("编辑资料")
+                }
+            } else {
+                Button(
+                    onClick = onFollow,
+                    enabled = !followBusy,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (followBusy) {
+                        CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(if (following) "已关注" else "关注")
+                    }
                 }
             }
         }
