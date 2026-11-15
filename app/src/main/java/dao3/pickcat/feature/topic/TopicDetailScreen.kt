@@ -46,6 +46,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -523,16 +524,14 @@ fun TopicDetailScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Spacer(Modifier.width(10.dp))
-                        SingleChoiceSegmentedButtonRow(Modifier.width(150.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             val options = listOf("hot" to "热评", "latest" to "最新")
-                            options.forEachIndexed { index, (value, label) ->
-                                SegmentedButton(
+                            options.forEach { (value, label) ->
+                                FilterChip(
                                     selected = state.postsSort == value,
                                     onClick = { viewModel.setPostsSort(value) },
-                                    shape = SegmentedButtonDefaults.itemShape(index, options.size),
-                                ) {
-                                    Text(label)
-                                }
+                                    label = { Text(label) },
+                                )
                             }
                         }
                     }
