@@ -37,15 +37,17 @@ import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
 import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -413,40 +415,85 @@ fun WorkDetailScreen(
                             HorizontalDivider(
                                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
                             )
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(onClick = viewModel::toggleLike) {
-                                    AnimatedContent(
-                                        targetState = state.liked,
-                                        transitionSpec = {
-                                            fadeIn(tween(160)) togetherWith fadeOut(tween(100))
-                                        },
-                                        label = "work-like-icon",
-                                    ) { liked ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                if (state.liked) {
+                                    FilledTonalButton(
+                                        onClick = viewModel::toggleLike,
+                                        modifier = Modifier.weight(1f),
+                                    ) {
+                                        AnimatedContent(
+                                            targetState = state.liked,
+                                            transitionSpec = {
+                                                fadeIn(tween(160)) togetherWith fadeOut(tween(100))
+                                            },
+                                            label = "work-like-icon",
+                                        ) { liked ->
+                                            Icon(
+                                                if (liked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp),
+                                            )
+                                        }
+                                        Spacer(Modifier.width(6.dp))
+                                        Text("已点赞")
+                                    }
+                                } else {
+                                    OutlinedButton(
+                                        onClick = viewModel::toggleLike,
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.outlinedButtonColors(
+                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        ),
+                                    ) {
                                         Icon(
-                                            if (liked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                            Icons.Default.FavoriteBorder,
                                             contentDescription = null,
                                             modifier = Modifier.size(18.dp),
                                         )
+                                        Spacer(Modifier.width(6.dp))
+                                        Text("点赞")
                                     }
-                                    Spacer(Modifier.width(6.dp))
-                                    Text(if (state.liked) "已点赞" else "点赞")
                                 }
-                                Button(onClick = viewModel::toggleFavorite) {
-                                    AnimatedContent(
-                                        targetState = state.favorited,
-                                        transitionSpec = {
-                                            fadeIn(tween(160)) togetherWith fadeOut(tween(100))
-                                        },
-                                        label = "work-favorite-icon",
-                                    ) { favorited ->
+                                if (state.favorited) {
+                                    FilledTonalButton(
+                                        onClick = viewModel::toggleFavorite,
+                                        modifier = Modifier.weight(1f),
+                                    ) {
+                                        AnimatedContent(
+                                            targetState = state.favorited,
+                                            transitionSpec = {
+                                                fadeIn(tween(160)) togetherWith fadeOut(tween(100))
+                                            },
+                                            label = "work-favorite-icon",
+                                        ) { favorited ->
+                                            Icon(
+                                                if (favorited) Icons.Default.Star else Icons.Default.StarBorder,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(18.dp),
+                                            )
+                                        }
+                                        Spacer(Modifier.width(6.dp))
+                                        Text("已收藏")
+                                    }
+                                } else {
+                                    OutlinedButton(
+                                        onClick = viewModel::toggleFavorite,
+                                        modifier = Modifier.weight(1f),
+                                        colors = ButtonDefaults.outlinedButtonColors(
+                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        ),
+                                    ) {
                                         Icon(
-                                            if (favorited) Icons.Default.Star else Icons.Default.StarBorder,
+                                            Icons.Default.StarBorder,
                                             contentDescription = null,
                                             modifier = Modifier.size(18.dp),
                                         )
+                                        Spacer(Modifier.width(6.dp))
+                                        Text("收藏")
                                     }
-                                    Spacer(Modifier.width(6.dp))
-                                    Text(if (state.favorited) "已收藏" else "收藏")
                                 }
                             }
                         }
