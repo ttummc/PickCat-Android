@@ -1,4 +1,4 @@
-package dao3.pickcat.feature.forum
+﻿package dao3.pickcat.feature.forum
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -27,10 +27,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -38,8 +37,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -52,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -364,44 +364,35 @@ private fun TopicFeedScaffold(
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (showTags && state.tags.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 2.dp),
-                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                LazyRow(
+                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    LazyRow(
-                        modifier = Modifier.weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(end = 8.dp),
-                    ) {
-                        items(state.tags, key = { it.id }) { tag ->
-                            AssistChip(
-                                onClick = { onOpenCategory(tag) },
-                                label = { Text("#${tag.name}") },
-                            )
-                        }
+                    items(state.tags, key = { it.id }) { tag ->
+                        AssistChip(
+                            onClick = { onOpenCategory(tag) },
+                            label = { Text("#${tag.name}") },
+                        )
                     }
-                    SortSelector(
-                        sort = state.sort,
-                        onSort = viewModel::setSort,
-                    )
                 }
-            } else {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
-                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.End,
-                ) {
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End,
+            ) {
+                if (!showTags) {
                     Text(
                         "排序",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Spacer(Modifier.width(10.dp))
-                    SortSelector(
-                        sort = state.sort,
-                        onSort = viewModel::setSort,
-                    )
+                    Spacer(Modifier.width(8.dp))
                 }
+                SortSelector(
+                    sort = state.sort,
+                    onSort = viewModel::setSort,
+                )
             }
             PullToRefreshBox(
                 isRefreshing = state.refreshing,
@@ -476,14 +467,26 @@ private fun SortSelector(
     sort: TopicSort,
     onSort: (TopicSort) -> Unit,
 ) {
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
         val options = listOf(TopicSort.LATEST to "最新", TopicSort.ACTIVE to "活跃")
         options.forEach { (value, label) ->
-            FilterChip(
-                selected = sort == value,
+            val selected = sort == value
+            TextButton(
                 onClick = { onSort(value) },
-                label = { Text(label) },
-            )
+                contentPadding = PaddingValues(horizontal = 10.dp),
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = if (selected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                ),
+            ) {
+                Text(
+                    label,
+                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                )
+            }
         }
     }
 }
