@@ -1,7 +1,18 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.compose.compiler)
 }
+
+val versionProps = Properties().apply {
+    rootProject.file("version.properties").inputStream().use { load(it) }
+}
+val versionMajor = versionProps.getProperty("version.major", "0").toInt()
+val versionMinor = versionProps.getProperty("version.minor", "1").toInt()
+val versionPatch = versionProps.getProperty("version.patch", "0").toInt()
+val pickcatVersionName = "$versionMajor.$versionMinor.$versionPatch"
+val pickcatVersionCode = versionMajor * 10_000 + versionMinor * 100 + versionPatch
 
 android {
     namespace = "dao3.pickcat"
@@ -11,8 +22,8 @@ android {
         applicationId = "fun.dao3.pickcat"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = pickcatVersionCode
+        versionName = pickcatVersionName
         vectorDrawables.useSupportLibrary = true
     }
 

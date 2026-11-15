@@ -1,0 +1,21 @@
+# 更新日志
+
+记录 PickCat for Android 的重要变更。
+格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
+
+## [0.1.0] - 2026-11-15
+
+首个公开发行版。
+
+### 新增
+
+- 通过 PickCat 官方网页会话登录，并持久化 Cookie。
+- 首页、论坛、分类、帖子详情、回复和搜索。
+- 作品、作品详情、评论和 Codemao 播放器。
+- Markdown 发帖编辑器，支持草稿、标签、图片上传、预览和手机/平板自适应布局。
+- 用户主页、合集、徽章、贡献图、动态和作者跳转。
+- 通知中心、后台通知、收藏、点赞、关注、媒体库和审核状态。
+- Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
+- 基于 Git 标签自动构建并发布版本。
+
+[0.1.0]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.0

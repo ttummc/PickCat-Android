@@ -64,6 +64,23 @@ APK 输出：
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
+## 发行版与版本号
+
+已发布版本见 [GitHub Releases](https://github.com/ttummc/PickCat-Android/releases)，更新内容见 [CHANGELOG.zh-CN.md](CHANGELOG.zh-CN.md)。
+
+- `version.properties` 是版本号唯一来源。
+- 版本号遵循语义化版本：`主版本.次版本.修订号`。
+- `versionCode` 按 `主版本 * 10000 + 次版本 * 100 + 修订号` 计算。
+- Git 标签使用 `vX.Y.Z`，且必须与 `version.properties` 一致。
+- 推送标签后，Release 工作流会自动构建、运行 lint 并发布可安装的 debug 签名 APK。
+
+发布步骤：
+
+1. 修改 `version.properties` 中的 `version.major`、`version.minor`、`version.patch`。
+2. 更新 `CHANGELOG.md` 和 `CHANGELOG.zh-CN.md`。
+3. 提交改动。
+4. 创建并推送标签：`git tag vX.Y.Z && git push origin vX.Y.Z`。
+
 `local.properties` 指向本机 Android SDK：
 
 ```properties

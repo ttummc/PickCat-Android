@@ -81,6 +81,23 @@ The debug APK is written to:
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
+## Releases and versioning
+
+Published builds are available on [GitHub Releases](https://github.com/ttummc/PickCat-Android/releases). See [CHANGELOG.md](CHANGELOG.md) for release notes.
+
+- `version.properties` is the single source of truth for the release version.
+- Versions follow Semantic Versioning: `major.minor.patch`.
+- `versionCode` is derived as `major * 10000 + minor * 100 + patch`.
+- Release tags use `vX.Y.Z` and must match `version.properties`.
+- Pushing a matching tag runs the release workflow, builds and lints the app, and publishes the installable debug-signed APK.
+
+To prepare a release:
+
+1. Update `version.major`, `version.minor`, and `version.patch` in `version.properties`.
+2. Update `CHANGELOG.md` and `CHANGELOG.zh-CN.md`.
+3. Commit the changes.
+4. Create and push the tag: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+
 `local.properties` must point to your local Android SDK:
 
 ```properties

@@ -119,6 +119,12 @@ fun SettingsScreen(
     var confirmSignOut by remember { mutableStateOf(false) }
     var email by remember { mutableStateOf<String?>(null) }
     var officialAccount by remember { mutableStateOf<OfficialAccount?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val versionName = remember {
+        runCatching {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName
+        }.getOrNull().orEmpty()
+    }
     val user = session.user
 
     LaunchedEffect(user?.id) {
@@ -357,7 +363,9 @@ fun SettingsScreen(
                             leadingContent = { Icon(Icons.Default.Info, contentDescription = null) },
                             headlineContent = { Text("PickCat Android 原生版") },
                             supportingContent = { Text("Kotlin 与 Jetpack Compose") },
-                            trailingContent = { Text("v0.1.0") },
+                            trailingContent = {
+                                Text(if (versionName.isBlank()) "开发版" else "v$versionName")
+                            },
                         )
                         HorizontalDivider()
                         ListItem(
