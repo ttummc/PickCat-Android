@@ -32,6 +32,7 @@ class NotificationSyncWorker(
 
     override suspend fun doWork(): Result {
         val container = AppContainer.get(applicationContext)
+        ensureChannel(applicationContext)
         if (!container.preferences.preferences.first().backgroundNotifications) {
             return Result.success()
         }
@@ -63,6 +64,7 @@ class NotificationSyncWorker(
             return Result.success()
         }
 
+        createChannel(applicationContext)
         createChannel(applicationContext)
         val unseen = page.items
             .filter { !it.read && it.id !in previous }
@@ -106,7 +108,8 @@ class NotificationSyncWorker(
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setAutoCancel(true)
             .setGroup(GROUP_KEY)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setCategory(NotificationCompat.CATEGORY_SOCIAL)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(pendingIntent)
             .build()
         runCatching { NotificationManagerCompat.from(context).notify(item.id.hashCode(), notification) }
@@ -117,20 +120,36 @@ class NotificationSyncWorker(
         val channel = NotificationChannel(
             CHANNEL_ID,
             "社区通知",
-            NotificationManager.IMPORTANCE_DEFAULT,
+            NotificationManager.IMPORTANCE_HIGH,
         ).apply {
             description = "回复、点赞、关注和系统通知"
+            setShowBadge(true)
         }
         context.getSystemService(NotificationManager::class.java)?.createNotificationChannel(channel)
     }
 
     companion object {
-        const val CHANNEL_ID = "pickcat_notifications"
+        const val CHANNEL_ID = "pickcat_notifications_v2"
         const val GROUP_KEY = "pickcat_notifications"
         const val EXTRA_OPEN_NOTIFICATIONS = "open_notifications"
         private const val PREFS = "pickcat_notification_sync"
         private const val KEY_SEEN = "seen_notification_ids"
         private const val KEY_INITIALIZED = "initialized"
+
+        fun ensureChannel(context: Context) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                "社区通知",
+                NotificationManager.IMPORTANCE_HIGH,
+            ).apply {
+                description = "回复、点赞、关注和系统通知"
+                setShowBadge(true)
+            }
+            context.getSystemService(NotificationManager::class.java)
+                ?.createNotificationChannel(channel)
+        }
+
         private val ACTION_LABELS = mapOf(
             "REPLY_CREATED" to "回复了你的帖子",
             "WORK_COMMENT_REPLY_CREATED" to "回复了你的作品评论",
@@ -152,6 +171,7 @@ object NotificationSyncScheduler {
     private const val WORK_NAME = "pickcat-notification-sync"
 
     fun schedule(context: Context) {
+        NotificationSyncWorker.ensureChannel(context)
         val request = PeriodicWorkRequestBuilder<NotificationSyncWorker>(15, TimeUnit.MINUTES)
             .setConstraints(
                 Constraints.Builder()
@@ -168,6 +188,7 @@ object NotificationSyncScheduler {
     }
 
     fun syncNow(context: Context) {
+        NotificationSyncWorker.ensureChannel(context)
         val request = androidx.work.OneTimeWorkRequestBuilder<NotificationSyncWorker>()
             .setConstraints(
                 Constraints.Builder()

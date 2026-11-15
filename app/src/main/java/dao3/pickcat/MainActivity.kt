@@ -41,4 +41,11 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onStop() {
+        super.onStop()
+        if (!isChangingConfigurations) {
+            NotificationSyncScheduler.syncNow(this)
+        }
+    }
 }
