@@ -5,8 +5,10 @@ import android.app.Dialog
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.Outline
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewOutlineProvider
 import android.view.Window
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
@@ -15,6 +17,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -105,19 +108,27 @@ fun CodemaoPlayer(
     var reloadToken by remember { mutableStateOf(0) }
     var chromeDialog by remember { mutableStateOf<Dialog?>(null) }
 
+    val playerShape = MaterialTheme.shapes.large
     Box(
         modifier = modifier
-            .background(androidx.compose.ui.graphics.Color.Black)
-            .clip(MaterialTheme.shapes.medium),
+            .clip(playerShape)
+            .background(androidx.compose.ui.graphics.Color.Black),
     ) {
         if (playerUrl == null) {
             RecordFallback(work = work)
         } else {
             key(reloadToken) {
                 AndroidView(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().clip(playerShape),
                     factory = { ctx ->
                         createPlayerWebView(ctx, playerUrl).apply {
+                            val radius = 16.dp.value * resources.displayMetrics.density
+                            outlineProvider = object : ViewOutlineProvider() {
+                                override fun getOutline(view: View, outline: Outline) {
+                                    outline.setRoundRect(0, 0, view.width, view.height, radius)
+                                }
+                            }
+                            clipToOutline = true
                             webViewClient = object : WebViewClient() {
                                 override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                                     loading = true
@@ -205,6 +216,15 @@ fun CodemaoPlayer(
                     Icon(Icons.Default.Fullscreen, contentDescription = "全屏")
                 }
             }
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.65f),
+                        shape = playerShape,
+                    ),
+            )
         }
     }
 }
