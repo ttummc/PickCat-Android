@@ -3,6 +3,13 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.3] - 2026-11-15
+
+### 变更
+
+- 设置页改为 Android 系统设置式结构：分区、全宽列表、箭头、分隔线和主题选择对话框。
+- 新增账号 ID 复制、登录与安全、授权应用、注销账号、主页展示和编程猫账号管理入口，统一跳转官网设置完成验证。
+
 ## [0.1.2] - 2026-11-15
 
 ### 修复
@@ -36,6 +43,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.3]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.3
 [0.1.2]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.2
 [0.1.1]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.1
 [0.1.0]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.0
