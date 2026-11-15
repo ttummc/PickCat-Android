@@ -48,6 +48,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -65,6 +66,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -501,32 +503,27 @@ fun WorkDetailScreen(
                     if (!work.description.isNullOrBlank()) {
                         item {
                             Card(
+                                modifier = Modifier.fillMaxWidth(),
                                 colors = CardDefaults.cardColors(
                                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                                 ),
                             ) {
-                                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Text(
-                                        work.description.orEmpty(),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                    )
-                                }
+                                ExpandableText(
+                                    text = work.description.orEmpty(),
+                                    modifier = Modifier.padding(14.dp),
+                                )
                             }
                         }
                     }
                     if (!work.operation.isNullOrBlank()) {
                         item {
-                            Card(
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                ),
+                            OutlinedCard(
+                                modifier = Modifier.fillMaxWidth(),
                             ) {
-                                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    Text(
-                                        work.operation.orEmpty(),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                    )
-                                }
+                                ExpandableText(
+                                    text = work.operation.orEmpty(),
+                                    modifier = Modifier.padding(14.dp),
+                                )
                             }
                         }
                     }
@@ -648,6 +645,38 @@ fun WorkDetailScreen(
         }
     }
 }
+}
+
+@Composable
+private fun ExpandableText(
+    text: String,
+    modifier: Modifier = Modifier,
+    collapsedMaxLines: Int = 6,
+) {
+    var expanded by rememberSaveable(text) { mutableStateOf(false) }
+    var hasOverflow by remember(text) { mutableStateOf(false) }
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Text(
+            text,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = if (expanded) Int.MAX_VALUE else collapsedMaxLines,
+            overflow = TextOverflow.Ellipsis,
+            onTextLayout = { result ->
+                if (!expanded) hasOverflow = result.hasVisualOverflow
+            },
+        )
+        if (hasOverflow || expanded) {
+            TextButton(
+                onClick = { expanded = !expanded },
+                modifier = Modifier.align(Alignment.End),
+            ) {
+                Text(if (expanded) "收起" else "展开")
+            }
+        }
+    }
 }
 
 @Composable
