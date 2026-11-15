@@ -299,6 +299,12 @@ data class Session(
 )
 
 @Serializable
+data class WorkPlayer(
+    val runtime: String = "",
+    val entryUrl: String = "",
+)
+
+@Serializable
 data class Work(
     val id: String = "",
     val sourceWorkId: String = "",
@@ -306,6 +312,7 @@ data class Work(
     val author: UserRef = UserRef(),
     val workName: String = "",
     val type: String = "",
+    val player: WorkPlayer? = null,
     val forkEnable: Boolean? = null,
     val isForked: Boolean? = null,
     val parentUuid: String? = null,

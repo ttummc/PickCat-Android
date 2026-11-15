@@ -65,17 +65,8 @@ import dao3.pickcat.core.ui.PickCatImage
  * The Codemao players are keyed by the source work id and live on different hosts
  * depending on the engine. Types without a player deliberately return null.
  */
-fun playerUrlFor(work: Work): String? {
-    val id = work.sourceWorkId.trim().ifBlank { return null }
-    return when (work.type.uppercase()) {
-        "KITTEN4" -> "https://player.codemao.cn/new/$id"
-        "KITTEN3" -> "https://player.codemao.cn/old/$id?origin=kitten_qrcode"
-        "KITTENN" -> "https://kn.codemao.cn/player?type=2&workId=$id"
-        "COCO" -> "https://coco.codemao.cn/editor/player/$id?channel=h5"
-        "NEMO" -> "https://nemo.codemao.cn/w/$id"
-        else -> null
-    }
-}
+fun playerUrlFor(work: Work): String? =
+    work.player?.entryUrl?.takeIf { it.isNotBlank() }
 
 @SuppressLint("SetJavaScriptEnabled")
 private fun createPlayerWebView(context: Context, url: String): WebView {
@@ -102,7 +93,9 @@ fun CodemaoPlayer(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val playerUrl = remember(work.id, work.type, work.sourceWorkId) { playerUrlFor(work) }
+    val playerUrl = remember(work.id, work.type, work.sourceWorkId, work.player?.entryUrl) {
+        playerUrlFor(work)
+    }
     var failed by remember { mutableStateOf(false) }
     var loading by remember { mutableStateOf(playerUrl != null) }
     var reloadToken by remember { mutableStateOf(0) }
