@@ -76,6 +76,7 @@ app/build/outputs/apk/debug/app-debug.apk
 - `versionCode` 按 `主版本 * 10000 + 次版本 * 100 + 修订号` 计算。
 - Git 标签使用 `vX.Y.Z`，且必须与 `version.properties` 一致。
 - 推送标签后，Release 工作流会自动构建、运行 lint 并发布可安装的 debug 签名 APK。
+- GitHub Release 创建成功后，工作流会调用 Kitter镜像源的 `/sync` 接口，让镜像同步新发行版。该步骤需要仓库 Secret `KITTER_SYNC_TOKEN`。
 - 应用内更新可选择 GitHub Releases 或 Kitter镜像源。首选源无法访问时会自动切换到另一个源；镜像下载会校验文件大小和 SHA-256。
 
 应用内更新只接受与当前应用签名一致的 APK。Debug 构建和 CI 发行版共用 `keystore/pickcat-debug.jks` 中的测试签名；正式分发前请阅读该目录的说明。

@@ -67,3 +67,32 @@ jobs:
           fail_on_unmatched_files: true
           draft: false
           prerelease: false
+
+      - name: Sync Kitter mirror
+        env:
+          KITTER_SYNC_TOKEN: ${{ secrets.KITTER_SYNC_TOKEN }}
+        run: |
+          if [ -z "${KITTER_SYNC_TOKEN}" ]; then
+            echo "::warning::KITTER_SYNC_TOKEN is not configured; skipping Kitter mirror sync."
+            exit 0
+          fi
+          for attempt in 1 2 3; do
+            echo "Kitter mirror sync attempt ${attempt}"
+            if response=$(curl -fsS --max-time 180 -X POST \
+              -H "X-Sync-Token: ${KITTER_SYNC_TOKEN}" \
+              "https://pickcat-android.kitter.cn/sync"); then
+              echo "${response}"
+              if ! echo "${response}" | grep -Eq '"ok"[[:space:]]*:[[:space:]]*true'; then
+                echo "::error::Kitter mirror reported a failed sync."
+                exit 1
+              fi
+              echo "Kitter mirror sync requested."
+              curl -fsS --max-time 30 \
+                "https://pickcat-android.kitter.cn/sync/health" || true
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::Kitter mirror sync failed after retries."
+          exit 1
+
