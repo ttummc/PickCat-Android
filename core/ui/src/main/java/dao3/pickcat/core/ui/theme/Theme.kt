@@ -111,8 +111,8 @@ private val PickCatShapes = Shapes(
 )
 
 /**
- * The standard theme keeps a Google-blue brand accent. Monet mode uses the
- * wallpaper-derived scheme unchanged so dynamic color is not overridden.
+ * Monet supplies the neutral surfaces; the Google-blue brand accent is kept so
+ * controls do not drift into arbitrary wallpaper accent colors.
  */
 private fun ColorScheme.withGoogleBlueAccent(darkTheme: Boolean): ColorScheme {
     return if (darkTheme) {
@@ -231,18 +231,13 @@ fun PickCatTheme(
         ThemeMode.DARK -> true
     }
     val context = LocalContext.current
-    val useDynamicColor = dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val baseScheme: ColorScheme = when {
-        useDynamicColor ->
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         darkTheme -> PickCatDark
         else -> PickCatLight
     }
-    val colorScheme = if (useDynamicColor) {
-        baseScheme
-    } else {
-        baseScheme.withGoogleBlueAccent(darkTheme)
-    }
+    val colorScheme = baseScheme.withGoogleBlueAccent(darkTheme)
 
     val view = LocalView.current
     if (!view.isInEditMode) {
