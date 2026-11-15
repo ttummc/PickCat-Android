@@ -609,7 +609,7 @@ fun RichContent(
                     url = part.url,
                     contentDescription = if (part.emoji) "表情" else "帖子图片",
                     modifier = if (part.emoji) {
-                        Modifier.size(24.dp)
+                        Modifier.size(32.dp)
                     } else {
                         Modifier.fillMaxWidth().heightIn(max = 320.dp)
                     },
