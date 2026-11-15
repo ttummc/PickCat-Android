@@ -38,9 +38,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -478,16 +476,14 @@ private fun SortSelector(
     sort: TopicSort,
     onSort: (TopicSort) -> Unit,
 ) {
-    SingleChoiceSegmentedButtonRow(Modifier.width(160.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         val options = listOf(TopicSort.LATEST to "最新", TopicSort.ACTIVE to "活跃")
-        options.forEachIndexed { index, (value, label) ->
-            SegmentedButton(
+        options.forEach { (value, label) ->
+            FilterChip(
                 selected = sort == value,
                 onClick = { onSort(value) },
-                shape = SegmentedButtonDefaults.itemShape(index, options.size),
-            ) {
-                Text(label)
-            }
+                label = { Text(label) },
+            )
         }
     }
 }
