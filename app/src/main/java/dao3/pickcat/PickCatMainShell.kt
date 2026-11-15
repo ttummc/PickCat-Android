@@ -223,28 +223,32 @@ fun PickCatMainShell(
                     scaleIn(
                         animationSpec = tween(300, easing = FastOutSlowInEasing),
                         initialScale = 0.97f,
-                    )
+                    ) +
+                    slideInHorizontally(tween(260, easing = FastOutSlowInEasing)) { it / 14 }
             },
             exitTransition = {
                 fadeOut(tween(150, easing = FastOutSlowInEasing)) +
                     scaleOut(
                         animationSpec = tween(220, easing = FastOutSlowInEasing),
                         targetScale = 1.015f,
-                    )
+                    ) +
+                    slideOutHorizontally(tween(150, easing = FastOutSlowInEasing)) { -it / 20 }
             },
             popEnterTransition = {
                 fadeIn(tween(240, easing = FastOutSlowInEasing)) +
                     scaleIn(
                         animationSpec = tween(280, easing = FastOutSlowInEasing),
                         initialScale = 0.985f,
-                    )
+                    ) +
+                    slideInHorizontally(tween(240, easing = FastOutSlowInEasing)) { -it / 14 }
             },
             popExitTransition = {
                 fadeOut(tween(150, easing = FastOutSlowInEasing)) +
                     scaleOut(
                         animationSpec = tween(220, easing = FastOutSlowInEasing),
                         targetScale = 1.02f,
-                    )
+                    ) +
+                    slideOutHorizontally(tween(150, easing = FastOutSlowInEasing)) { it / 20 }
             },
         ) {
             composable(Routes.HOME) {
