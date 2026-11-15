@@ -543,13 +543,14 @@ fun TopicDetailScreen(
                 }
                 items(threadedPosts, key = { it.post.id }) { item ->
                     ThreadedReply(depth = item.depth) {
-                        PostCard(
+                        CommentRow(
                             post = item.post,
                             liked = item.post.id in state.likedPosts,
                             likeCount = state.postLikeCounts[item.post.id] ?: item.post.likeCount,
                             onLike = { viewModel.togglePostLike(item.post) },
                             onReply = { replyTo = item.post },
                             onReport = { reportTarget = item.post },
+                            showDivider = item.depth == 0,
                         )
                     }
                 }
@@ -673,6 +674,97 @@ fun TopicDetailScreen(
                 TextButton(onClick = { reportTarget = null }) { Text("取消") }
             },
         )
+    }
+}
+
+@Composable
+private fun CommentRow(
+    post: Post,
+    liked: Boolean,
+    likeCount: Int,
+    onLike: () -> Unit,
+    onReply: () -> Unit,
+    onReport: () -> Unit,
+    showDivider: Boolean,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        AuthorRow(
+            user = post.author,
+            time = post.createdAt,
+            trailing = {
+                Text(
+                    "#${post.postNumber}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
+        )
+        if (post.deleted) {
+            Text(
+                "该楼层已删除",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            PostContent(post)
+        }
+        if (post.replyToPostNumber != null) {
+            Text(
+                "回复 #${post.replyToPostNumber}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+            TextButton(
+                onClick = onLike,
+                contentPadding = PaddingValues(horizontal = 8.dp),
+            ) {
+                AnimatedContent(
+                    targetState = liked,
+                    transitionSpec = {
+                        fadeIn(tween(160)) togetherWith fadeOut(tween(100))
+                    },
+                    label = "comment-like-icon",
+                ) { active ->
+                    Icon(
+                        if (active) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(4.dp))
+                Text(compactNumber(likeCount))
+            }
+            TextButton(
+                onClick = onReply,
+                contentPadding = PaddingValues(horizontal = 8.dp),
+            ) {
+                Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("回复")
+            }
+            TextButton(
+                onClick = onReport,
+                contentPadding = PaddingValues(horizontal = 8.dp),
+            ) {
+                Icon(Icons.Default.Flag, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("举报")
+            }
+        }
+        if (showDivider) {
+            HorizontalDivider(
+                modifier = Modifier.padding(top = 4.dp),
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+            )
+        }
     }
 }
 
