@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,13 +35,17 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -193,12 +198,17 @@ class NotificationsViewModel : ViewModel() {
             _state.update { it.copy(marking = true) }
             try {
                 api.markNotificationsRead()
-                refresh()
+                _state.update {
+                    it.copy(
+                        items = it.items.map { item -> item.copy(read = true) },
+                        summary = it.summary?.copy(unreadCount = 0),
+                        marking = false,
+                    )
+                }
                 _messages.tryEmit("已全部标记为已读")
             } catch (error: Exception) {
-                _messages.tryEmit(error.message ?: "操作失败")
-            } finally {
                 _state.update { it.copy(marking = false) }
+                _messages.tryEmit(error.message ?: "操作失败")
             }
         }
     }
@@ -251,8 +261,11 @@ fun NotificationsScreen(
                     },
                     actions = {
                         if (unread > 0) {
-                            IconButton(onClick = viewModel::markAllRead, enabled = !state.marking) {
-                                Icon(Icons.Default.DoneAll, contentDescription = "全部已读")
+                            TextButton(
+                                onClick = viewModel::markAllRead,
+                                enabled = !state.marking,
+                            ) {
+                                Text("全部已读")
                             }
                         }
                     },
@@ -320,23 +333,27 @@ fun NotificationsScreen(
                     contentPadding = PaddingValues(
                         start = wideContentPadding(760.dp),
                         end = wideContentPadding(760.dp),
-                        top = 8.dp,
+                        top = 4.dp,
                         bottom = 32.dp,
                     ),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(filteredItems, key = { it.id }) { item ->
-                        NotificationRow(
-                            item = item,
-                            modifier = Modifier.animateItem(),
-                            onClick = {
-                                if (item.topic?.id != null) {
-                                    onOpenTopic(item.topic!!.id, item.post?.postNumber)
-                                } else if (item.work?.id != null) {
-                                    onOpenWork(item.work!!.id)
-                                }
-                            },
-                        )
+                        Column(Modifier.animateItem()) {
+                            NotificationRow(
+                                item = item,
+                                onClick = {
+                                    if (item.topic?.id != null) {
+                                        onOpenTopic(item.topic!!.id, item.post?.postNumber)
+                                    } else if (item.work?.id != null) {
+                                        onOpenWork(item.work!!.id)
+                                    }
+                                },
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier.padding(start = 16.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
+                            )
+                        }
                     }
                     item {
                         LaunchedEffect(state.cursor, state.endReached) {
@@ -353,62 +370,55 @@ fun NotificationsScreen(
 @Composable
 private fun NotificationRow(
     item: NotificationItem,
-    modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
-    Card(
-        onClick = onClick,
-        modifier = modifier,
-        shape = MaterialTheme.shapes.medium,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            if (!item.read) {
-                Box(
-                    Modifier
-                        .size(6.dp)
-                        .background(MaterialTheme.colorScheme.primary, CircleShape)
-                        .semantics { contentDescription = "未读" },
-                )
+    val target = item.topic?.title ?: item.work?.workName
+    ListItem(
+        modifier = Modifier.clickable(onClick = onClick),
+        colors = ListItemDefaults.colors(
+            containerColor = if (item.read) {
+                MaterialTheme.colorScheme.surface
             } else {
-                Spacer(Modifier.width(6.dp))
-            }
+                MaterialTheme.colorScheme.surfaceContainerLow
+            },
+        ),
+        leadingContent = {
             if (item.actor != null) {
-                UserAvatar(item.actor, 38.dp)
+                UserAvatar(item.actor, 40.dp)
+            } else {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                ) {
+                    Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.Default.Notifications,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        )
+                    }
+                }
             }
-            Column(Modifier.weight(1f)) {
+        },
+        headlineContent = {
+            Text(
+                item.actor?.username ?: "系统",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = if (item.read) FontWeight.Medium else FontWeight.SemiBold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        supportingContent = {
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                if (!target.isNullOrBlank()) {
                     Text(
-                        item.actor?.username ?: "系统",
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = if (item.read) FontWeight.Medium else FontWeight.SemiBold,
-                        maxLines = 1,
+                        target,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                val target = item.topic?.title ?: item.work?.workName
-                if (!target.isNullOrBlank()) {
-                    Row(verticalAlignment = Alignment.Top) {
-                        Text(
-                            target,
-                            style = MaterialTheme.typography.bodySmall,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f),
-                        )
-                        item.post?.postNumber?.let { number ->
-                            Spacer(Modifier.width(6.dp))
-                            Text(
-                                "#$number",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
                 }
                 Text(
                     relativeTime(item.createdAt),
@@ -416,8 +426,20 @@ private fun NotificationRow(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        }
-    }
+        },
+        trailingContent = if (!item.read) {
+            {
+                Box(
+                    Modifier
+                        .size(8.dp)
+                        .background(MaterialTheme.colorScheme.primary, CircleShape)
+                        .semantics { contentDescription = "未读" },
+                )
+            }
+        } else {
+            null
+        },
+    )
 }
 
 // ------------------------------------------------------------------ likes page
