@@ -98,13 +98,16 @@ class NotificationSyncWorker(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         val actor = item.actor?.username ?: "PICKCAT"
-        val action = ACTION_LABELS[item.type] ?: "有新的互动"
+        val action = actionLabel(item.type)
+        val category = categoryLabel(item.type)
         val target = item.topic?.title ?: item.work?.workName
-        val body = if (!target.isNullOrBlank()) target else "打开 PICKCAT 查看详情"
+        val title = if (actor == "PICKCAT") category else "$category · $actor"
+        val body = if (!target.isNullOrBlank()) "$action：$target" else action
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_pickcat)
-            .setContentTitle("$actor $action")
+            .setContentTitle(title)
             .setContentText(body)
+            .setSubText(category)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body))
             .setAutoCancel(true)
             .setGroup(GROUP_KEY)
@@ -113,6 +116,23 @@ class NotificationSyncWorker(
             .setContentIntent(pendingIntent)
             .build()
         runCatching { NotificationManagerCompat.from(context).notify(item.id.hashCode(), notification) }
+    }
+
+    private fun categoryLabel(type: String): String = when {
+        type.contains("LIKE") -> "点赞"
+        type.contains("MENTION") -> "提及"
+        type.contains("REPLY") || type.contains("COMMENT") -> "评论"
+        type.contains("FOLLOW") -> "关注"
+        type.contains("MANAGEMENT") || type.contains("LEVEL") || type.contains("TOPIC") -> "系统"
+        else -> "通知"
+    }
+
+    private fun actionLabel(type: String): String = ACTION_LABELS[type] ?: when {
+        type.contains("LIKE") -> "赞了你"
+        type.contains("MENTION") -> "提到了你"
+        type.contains("REPLY") || type.contains("COMMENT") -> "评论了你"
+        type.contains("FOLLOW") -> "关注了你"
+        else -> "有新的互动"
     }
 
     private fun createChannel(context: Context) {
