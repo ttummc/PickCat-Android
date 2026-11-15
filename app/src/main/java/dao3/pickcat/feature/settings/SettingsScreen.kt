@@ -6,9 +6,12 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,6 +24,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -39,6 +43,7 @@ import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.WorkspacePremium
@@ -55,10 +60,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -69,6 +77,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -92,6 +101,7 @@ import dao3.pickcat.core.ui.UserAvatar
 import dao3.pickcat.core.ui.absoluteUrl
 import dao3.pickcat.core.ui.avatarUrl
 import dao3.pickcat.core.ui.compactNumber
+import dao3.pickcat.core.ui.EmptyState
 import dao3.pickcat.core.ui.wideContentPadding
 import dao3.pickcat.core.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -186,6 +196,25 @@ fun SettingsScreen(
     val scope = rememberCoroutineScope()
     var showThemeDialog by remember { mutableStateOf(false) }
     var showUpdateSourceDialog by remember { mutableStateOf(false) }
+    var query by rememberSaveable { mutableStateOf("") }
+    val normalizedQuery = query.trim()
+
+    fun matches(vararg keywords: String): Boolean =
+        normalizedQuery.isEmpty() ||
+            keywords.any { it.contains(normalizedQuery, ignoreCase = true) }
+
+    val showAccount = matches("账号", "邮箱", "资料", user?.username.orEmpty(), email.orEmpty())
+    val showAccountInfo = matches("账号", "ID", "邮箱")
+    val showProfile = matches("个人资料", "简介", "地区", "隐私", "主页", "展示")
+    val showSecurity = matches("登录", "安全", "邮箱", "手机", "密码", "实名", "授权", "注销", "删除")
+    val showCodema = matches("编程猫", "绑定", "作品", "同步")
+    val showAppearance = matches("外观", "主题", "动态", "取色", "颜色")
+    val showNotifications = matches("通知", "后台")
+    val showContent = matches("内容", "图盘", "媒体", "作品库", "图片")
+    val showAbout = matches("关于", "版本", "更新", "来源", "GitHub", "Kitter", "登录方式")
+    val showSignOut = user != null && matches("退出", "登录", "账号")
+    val anySection = showAccount || showAccountInfo || showProfile || showSecurity ||
+        showCodema || showAppearance || showNotifications || showContent || showAbout || showSignOut
 
     val copyAccountId: () -> Unit = {
         val id = user?.id.orEmpty()
@@ -222,273 +251,326 @@ fun SettingsScreen(
             ),
         ) {
             item {
-                SettingsAccountHeader(
-                    user = user,
-                    email = email,
-                    onClick = if (user != null) onEditProfile else null,
-                )
-            }
-
-            item { SettingsSectionTitle("账号信息") }
-            item {
-                Column {
-                    SettingsRow(
-                        icon = Icons.Default.Badge,
-                        title = "账号 ID",
-                        summary = user?.id ?: "未登录",
-                        onClick = copyAccountId,
-                        trailing = if (user != null) {
-                            {
-                                TextButton(onClick = copyAccountId) {
-                                    Text("复制")
-                                }
-                            }
-                        } else null,
-                    )
-                    HorizontalDivider(Modifier.padding(start = 56.dp))
-                    SettingsRow(
-                        icon = Icons.Default.Email,
-                        title = "邮箱",
-                        summary = if (email.isNullOrBlank()) "未绑定" else email,
-                    )
-                }
-            }
-            if (state.levelProgress != null) {
-                item {
-                    LevelProgressRow(state.levelProgress!!)
-                }
-            }
-
-            item { SettingsSectionTitle("个人资料") }
-            item {
-                Column {
-                    SettingsRow(
-                        icon = Icons.Default.Edit,
-                        title = "编辑个人资料",
-                        summary = "简介、地区和隐私设置",
-                        onClick = onEditProfile,
-                        showChevron = true,
-                    )
-                    HorizontalDivider(Modifier.padding(start = 56.dp))
-                    SettingsRow(
-                        icon = Icons.Default.Link,
-                        title = "主页展示",
-                        summary = "精选帖子、精选作品和徽章展示，在官网管理",
-                        onClick = {
-                            openExternalUrl(context, OFFICIAL_SETTINGS_URL)
-                        },
-                        showChevron = true,
-                    )
-                }
-            }
-
-            item { SettingsSectionTitle("登录与安全") }
-            item {
-                Column {
-                    SettingsRow(
-                        icon = Icons.Default.Security,
-                        title = "登录与安全",
-                        summary = "邮箱、手机号、密码和实名认证，在官网管理",
-                        onClick = {
-                            openExternalUrl(context, OFFICIAL_SETTINGS_URL)
-                        },
-                        showChevron = true,
-                    )
-                    HorizontalDivider(Modifier.padding(start = 56.dp))
-                    SettingsRow(
-                        icon = Icons.Default.Security,
-                        title = "授权应用",
-                        summary = "查看并撤销已授权的第三方应用，在官网管理",
-                        onClick = {
-                            openExternalUrl(context, OFFICIAL_SETTINGS_URL)
-                        },
-                        showChevron = true,
-                    )
-                    HorizontalDivider(Modifier.padding(start = 56.dp))
-                    SettingsRow(
-                        icon = Icons.Default.Delete,
-                        title = "注销账号",
-                        summary = "永久删除账号和内容，需要官网验证",
-                        onClick = {
-                            openExternalUrl(context, OFFICIAL_ACCOUNT_DELETION_URL)
-                        },
-                        showChevron = true,
-                        tint = MaterialTheme.colorScheme.error,
-                    )
-                }
-            }
-
-            item { SettingsSectionTitle("编程猫互联") }
-            item {
-                Column {
-                    SettingsRow(
-                        icon = Icons.Default.Link,
-                        title = if (officialAccount == null) "绑定编程猫账号" else "已绑定编程猫账号",
-                        summary = if (officialAccount == null) {
-                            "绑定后可把作品同步到社区，在官网管理"
-                        } else {
-                            buildString {
-                                append("编程猫 ID：")
-                                append(officialAccount?.sourceUserId.orEmpty())
-                                officialAccount?.lastSyncedAt?.let { time ->
-                                    append("\n最近同步：")
-                                    append(relativeTime(time))
-                                }
-                            }
-                        },
-                        onClick = {
-                            openExternalUrl(context, OFFICIAL_SETTINGS_URL)
-                        },
-                        showChevron = true,
-                    )
-                }
-            }
-
-            item { SettingsSectionTitle("外观") }
-            item {
-                Column {
-                    SettingsRow(
-                        icon = Icons.Default.ColorLens,
-                        title = "主题",
-                        summary = themeLabel(preferences.themeMode),
-                        onClick = { showThemeDialog = true },
-                        showChevron = true,
-                    )
-                    HorizontalDivider(Modifier.padding(start = 56.dp))
-                    SettingsRow(
-                        icon = Icons.Default.DarkMode,
-                        title = "动态取色",
-                        summary = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                            "Android 12+ 使用系统壁纸配色"
-                        } else {
-                            "当前系统版本不支持，使用 PickCat 配色"
-                        },
-                        trailing = {
-                            Switch(
-                                checked = preferences.dynamicColor &&
-                                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
-                                enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
-                                onCheckedChange = appViewModel::updateDynamicColor,
-                            )
-                        },
-                    )
-                }
-            }
-
-            item { SettingsSectionTitle("通知") }
-            item {
-                SettingsRow(
-                    icon = Icons.Default.Notifications,
-                    title = "后台通知",
-                    summary = "约每 15 分钟检查一次",
-                    trailing = {
-                        Switch(
-                            checked = preferences.backgroundNotifications,
-                            onCheckedChange = appViewModel::updateBackgroundNotifications,
-                        )
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    placeholder = { Text("搜索设置") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Search, contentDescription = null)
                     },
+                    singleLine = true,
+                    shape = CircleShape,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    ),
                 )
             }
-
-            item { SettingsSectionTitle("内容") }
-            item {
-                Column {
-                    SettingsRow(
-                        icon = Icons.Default.PhotoLibrary,
-                        title = "个人图盘",
-                        summary = "上传图片、查看已用容量",
-                        onClick = onOpenMedia,
-                        showChevron = true,
-                    )
-                    HorizontalDivider(Modifier.padding(start = 56.dp))
-                    SettingsRow(
-                        icon = Icons.Default.PhotoLibrary,
-                        title = "媒体库",
-                        summary = "图库与回收站、批量恢复和彻底删除",
-                        onClick = onOpenGallery,
-                        showChevron = true,
-                    )
-                    HorizontalDivider(Modifier.padding(start = 56.dp))
-                    SettingsRow(
-                        icon = Icons.Default.Star,
-                        title = "个人作品库",
-                        summary = "我发布过的作品和帖子",
-                        onClick = onOpenLibrary,
-                        showChevron = true,
-                    )
-                }
-            }
-
-            item { SettingsSectionTitle("关于") }
-            item {
-                Column {
-                    SettingsRow(
-                        icon = Icons.Default.Info,
-                        title = "PickCat Android",
-                        summary = "Kotlin 与 Jetpack Compose",
-                        trailing = {
-                            Text(if (versionName.isBlank()) "开发版" else "v$versionName")
-                        },
-                    )
-                    HorizontalDivider(Modifier.padding(start = 56.dp))
-                    SettingsRow(
-                        icon = Icons.Default.Refresh,
-                        title = "检查更新",
-                        summary = when {
-                            updateState.checking -> "正在检查更新"
-                            updateState.downloading -> "正在下载更新"
-                            updateState.update != null -> "发现 ${updateState.update?.tag}"
-                            else -> "GitHub Releases 或 Kitter镜像源"
-                        },
-                        onClick = {
-                            if (!updateState.checking && !updateState.downloading) {
-                                updateViewModel.check(context, preferences.updateSource)
-                            }
-                        },
-                        trailing = {
-                            if (updateState.checking || updateState.downloading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(20.dp),
-                                    strokeWidth = 2.dp,
-                                )
-                            } else {
-                                Icon(
-                                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                    contentDescription = null,
-                                )
-                            }
-                        },
-                    )
-                    HorizontalDivider(Modifier.padding(start = 56.dp))
-                    SettingsRow(
-                        icon = Icons.Default.Refresh,
-                        title = "更新来源",
-                        summary = if (preferences.updateSource == "mirror") {
-                            "Kitter镜像源，失败时自动切 GitHub"
-                        } else {
-                            "GitHub Releases，失败时自动切 Kitter镜像源"
-                        },
-                        onClick = { showUpdateSourceDialog = true },
-                        showChevron = true,
-                    )
-                    HorizontalDivider(Modifier.padding(start = 56.dp))
-                    SettingsRow(
-                        icon = Icons.Default.Badge,
-                        title = "登录方式",
-                        summary = "官方登录页完成验证与 Cookie 会话",
-                    )
-                }
-            }
-
-            if (user != null) {
+            if (query.isNotBlank() && !anySection) {
                 item {
-                    SettingsRow(
-                        icon = Icons.AutoMirrored.Filled.Logout,
-                        title = "退出登录",
-                        summary = "会清除本地会话与 Cookie",
-                        onClick = { confirmSignOut = true },
-                        tint = MaterialTheme.colorScheme.error,
+                    EmptyState(
+                        title = "没有找到设置",
+                        description = "换个关键词试试。",
+                        modifier = Modifier.fillParentMaxHeight(0.6f),
                     )
+                }
+            }
+            if (showAccount) {
+                item {
+                    SettingsGroup {
+                        SettingsAccountHeader(
+                            user = user,
+                            email = email,
+                            onClick = if (user != null) onEditProfile else null,
+                        )
+                    }
+                }
+            }
+
+            if (showAccountInfo) {
+                item { SettingsSectionTitle("账号信息") }
+                item {
+                    SettingsGroup {
+                        SettingsRow(
+                            icon = Icons.Default.Badge,
+                            title = "账号 ID",
+                            summary = user?.id ?: "未登录",
+                            onClick = copyAccountId,
+                            trailing = if (user != null) {
+                                {
+                                    TextButton(onClick = copyAccountId) {
+                                        Text("复制")
+                                    }
+                                }
+                            } else null,
+                        )
+                        HorizontalDivider(Modifier.padding(start = 56.dp))
+                        SettingsRow(
+                            icon = Icons.Default.Email,
+                            title = "邮箱",
+                            summary = if (email.isNullOrBlank()) "未绑定" else email,
+                        )
+                        if (state.levelProgress != null) {
+                            HorizontalDivider(Modifier.padding(start = 56.dp))
+                            LevelProgressRow(state.levelProgress!!)
+                        }
+                    }
+                }
+            }
+
+            if (showProfile) {
+                item { SettingsSectionTitle("个人资料") }
+                item {
+                    SettingsGroup {
+                        SettingsRow(
+                            icon = Icons.Default.Edit,
+                            title = "编辑个人资料",
+                            summary = "简介、地区和隐私设置",
+                            onClick = onEditProfile,
+                            showChevron = true,
+                        )
+                        HorizontalDivider(Modifier.padding(start = 56.dp))
+                        SettingsRow(
+                            icon = Icons.Default.Link,
+                            title = "主页展示",
+                            summary = "精选帖子、精选作品和徽章展示，在官网管理",
+                            onClick = {
+                                openExternalUrl(context, OFFICIAL_SETTINGS_URL)
+                            },
+                            showChevron = true,
+                        )
+                    }
+                }
+            }
+
+            if (showSecurity) {
+                item { SettingsSectionTitle("登录与安全") }
+                item {
+                    SettingsGroup {
+                        SettingsRow(
+                            icon = Icons.Default.Security,
+                            title = "登录与安全",
+                            summary = "邮箱、手机号、密码和实名认证，在官网管理",
+                            onClick = {
+                                openExternalUrl(context, OFFICIAL_SETTINGS_URL)
+                            },
+                            showChevron = true,
+                        )
+                        HorizontalDivider(Modifier.padding(start = 56.dp))
+                        SettingsRow(
+                            icon = Icons.Default.Security,
+                            title = "授权应用",
+                            summary = "查看并撤销已授权的第三方应用，在官网管理",
+                            onClick = {
+                                openExternalUrl(context, OFFICIAL_SETTINGS_URL)
+                            },
+                            showChevron = true,
+                        )
+                        HorizontalDivider(Modifier.padding(start = 56.dp))
+                        SettingsRow(
+                            icon = Icons.Default.Delete,
+                            title = "注销账号",
+                            summary = "永久删除账号和内容，需要官网验证",
+                            onClick = {
+                                openExternalUrl(context, OFFICIAL_ACCOUNT_DELETION_URL)
+                            },
+                            showChevron = true,
+                            tint = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+            }
+
+            if (showCodema) {
+                item { SettingsSectionTitle("编程猫互联") }
+                item {
+                    SettingsGroup {
+                        SettingsRow(
+                            icon = Icons.Default.Link,
+                            title = if (officialAccount == null) "绑定编程猫账号" else "已绑定编程猫账号",
+                            summary = if (officialAccount == null) {
+                                "绑定后可把作品同步到社区，在官网管理"
+                            } else {
+                                buildString {
+                                    append("编程猫 ID：")
+                                    append(officialAccount?.sourceUserId.orEmpty())
+                                    officialAccount?.lastSyncedAt?.let { time ->
+                                        append("\n最近同步：")
+                                        append(relativeTime(time))
+                                    }
+                                }
+                            },
+                            onClick = {
+                                openExternalUrl(context, OFFICIAL_SETTINGS_URL)
+                            },
+                            showChevron = true,
+                        )
+                    }
+                }
+            }
+
+            if (showAppearance) {
+                item { SettingsSectionTitle("外观") }
+                item {
+                    SettingsGroup {
+                        SettingsRow(
+                            icon = Icons.Default.ColorLens,
+                            title = "主题",
+                            summary = themeLabel(preferences.themeMode),
+                            onClick = { showThemeDialog = true },
+                            showChevron = true,
+                        )
+                        HorizontalDivider(Modifier.padding(start = 56.dp))
+                        SettingsRow(
+                            icon = Icons.Default.DarkMode,
+                            title = "动态取色",
+                            summary = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                "Android 12+ 使用系统壁纸配色"
+                            } else {
+                                "当前系统版本不支持，使用 PickCat 配色"
+                            },
+                            trailing = {
+                                Switch(
+                                    checked = preferences.dynamicColor &&
+                                        Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
+                                    enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
+                                    onCheckedChange = appViewModel::updateDynamicColor,
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+
+            if (showNotifications) {
+                item { SettingsSectionTitle("通知") }
+                item {
+                    SettingsGroup {
+                        SettingsRow(
+                            icon = Icons.Default.Notifications,
+                            title = "后台通知",
+                            summary = "约每 15 分钟检查一次",
+                            trailing = {
+                                Switch(
+                                    checked = preferences.backgroundNotifications,
+                                    onCheckedChange = appViewModel::updateBackgroundNotifications,
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+
+            if (showContent) {
+                item { SettingsSectionTitle("内容") }
+                item {
+                    SettingsGroup {
+                        SettingsRow(
+                            icon = Icons.Default.PhotoLibrary,
+                            title = "个人图盘",
+                            summary = "上传图片、查看已用容量",
+                            onClick = onOpenMedia,
+                            showChevron = true,
+                        )
+                        HorizontalDivider(Modifier.padding(start = 56.dp))
+                        SettingsRow(
+                            icon = Icons.Default.PhotoLibrary,
+                            title = "媒体库",
+                            summary = "图库与回收站、批量恢复和彻底删除",
+                            onClick = onOpenGallery,
+                            showChevron = true,
+                        )
+                        HorizontalDivider(Modifier.padding(start = 56.dp))
+                        SettingsRow(
+                            icon = Icons.Default.Star,
+                            title = "个人作品库",
+                            summary = "我发布过的作品和帖子",
+                            onClick = onOpenLibrary,
+                            showChevron = true,
+                        )
+                    }
+                }
+            }
+
+            if (showAbout) {
+                item { SettingsSectionTitle("关于") }
+                item {
+                    SettingsGroup {
+                        SettingsRow(
+                            icon = Icons.Default.Info,
+                            title = "PickCat Android",
+                            summary = "Kotlin 与 Jetpack Compose",
+                            trailing = {
+                                Text(if (versionName.isBlank()) "开发版" else "v$versionName")
+                            },
+                        )
+                        HorizontalDivider(Modifier.padding(start = 56.dp))
+                        SettingsRow(
+                            icon = Icons.Default.Refresh,
+                            title = "检查更新",
+                            summary = when {
+                                updateState.checking -> "正在检查更新"
+                                updateState.downloading -> "正在下载更新"
+                                updateState.update != null -> "发现 ${updateState.update?.tag}"
+                                else -> "GitHub Releases 或 Kitter镜像源"
+                            },
+                            onClick = {
+                                if (!updateState.checking && !updateState.downloading) {
+                                    updateViewModel.check(context, preferences.updateSource)
+                                }
+                            },
+                            trailing = {
+                                if (updateState.checking || updateState.downloading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp,
+                                    )
+                                } else {
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                        contentDescription = null,
+                                    )
+                                }
+                            },
+                        )
+                        HorizontalDivider(Modifier.padding(start = 56.dp))
+                        SettingsRow(
+                            icon = Icons.Default.Refresh,
+                            title = "更新来源",
+                            summary = if (preferences.updateSource == "mirror") {
+                                "Kitter镜像源，失败时自动切 GitHub"
+                            } else {
+                                "GitHub Releases，失败时自动切 Kitter镜像源"
+                            },
+                            onClick = { showUpdateSourceDialog = true },
+                            showChevron = true,
+                        )
+                        HorizontalDivider(Modifier.padding(start = 56.dp))
+                        SettingsRow(
+                            icon = Icons.Default.Badge,
+                            title = "登录方式",
+                            summary = "官方登录页完成验证与 Cookie 会话",
+                        )
+                    }
+                }
+            }
+
+            if (showSignOut) {
+                item {
+                    SettingsGroup(Modifier.padding(top = 12.dp)) {
+                        SettingsRow(
+                            icon = Icons.AutoMirrored.Filled.Logout,
+                            title = "退出登录",
+                            summary = "会清除本地会话与 Cookie",
+                            onClick = { confirmSignOut = true },
+                            tint = MaterialTheme.colorScheme.error,
+                        )
+                    }
                 }
             }
 
@@ -754,6 +836,20 @@ private fun SettingsAccountHeader(
 }
 
 @Composable
+private fun SettingsGroup(
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.extraLarge,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column(content = content)
+    }
+}
+
+@Composable
 private fun SettingsSectionTitle(text: String) {
     Text(
         text,
@@ -773,13 +869,32 @@ private fun SettingsRow(
     tint: Color? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
+    val iconContainer = if (tint != null) {
+        MaterialTheme.colorScheme.errorContainer
+    } else {
+        MaterialTheme.colorScheme.secondaryContainer
+    }
+    val iconColor = if (tint != null) {
+        MaterialTheme.colorScheme.onErrorContainer
+    } else {
+        MaterialTheme.colorScheme.onSecondaryContainer
+    }
     ListItem(
         leadingContent = {
-            Icon(
-                icon,
-                contentDescription = null,
-                tint = tint ?: MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(iconContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = iconColor,
+                    modifier = Modifier.size(20.dp),
+                )
+            }
         },
         headlineContent = {
             Text(
@@ -791,11 +906,7 @@ private fun SettingsRow(
             {
                 Text(
                     text,
-                    color = if (tint != null) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         },
