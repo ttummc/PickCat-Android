@@ -22,6 +22,7 @@ This project is under active development. Core browsing, publishing, notificatio
 - User profiles, collections, badges, contribution graph, and activity
 - Notification center, unread state, filters, and grouped likes
 - Background notification sync with WorkManager
+- In-app update check against GitHub Releases, with APK validation and system installer handoff
 - Bookmarks, likes, follows, personal media, and media library
 - Profile editing for region, bio, privacy lists, and badge display
 - Moderation-aware publishing and replies

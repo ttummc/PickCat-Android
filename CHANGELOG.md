@@ -3,6 +3,18 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-11-15
+
+### Added
+
+- In-app update check against GitHub Releases, with release notes, APK download, package validation, and system installer handoff.
+- Shared test signing key so debug updates can be installed over previous builds.
+
+### Fixed
+
+- Rich text span crash when trimming post content.
+- Missing notification channel setup and delayed background notification handling.
+
 ## [0.1.0] - 2026-11-15
 
 First public release.
@@ -18,4 +30,5 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.1]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.1
 [0.1.0]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.0

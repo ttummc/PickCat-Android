@@ -3,6 +3,18 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.1] - 2026-11-15
+
+### 新增
+
+- 设置页检查 GitHub Releases 更新，显示更新说明，下载 APK，校验安装包并交给系统安装器。
+- 固定测试签名，使 debug 版本可以覆盖安装后续版本。
+
+### 修复
+
+- 富文本裁剪时 Span 越界导致的启动崩溃。
+- 通知渠道创建时机和后台通知延迟问题。
+
 ## [0.1.0] - 2026-11-15
 
 首个公开发行版。
@@ -18,4 +30,5 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.1]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.1
 [0.1.0]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.0

@@ -1,5 +1,8 @@
 package dao3.pickcat.feature.settings
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -10,12 +13,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
@@ -29,6 +35,7 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.AlertDialog
@@ -36,6 +43,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -61,6 +69,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
@@ -82,6 +91,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.Locale
 
 data class SettingsUiState(
@@ -124,6 +134,20 @@ fun SettingsScreen(
         runCatching {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName
         }.getOrNull().orEmpty()
+    }
+    val updateViewModel: UpdateViewModel = viewModel()
+    val updateState by updateViewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(updateState.installFile) {
+        val file = updateState.installFile ?: return@LaunchedEffect
+        val result = installApk(context, file)
+        updateViewModel.consumeInstallFile()
+        if (result.isSuccess) {
+            updateViewModel.dismiss()
+        } else {
+            updateViewModel.reportInstallError(
+                result.exceptionOrNull()?.message ?: "无法打开系统安装器",
+            )
+        }
     }
     val user = session.user
 
@@ -369,6 +393,42 @@ fun SettingsScreen(
                         )
                         HorizontalDivider()
                         ListItem(
+                            leadingContent = {
+                                Icon(Icons.Default.Refresh, contentDescription = null)
+                            },
+                            headlineContent = { Text("检查更新") },
+                            supportingContent = {
+                                Text(
+                                    when {
+                                        updateState.checking -> "正在检查 GitHub Releases"
+                                        updateState.downloading -> "正在下载更新"
+                                        updateState.update != null -> "发现 ${updateState.update?.tag}"
+                                        else -> "从 GitHub Releases 获取最新版本"
+                                    },
+                                )
+                            },
+                            trailingContent = {
+                                if (updateState.checking || updateState.downloading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp,
+                                    )
+                                } else {
+                                    TextButton(
+                                        onClick = { updateViewModel.check() },
+                                    ) {
+                                        Text(if (updateState.update != null) "查看" else "检查")
+                                    }
+                                }
+                            },
+                            modifier = Modifier.clickableRow {
+                                if (!updateState.checking && !updateState.downloading) {
+                                    updateViewModel.check()
+                                }
+                            },
+                        )
+                        HorizontalDivider()
+                        ListItem(
                             leadingContent = { Icon(Icons.Default.Badge, contentDescription = null) },
                             headlineContent = { Text("登录方式") },
                             supportingContent = { Text("官方登录页完成验证与 Cookie 会话") },
@@ -430,6 +490,89 @@ fun SettingsScreen(
         }
     }
 
+    val update = updateState.update
+    if (updateState.installError != null) {
+        AlertDialog(
+            onDismissRequest = updateViewModel::dismiss,
+            title = { Text("安装未完成") },
+            text = { Text(updateState.installError.orEmpty()) },
+            confirmButton = {
+                if (update != null) {
+                    Button(onClick = {
+                        openReleasePage(context, update.releaseUrl)
+                        updateViewModel.dismiss()
+                    }) { Text("打开 Release 页面") }
+                } else {
+                    Button(onClick = updateViewModel::dismiss) { Text("知道了") }
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = updateViewModel::dismiss) { Text("关闭") }
+            },
+        )
+    } else if (updateState.error != null) {
+        AlertDialog(
+            onDismissRequest = updateViewModel::dismiss,
+            title = { Text("检查更新失败") },
+            text = { Text(updateState.error.orEmpty()) },
+            confirmButton = {
+                Button(onClick = updateViewModel::dismiss) { Text("知道了") }
+            },
+        )
+    } else if (updateState.upToDate) {
+        AlertDialog(
+            onDismissRequest = updateViewModel::dismiss,
+            title = { Text("已是最新版本") },
+            text = {
+                Text(if (versionName.isBlank()) "当前为开发版。" else "当前版本 v$versionName。")
+            },
+            confirmButton = {
+                Button(onClick = updateViewModel::dismiss) { Text("知道了") }
+            },
+        )
+    } else if (updateState.downloading) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("正在下载更新") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    LinearProgressIndicator(
+                        progress = { updateState.progress ?: 0f },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Text(
+                        "${((updateState.progress ?: 0f) * 100).toInt()}%",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
+            confirmButton = {},
+        )
+    } else if (update != null) {
+        AlertDialog(
+            onDismissRequest = updateViewModel::dismiss,
+            title = { Text("发现 ${update.tag}") },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 260.dp)
+                        .verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(update.title, style = MaterialTheme.typography.titleSmall)
+                    Text(update.notes, style = MaterialTheme.typography.bodyMedium)
+                }
+            },
+            confirmButton = {
+                Button(onClick = updateViewModel::download) { Text("下载并安装") }
+            },
+            dismissButton = {
+                TextButton(onClick = updateViewModel::dismiss) { Text("稍后") }
+            },
+        )
+    }
+
     if (confirmSignOut) {
         AlertDialog(
             onDismissRequest = { confirmSignOut = false },
@@ -444,6 +587,29 @@ fun SettingsScreen(
             dismissButton = {
                 TextButton(onClick = { confirmSignOut = false }) { Text("取消") }
             },
+        )
+    }
+}
+
+private fun installApk(context: Context, file: File): Result<Unit> = runCatching {
+    val uri = FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.fileprovider",
+        file,
+    )
+    val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, "application/vnd.android.package-archive")
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    context.startActivity(intent)
+}
+
+private fun openReleasePage(context: Context, url: String) {
+    if (url.isBlank()) return
+    runCatching {
+        context.startActivity(
+            Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         )
     }
 }
