@@ -86,6 +86,7 @@ import dao3.pickcat.core.network.PickCatApi
 import dao3.pickcat.core.network.Tag
 import dao3.pickcat.core.ui.MarkdownPreview
 import dao3.pickcat.core.ui.PickCatTextField
+import dao3.pickcat.core.ui.wideContentPadding
 import dao3.pickcat.core.ui.relativeTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -190,19 +191,29 @@ class ComposerViewModel : ViewModel() {
         }
     }
 
-    fun uploadImages(images: List<PickedImage>) {
+    fun uploadImages(
+        images: List<PickedImage>,
+        insertAt: Int? = null,
+        replaceEnd: Int? = null,
+    ) {
         if (images.isEmpty()) return
         _state.update { it.copy(uploading = it.uploading + images.size) }
         viewModelScope.launch {
+            var cursor = insertAt ?: _state.value.markdown.length
+            var end = replaceEnd ?: cursor
             for (image in images) {
                 try {
                     val uploaded = api.uploadFile(image)
-                    val alt = image.name.substringBeforeLast('.').ifBlank { "图片" }
-                    val url = uploaded.url ?: "/api/v1/files/${uploaded.id}"
-                    val markdown = "![$alt]($url)"
+                    val reference = "![${uploaded.id}]"
                     _state.update { current ->
-                        val prefix = if (current.markdown.isBlank() || current.markdown.endsWith("\n")) "" else "\n"
-                        current.copy(markdown = current.markdown + prefix + markdown + "\n")
+                        val start = cursor.coerceIn(0, current.markdown.length)
+                        val finish = end.coerceIn(start, current.markdown.length)
+                        val next = current.markdown.substring(0, start) +
+                            reference +
+                            current.markdown.substring(finish)
+                        cursor = start + reference.length
+                        end = cursor
+                        current.copy(markdown = next.take(MAX_MARKDOWN))
                     }
                     scheduleDraftSave()
                     _messages.tryEmit("图片已上传并存入个人图盘")
@@ -276,15 +287,21 @@ fun ComposerScreen(
     var fieldValue by rememberSaveable(stateSaver = androidx.compose.ui.text.input.TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(""))
     }
+    var imageInsertRange by remember { mutableStateOf<TextRange?>(null) }
 
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { snackbarHostState.showSnackbar(it) }
     }
     LaunchedEffect(state.markdown) {
         if (state.markdown != fieldValue.text) {
+            val caret = if (fieldValue.text.isEmpty()) {
+                state.markdown.length
+            } else {
+                fieldValue.selection.start.coerceAtMost(state.markdown.length)
+            }
             fieldValue = fieldValue.copy(
                 text = state.markdown,
-                selection = TextRange(state.markdown.length),
+                selection = TextRange(caret),
             )
         }
     }
@@ -308,7 +325,12 @@ fun ComposerScreen(
             if (picked.isEmpty()) {
                 viewModel.reportMessage(errors.firstOrNull() ?: "无法读取所选图片")
             } else {
-                viewModel.uploadImages(picked)
+                viewModel.uploadImages(
+                    images = picked,
+                    insertAt = imageInsertRange?.start,
+                    replaceEnd = imageInsertRange?.end,
+                )
+                imageInsertRange = null
             }
         }
     }
@@ -324,7 +346,7 @@ fun ComposerScreen(
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
-                title = { Text("发布新主题") },
+                title = { Text("发帖") },
                 navigationIcon = {
                     IconButton(onClick = {
                         viewModel.saveDraftNow()
@@ -332,26 +354,6 @@ fun ComposerScreen(
                     }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
-                },
-                actions = {
-                    Button(
-                        onClick = {
-                            viewModel.publish {
-                                viewModel.clearDraftAfterPublish()
-                                onPublished()
-                            }
-                        },
-                        enabled = !state.publishing,
-                    ) {
-                        if (state.publishing) {
-                            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                        } else {
-                            Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text("发布")
-                        }
-                    }
-                    Spacer(Modifier.width(12.dp))
                 },
             )
         },
@@ -362,8 +364,8 @@ fun ComposerScreen(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(horizontal = wideContentPadding(840.dp), vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             if (state.draftRestored) {
                 Text(
@@ -381,7 +383,34 @@ fun ComposerScreen(
                 supportingText = "${state.title.length}/$MAX_TITLE",
                 singleLine = true,
             )
-            Text("分类", style = MaterialTheme.typography.titleSmall)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            ) {
+                Text(
+                    "帖子类型",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                SingleChoiceSegmentedButtonRow {
+                    SegmentedButton(
+                        selected = state.kind == "DISCUSSION",
+                        onClick = { viewModel.setKind("DISCUSSION") },
+                        shape = SegmentedButtonDefaults.itemShape(0, 2),
+                    ) { Text("普通帖") }
+                    SegmentedButton(
+                        selected = state.kind == "QUESTION",
+                        onClick = { viewModel.setKind("QUESTION") },
+                        shape = SegmentedButtonDefaults.itemShape(1, 2),
+                    ) { Text("问答帖") }
+                }
+            }
+            Text(
+                "分类",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             if (state.loadingTags) {
                 LinearProgressIndicator(Modifier.fillMaxWidth())
             } else {
@@ -398,36 +427,17 @@ fun ComposerScreen(
                     }
                 }
             }
-            Text("帖子类型", style = MaterialTheme.typography.titleSmall)
-            SingleChoiceSegmentedButtonRow {
-                SegmentedButton(
-                    selected = state.kind == "DISCUSSION",
-                    onClick = { viewModel.setKind("DISCUSSION") },
-                    shape = SegmentedButtonDefaults.itemShape(0, 2),
-                ) { Text("普通帖") }
-                SegmentedButton(
-                    selected = state.kind == "QUESTION",
-                    onClick = { viewModel.setKind("QUESTION") },
-                    shape = SegmentedButtonDefaults.itemShape(1, 2),
-                ) { Text("问答帖") }
-            }
-            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            ) {
                 Text(
                     "正文",
-                    style = MaterialTheme.typography.titleSmall,
+                    style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f),
                 )
-                SingleChoiceSegmentedButtonRow {
-                    SegmentedButton(
-                        selected = !preview,
-                        onClick = { preview = false },
-                        shape = SegmentedButtonDefaults.itemShape(0, 2),
-                    ) { Text("编辑") }
-                    SegmentedButton(
-                        selected = preview,
-                        onClick = { preview = true },
-                        shape = SegmentedButtonDefaults.itemShape(1, 2),
-                    ) { Text("预览") }
+                TextButton(onClick = { preview = !preview }) {
+                    Text(if (preview) "继续编辑" else "预览")
                 }
             }
             AnimatedContent(
@@ -485,7 +495,10 @@ fun ComposerScreen(
                             onLink = {
                                 applyEdit { value -> wrapValue(value, "[", "](https://)", "链接文字") }
                             },
-                            onImage = { picker.launch("image/*") },
+                            onImage = {
+                                imageInsertRange = fieldValue.selection
+                                picker.launch("image/*")
+                            },
                             uploading = state.uploading,
                         )
                         PickCatTextField(
@@ -513,6 +526,24 @@ fun ComposerScreen(
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+            Button(
+                onClick = {
+                    viewModel.publish {
+                        viewModel.clearDraftAfterPublish()
+                        onPublished()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !state.publishing,
+            ) {
+                if (state.publishing) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("发布帖子")
+                }
             }
         }
     }
