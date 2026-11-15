@@ -156,7 +156,7 @@ fun SettingsScreen(
     val updateState by updateViewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(updateState.installFile) {
         val file = updateState.installFile ?: return@LaunchedEffect
-        val result = installApk(context, file)
+        val result = launchUpdateInstaller(context, file)
         updateViewModel.consumeInstallFile()
         if (result.isSuccess) {
             updateViewModel.dismiss()
@@ -758,29 +758,6 @@ private fun SettingsRow(
         },
         modifier = if (onClick != null) Modifier.clickableRow(onClick) else Modifier,
     )
-}
-
-private fun installApk(context: Context, file: File): Result<Unit> = runCatching {
-    val uri = FileProvider.getUriForFile(
-        context,
-        "${context.packageName}.fileprovider",
-        file,
-    )
-    val intent = Intent(Intent.ACTION_VIEW).apply {
-        setDataAndType(uri, "application/vnd.android.package-archive")
-        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
-    }
-    context.startActivity(intent)
-}
-
-private fun openExternalUrl(context: Context, url: String) {
-    if (url.isBlank()) return
-    runCatching {
-        context.startActivity(
-            Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-        )
-    }
 }
 
 @Composable
