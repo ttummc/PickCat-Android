@@ -12,18 +12,23 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -50,6 +55,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -61,6 +67,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -86,7 +93,6 @@ import dao3.pickcat.core.network.PickCatApi
 import dao3.pickcat.core.network.Tag
 import dao3.pickcat.core.ui.MarkdownPreview
 import dao3.pickcat.core.ui.PickCatTextField
-import dao3.pickcat.core.ui.wideContentPadding
 import dao3.pickcat.core.ui.relativeTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -341,31 +347,17 @@ fun ComposerScreen(
         viewModel.setMarkdown(next.text)
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize().imePadding(),
-        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
-        topBar = {
-            TopAppBar(
-                title = { Text("发帖") },
-                navigationIcon = {
-                    IconButton(onClick = {
-                        viewModel.saveDraftNow()
-                        onBack()
-                    }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                    }
-                },
-            )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) { padding ->
+    val publish: () -> Unit = {
+        viewModel.publish {
+            viewModel.clearDraftAfterPublish()
+            onPublished()
+        }
+    }
+
+    val editorPane: @Composable (Modifier, Boolean) -> Unit = { modifier, showPreviewToggle ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = wideContentPadding(840.dp), vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            modifier = modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             if (state.draftRestored) {
                 Text(
@@ -406,19 +398,11 @@ fun ComposerScreen(
                     ) { Text("问答帖") }
                 }
             }
-            Text(
-                "分类",
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
             if (state.loadingTags) {
                 LinearProgressIndicator(Modifier.fillMaxWidth())
             } else {
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    state.tags.forEach { tag ->
+                LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    items(state.tags, key = { it.id }) { tag ->
                         FilterChip(
                             selected = tag.id in state.selectedTagIds,
                             onClick = { viewModel.toggleTag(tag.id) },
@@ -436,114 +420,159 @@ fun ComposerScreen(
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f),
                 )
-                TextButton(onClick = { preview = !preview }) {
-                    Text(if (preview) "继续编辑" else "预览")
+                if (showPreviewToggle) {
+                    TextButton(onClick = { preview = !preview }) {
+                        Text(if (preview) "继续编辑" else "预览")
+                    }
                 }
             }
-            AnimatedContent(
-                targetState = preview,
-                transitionSpec = {
-                    fadeIn(tween(180)) togetherWith fadeOut(tween(120))
-                },
-                label = "composer-mode",
-            ) { showPreview ->
-                if (showPreview) {
-                    Surface(
-                        modifier = Modifier.fillMaxWidth().height(380.dp),
-                        shape = MaterialTheme.shapes.medium,
-                        color = MaterialTheme.colorScheme.surfaceContainerLow,
+            if (preview && showPreviewToggle) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(14.dp)
+                            .verticalScroll(rememberScrollState()),
                     ) {
-                        Column(Modifier.padding(14.dp).verticalScroll(rememberScrollState())) {
-                            MarkdownPreview(state.markdown)
+                        MarkdownPreview(state.markdown)
+                    }
+                }
+            } else {
+                Column(Modifier.fillMaxWidth().weight(1f)) {
+                    MarkdownToolbar(
+                        onBold = {
+                            applyEdit { value -> wrapValue(value, "**", "**", "粗体") }
+                        },
+                        onItalic = {
+                            applyEdit { value -> wrapValue(value, "*", "*", "斜体") }
+                        },
+                        onStrike = {
+                            applyEdit { value -> wrapValue(value, "~~", "~~", "删除线") }
+                        },
+                        onHeading = {
+                            applyEdit { value -> prefixLine(value, "## ") }
+                        },
+                        onList = {
+                            applyEdit { value -> prefixLine(value, "- ") }
+                        },
+                        onQuote = {
+                            applyEdit { value -> prefixLine(value, "> ") }
+                        },
+                        onCode = {
+                            applyEdit { value -> wrapValue(value, "`", "`", "代码") }
+                        },
+                        onTable = {
+                            applyEdit { value ->
+                                insertBlock(
+                                    value,
+                                    "\n| 列 1 | 列 2 |\n| --- | --- |\n| 内容 | 内容 |\n",
+                                )
+                            }
+                        },
+                        onFormula = {
+                            applyEdit { value -> wrapValue(value, "$", "$", "公式") }
+                        },
+                        onLink = {
+                            applyEdit { value -> wrapValue(value, "[", "](https://)", "链接文字") }
+                        },
+                        onImage = {
+                            imageInsertRange = fieldValue.selection
+                            picker.launch("image/*")
+                        },
+                        uploading = state.uploading,
+                    )
+                    PickCatTextField(
+                        value = fieldValue,
+                        onValueChange = {
+                            if (it.text.length <= MAX_MARKDOWN) {
+                                fieldValue = it
+                                viewModel.setMarkdown(it.text)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth().weight(1f),
+                        placeholder = "开始写作，支持 Markdown",
+                        textStyle = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+        }
+    }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize().imePadding(),
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
+        topBar = {
+            TopAppBar(
+                title = { Text("发帖") },
+                navigationIcon = {
+                    IconButton(onClick = {
+                        viewModel.saveDraftNow()
+                        onBack()
+                    }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                    }
+                },
+            )
+        },
+        bottomBar = {
+            Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                ) {
+                    Text(
+                        if (state.uploading > 0) "正在上传 ${state.uploading} 张图片…"
+                        else "${state.markdown.length} / $MAX_MARKDOWN",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Spacer(Modifier.width(12.dp))
+                    Button(onClick = publish, enabled = !state.publishing) {
+                        if (state.publishing) {
+                            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(6.dp))
+                            Text("发布帖子")
                         }
                     }
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        MarkdownToolbar(
-                            onBold = {
-                                applyEdit { value -> wrapValue(value, "**", "**", "粗体") }
-                            },
-                            onItalic = {
-                                applyEdit { value -> wrapValue(value, "*", "*", "斜体") }
-                            },
-                            onStrike = {
-                                applyEdit { value -> wrapValue(value, "~~", "~~", "删除线") }
-                            },
-                            onHeading = {
-                                applyEdit { value -> prefixLine(value, "## ") }
-                            },
-                            onList = {
-                                applyEdit { value -> prefixLine(value, "- ") }
-                            },
-                            onQuote = {
-                                applyEdit { value -> prefixLine(value, "> ") }
-                            },
-                            onCode = {
-                                applyEdit { value -> wrapValue(value, "`", "`", "代码") }
-                            },
-                            onTable = {
-                                applyEdit { value ->
-                                    insertBlock(
-                                        value,
-                                        "\n| 列 1 | 列 2 |\n| --- | --- |\n| 内容 | 内容 |\n",
-                                    )
-                                }
-                            },
-                            onFormula = {
-                                applyEdit { value -> wrapValue(value, "$", "$", "公式") }
-                            },
-                            onLink = {
-                                applyEdit { value -> wrapValue(value, "[", "](https://)", "链接文字") }
-                            },
-                            onImage = {
-                                imageInsertRange = fieldValue.selection
-                                picker.launch("image/*")
-                            },
-                            uploading = state.uploading,
-                        )
-                        PickCatTextField(
-                            value = fieldValue,
-                            onValueChange = {
-                                if (it.text.length <= MAX_MARKDOWN) {
-                                    fieldValue = it
-                                    viewModel.setMarkdown(it.text)
-                                }
-                            },
-                            modifier = Modifier.fillMaxWidth().height(380.dp),
-                            placeholder = "支持 Markdown。图片上传后会自动插入到正文。",
-                            textStyle = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
                 }
             }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-            ) {
-                Text(
-                    if (state.uploading > 0) "正在上传 ${state.uploading} 张图片…"
-                    else "${state.markdown.length} 字",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Button(
-                onClick = {
-                    viewModel.publish {
-                        viewModel.clearDraftAfterPublish()
-                        onPublished()
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+    ) { padding ->
+        BoxWithConstraints(Modifier.fillMaxSize().padding(padding)) {
+            if (maxWidth >= 840.dp) {
+                Row(Modifier.fillMaxSize()) {
+                    editorPane(Modifier.weight(0.58f).fillMaxHeight(), false)
+                    VerticalDivider()
+                    Column(
+                        modifier = Modifier.weight(0.42f).fillMaxHeight().padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text("预览", style = MaterialTheme.typography.titleMedium)
+                        OutlinedCard(Modifier.fillMaxWidth().weight(1f)) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp)
+                                    .verticalScroll(rememberScrollState()),
+                            ) {
+                                MarkdownPreview(state.markdown)
+                            }
+                        }
                     }
-                },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !state.publishing,
-            ) {
-                if (state.publishing) {
-                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                } else {
-                    Icon(Icons.Default.Send, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text("发布帖子")
                 }
+            } else {
+                editorPane(Modifier.fillMaxSize(), true)
             }
         }
     }
