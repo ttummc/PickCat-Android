@@ -28,16 +28,16 @@ import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -265,7 +265,7 @@ fun SearchScreen(
                                         style = MaterialTheme.typography.titleSmall,
                                         modifier = Modifier.weight(1f),
                                     )
-                                    IconButton(onClick = appViewModel::clearSearchHistory) {
+                                    FilledTonalIconButton(onClick = appViewModel::clearSearchHistory) {
                                         Icon(
                                             Icons.Default.DeleteSweep,
                                             contentDescription = "清除搜索历史",
@@ -296,18 +296,24 @@ fun SearchScreen(
                         icon = Icons.Default.Search,
                     )
                     SearchContentPhase.RESULTS -> Column(Modifier.fillMaxSize()) {
-                        SingleChoiceSegmentedButtonRow(
-                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 10.dp, bottom = 6.dp),
+                        PrimaryScrollableTabRow(
+                            selectedTabIndex = targetTab.ordinal,
+                            edgePadding = 16.dp,
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
                         ) {
-                            val tabs = SearchTab.entries
-                            tabs.forEachIndexed { index, tab ->
-                                SegmentedButton(
+                            SearchTab.entries.forEach { tab ->
+                                Tab(
                                     selected = targetTab == tab,
                                     onClick = { viewModel.setTab(tab) },
-                                    shape = SegmentedButtonDefaults.itemShape(index, tabs.size),
-                                ) {
-                                    Text(tab.label, maxLines = 1)
-                                }
+                                    text = {
+                                        Text(
+                                            tab.label,
+                                            maxLines = 1,
+                                            style = MaterialTheme.typography.labelLarge,
+                                        )
+                                    },
+                                )
                             }
                         }
                         SearchResults(
