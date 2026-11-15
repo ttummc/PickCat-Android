@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -595,24 +596,27 @@ fun RichContent(
     html: String?,
     modifier: Modifier = Modifier,
 ) {
-    val text = htmlToAnnotated(html)
-    val images = extractImageUrls(html)
+    val parts = androidx.compose.runtime.remember(html) { parseRichParts(html) }
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (text.isNotEmpty()) {
-            Text(
-                text,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
-        images.forEach { url ->
-            PickCatImage(
-                url = url,
-                contentDescription = "帖子图片",
-                modifier = Modifier.fillMaxWidth().height(220.dp),
-                contentScale = ContentScale.Fit,
-                corner = 12.dp,
-            )
+        parts.forEach { part ->
+            when (part) {
+                is RichPart.Text -> Text(
+                    part.annotated,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                is RichPart.Image -> PickCatImage(
+                    url = part.url,
+                    contentDescription = if (part.emoji) "表情" else "帖子图片",
+                    modifier = if (part.emoji) {
+                        Modifier.size(24.dp)
+                    } else {
+                        Modifier.fillMaxWidth().heightIn(max = 320.dp)
+                    },
+                    contentScale = ContentScale.Fit,
+                    corner = if (part.emoji) 0.dp else 12.dp,
+                )
+            }
         }
     }
 }

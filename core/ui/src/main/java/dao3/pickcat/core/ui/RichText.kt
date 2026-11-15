@@ -159,6 +159,52 @@ fun extractImageUrls(html: String?): List<String> {
         .toList()
 }
 
+sealed interface RichPart {
+    data class Text(val annotated: AnnotatedString) : RichPart
+    data class Image(val url: String, val emoji: Boolean) : RichPart
+}
+
+private val IMG_TAG = Regex("""(?is)<img\b[^>]*>""")
+private val IMG_SRC = Regex("""src\s*=\s*["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+private val IMG_ALT = Regex("""alt\s*=\s*["']([^"']*)["']""", RegexOption.IGNORE_CASE)
+private val IMG_CLASS = Regex("""class\s*=\s*["']([^"']*)["']""", RegexOption.IGNORE_CASE)
+
+/**
+ * Splits cooked HTML into ordered text and image parts. Regular post images are
+ * kept where they appear in the document; emoji images are marked separately so
+ * the renderer can keep them small.
+ */
+fun parseRichParts(html: String?): List<RichPart> {
+    if (html.isNullOrBlank()) return emptyList()
+    val parts = mutableListOf<RichPart>()
+    var cursor = 0
+
+    fun addText(chunk: String) {
+        val annotated = htmlToAnnotated(chunk)
+        if (annotated.text.isNotBlank()) parts += RichPart.Text(annotated)
+    }
+
+    for (match in IMG_TAG.findAll(html)) {
+        if (match.range.first > cursor) {
+            addText(html.substring(cursor, match.range.first))
+        }
+        val tag = match.value
+        val src = IMG_SRC.find(tag)?.groupValues?.getOrNull(1)
+            ?: continue
+        if (src.isBlank()) continue
+        val alt = IMG_ALT.find(tag)?.groupValues?.getOrNull(1).orEmpty()
+        val className = IMG_CLASS.find(tag)?.groupValues?.getOrNull(1).orEmpty()
+        val emoji = src.contains("/emojis/") ||
+            alt.startsWith("[emoji:") ||
+            className.contains("markdown-emoji")
+        val url = absoluteUrl(src) ?: continue
+        parts += RichPart.Image(url, emoji)
+        cursor = match.range.last + 1
+    }
+    if (cursor < html.length) addText(html.substring(cursor))
+    return parts
+}
+
 fun plainTextFromHtml(html: String?): String {
     if (html.isNullOrBlank()) return ""
     val withoutImages = html.replace(IMAGE_PATTERN, " ")
