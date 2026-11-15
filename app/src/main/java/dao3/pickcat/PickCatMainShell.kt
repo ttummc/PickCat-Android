@@ -584,7 +584,7 @@ private fun ForumTwoPane(
                         title = "选择一个帖子",
                         description = "左侧列表和右侧讨论同时显示。",
                         icon = Icons.Default.ChatBubbleOutline,
-                        modifier = Modifier.fillMaxSize().padding(top = 48.dp),
+                        modifier = Modifier.align(Alignment.Center),
                     )
                 } else {
                     TopicDetailScreen(
@@ -623,7 +623,7 @@ private fun WorksTwoPane(
                         title = "选择一个作品",
                         description = "左侧列表和右侧详情同时显示。",
                         icon = Icons.Default.VideoLibrary,
-                        modifier = Modifier.fillMaxSize().padding(top = 48.dp),
+                        modifier = Modifier.align(Alignment.Center),
                     )
                 } else {
                     WorkDetailScreen(
