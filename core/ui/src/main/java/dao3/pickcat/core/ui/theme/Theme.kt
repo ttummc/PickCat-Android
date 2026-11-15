@@ -111,8 +111,8 @@ private val PickCatShapes = Shapes(
 )
 
 /**
- * Monet supplies the neutral surfaces; PickCat keeps a Google-blue brand accent so
- * the product identity does not disappear into an arbitrary wallpaper palette.
+ * The standard theme keeps a Google-blue brand accent. Monet mode uses the
+ * wallpaper-derived scheme unchanged so dynamic color is not overridden.
  */
 private fun ColorScheme.withGoogleBlueAccent(darkTheme: Boolean): ColorScheme {
     return if (darkTheme) {
@@ -165,6 +165,13 @@ private val PickCatLight = lightColorScheme(
     onSurface = Color(0xFF1A1C1E),
     surfaceVariant = Color(0xFFDEE3EB),
     onSurfaceVariant = Color(0xFF43474E),
+    surfaceDim = Color(0xFFD8DAE0),
+    surfaceBright = Color(0xFFF8F9FF),
+    surfaceContainerLowest = Color(0xFFFFFFFF),
+    surfaceContainerLow = Color(0xFFF2F3FA),
+    surfaceContainer = Color(0xFFECEEF4),
+    surfaceContainerHigh = Color(0xFFE6E8EE),
+    surfaceContainerHighest = Color(0xFFE0E2E8),
     outline = Color(0xFF73777F),
     outlineVariant = Color(0xFFC3C7CF),
     inverseSurface = Color(0xFF2F3033),
@@ -196,6 +203,13 @@ private val PickCatDark = darkColorScheme(
     onSurface = Color(0xFFE2E2E9),
     surfaceVariant = Color(0xFF43474E),
     onSurfaceVariant = Color(0xFFC3C7CF),
+    surfaceDim = Color(0xFF111318),
+    surfaceBright = Color(0xFF37393E),
+    surfaceContainerLowest = Color(0xFF0C0E13),
+    surfaceContainerLow = Color(0xFF191C20),
+    surfaceContainer = Color(0xFF1D2024),
+    surfaceContainerHigh = Color(0xFF282A2F),
+    surfaceContainerHighest = Color(0xFF33353A),
     outline = Color(0xFF8D9199),
     outlineVariant = Color(0xFF43474E),
     inverseSurface = Color(0xFFE2E2E9),
@@ -217,13 +231,18 @@ fun PickCatTheme(
         ThemeMode.DARK -> true
     }
     val context = LocalContext.current
+    val useDynamicColor = dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val baseScheme: ColorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
+        useDynamicColor ->
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         darkTheme -> PickCatDark
         else -> PickCatLight
     }
-    val colorScheme = baseScheme.withGoogleBlueAccent(darkTheme)
+    val colorScheme = if (useDynamicColor) {
+        baseScheme
+    } else {
+        baseScheme.withGoogleBlueAccent(darkTheme)
+    }
 
     val view = LocalView.current
     if (!view.isInEditMode) {

@@ -3,6 +3,13 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.6] - 2026-11-15
+
+### 变更
+
+- 个人图盘和媒体库重构为自适应图片网格，包含存储卡片、图库/回收站 Tab、选择模式、底部批量操作和全屏预览。
+- 标准 Google 蓝主题的 Material 容器表面统一为中性蓝灰；莫奈模式完全使用壁纸动态色，不再强制蓝色主色。
+
 ## [0.1.5] - 2026-11-15
 
 ### 新增
@@ -55,6 +62,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.6]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.6
 [0.1.5]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.5
 [0.1.4]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.4
 [0.1.3]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.3

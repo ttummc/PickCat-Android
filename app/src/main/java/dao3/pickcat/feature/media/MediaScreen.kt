@@ -15,8 +15,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +29,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -40,9 +43,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.SelectAll
@@ -56,12 +61,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -290,7 +298,7 @@ enum class BatchAction { TRASH, RESTORE, PURGE }
 
 private enum class MediaPageState { LOADING, ERROR, EMPTY, CONTENT }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun MediaScreen(
     title: String,
@@ -304,11 +312,15 @@ fun MediaScreen(
     val scope = rememberCoroutineScope()
     var previewFile by remember { mutableStateOf<StoredFile?>(null) }
     var confirmPurge by remember { mutableStateOf(false) }
+    var selecting by remember { mutableStateOf(false) }
     val gridState = rememberLazyGridState()
     val fabVisible = rememberFabVisibleOnGridScroll(gridState)
 
     LaunchedEffect(initialTab) {
         viewModel.setTab(initialTab)
+    }
+    LaunchedEffect(state.tab) {
+        selecting = false
     }
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { snackbarHostState.showSnackbar(it) }
@@ -325,8 +337,11 @@ fun MediaScreen(
                         .getOrNull()
                 }
             }
-            if (images.isEmpty()) viewModel.reportLocalError(errors.firstOrNull() ?: "无法读取所选图片")
-            else viewModel.uploadImages(images)
+            if (images.isEmpty()) {
+                viewModel.reportLocalError(errors.firstOrNull() ?: "无法读取所选图片")
+            } else {
+                viewModel.uploadImages(images)
+            }
         }
     }
 
@@ -334,32 +349,72 @@ fun MediaScreen(
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(title, style = MaterialTheme.typography.titleLarge)
+            if (selecting) {
+                TopAppBar(
+                    title = {
                         Text(
-                            "图片会存入 PickCat 的个人图盘",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            if (state.selected.isEmpty()) "选择图片" else "已选 ${state.selected.size}",
                         )
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = viewModel::refresh) {
-                        Icon(Icons.Default.Refresh, contentDescription = "刷新")
-                    }
-                },
-            )
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = {
+                            selecting = false
+                            viewModel.clearSelection()
+                        }) {
+                            Icon(Icons.Default.Close, contentDescription = "退出选择")
+                        }
+                    },
+                    actions = {
+                        TextButton(onClick = viewModel::selectAll) {
+                            Text(
+                                if (state.files.isNotEmpty() &&
+                                    state.selected.size == state.files.size
+                                ) {
+                                    "取消全选"
+                                } else {
+                                    "全选"
+                                },
+                            )
+                        }
+                    },
+                )
+            } else {
+                TopAppBar(
+                    title = { Text(title) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = viewModel::refresh) {
+                            Icon(Icons.Default.Refresh, contentDescription = "刷新")
+                        }
+                        IconButton(
+                            onClick = { selecting = true },
+                            enabled = state.files.isNotEmpty(),
+                        ) {
+                            Icon(Icons.Default.CheckCircle, contentDescription = "选择图片")
+                        }
+                    },
+                )
+            }
+        },
+        bottomBar = {
+            if (selecting && state.selected.isNotEmpty()) {
+                SelectionActionBar(
+                    tab = state.tab,
+                    selectedCount = state.selected.size,
+                    busy = state.busy,
+                    onTrash = { viewModel.runBatch(BatchAction.TRASH) },
+                    onRestore = { viewModel.runBatch(BatchAction.RESTORE) },
+                    onPurge = { confirmPurge = true },
+                )
+            }
         },
         floatingActionButton = {
             AnimatedVisibility(
-                visible = state.tab == FileStateTab.READY && fabVisible,
+                visible = !selecting && state.tab == FileStateTab.READY && fabVisible,
                 enter = fadeIn(tween(180)) + scaleIn(
                     animationSpec = spring(
                         dampingRatio = Spring.DampingRatioNoBouncy,
@@ -376,7 +431,7 @@ fun MediaScreen(
                     onClick = { picker.launch("image/*") },
                     icon = { Icon(Icons.Default.Add, contentDescription = null) },
                     text = {
-                        Text(if (state.uploading > 0) "上传中 ${state.uploading}…" else "上传图片")
+                        Text(if (state.uploading > 0) "上传中 ${state.uploading}" else "上传图片")
                     },
                 )
             }
@@ -384,73 +439,26 @@ fun MediaScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            StorageBar(state)
-            SingleChoiceSegmentedButtonRow(
-                Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
-            ) {
-                FileStateTab.entries.forEachIndexed { index, tab ->
-                    SegmentedButton(
+            StorageSummary(
+                state = state,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            )
+            PrimaryTabRow(selectedTabIndex = state.tab.ordinal) {
+                FileStateTab.entries.forEach { tab ->
+                    Tab(
                         selected = state.tab == tab,
                         onClick = { viewModel.setTab(tab) },
-                        shape = SegmentedButtonDefaults.itemShape(index, FileStateTab.entries.size),
-                    ) { Text(tab.label) }
+                        text = { Text(tab.label) },
+                    )
                 }
             }
             if (state.files.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        "${state.files.size} 个文件",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (state.selected.isNotEmpty()) {
-                        Text(
-                            "已选 ${state.selected.size}",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                        Spacer(Modifier.width(8.dp))
-                    }
-                    TextButton(onClick = viewModel::selectAll) {
-                        Icon(Icons.Default.SelectAll, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(5.dp))
-                        Text(if (state.selected.size == state.files.size) "取消全选" else "全选")
-                    }
-                }
-            }
-            if (state.selected.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.secondaryContainer)
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (state.tab == FileStateTab.READY) {
-                        TextButton(onClick = { viewModel.runBatch(BatchAction.TRASH) }, enabled = !state.busy) {
-                            Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(4.dp))
-                            Text("移入回收站")
-                        }
-                    } else {
-                        TextButton(onClick = { viewModel.runBatch(BatchAction.RESTORE) }, enabled = !state.busy) {
-                            Icon(Icons.Default.Restore, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(4.dp))
-                            Text("恢复")
-                        }
-                        TextButton(onClick = { confirmPurge = true }, enabled = !state.busy) {
-                            Icon(Icons.Default.DeleteForever, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(4.dp))
-                            Text("彻底删除")
-                        }
-                    }
-                    Spacer(Modifier.weight(1f))
-                    TextButton(onClick = viewModel::clearSelection) { Text("取消") }
-                }
+                Text(
+                    "${state.files.size} 张图片",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                )
             }
             val pageState = when {
                 state.loading -> MediaPageState.LOADING
@@ -480,10 +488,10 @@ fun MediaScreen(
                         modifier = Modifier.fillMaxSize(),
                     )
                     MediaPageState.CONTENT -> LazyVerticalGrid(
-                        columns = GridCells.Adaptive(142.dp),
+                        columns = GridCells.Adaptive(112.dp),
                         state = gridState,
                         modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(start = 12.dp, end = 12.dp, bottom = 96.dp, top = 4.dp),
+                        contentPadding = PaddingValues(16.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
@@ -491,9 +499,22 @@ fun MediaScreen(
                             MediaTile(
                                 file = file,
                                 selected = file.id in state.selected,
-                                inTrash = state.tab == FileStateTab.DELETED,
-                                onClick = { viewModel.toggleSelection(file.id) },
-                                onPreview = { previewFile = file },
+                                selectionMode = selecting,
+                                onClick = {
+                                    if (selecting) {
+                                        viewModel.toggleSelection(file.id)
+                                    } else {
+                                        previewFile = file
+                                    }
+                                },
+                                onLongClick = {
+                                    selecting = true
+                                    viewModel.toggleSelection(file.id)
+                                },
+                                onToggleSelection = {
+                                    selecting = true
+                                    viewModel.toggleSelection(file.id)
+                                },
                                 modifier = Modifier.animateItem(),
                             )
                         }
@@ -502,7 +523,10 @@ fun MediaScreen(
                                 if (state.hasMore) viewModel.loadMore()
                             }
                             if (state.loadingMore) {
-                                Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                Box(
+                                    Modifier.fillMaxWidth().padding(16.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
                                     CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
                                 }
                             }
@@ -514,29 +538,7 @@ fun MediaScreen(
     }
 
     previewFile?.let { file ->
-        Dialog(
-            onDismissRequest = { previewFile = null },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-            Box(
-                Modifier.fillMaxSize().background(Color.Black).clickable { previewFile = null },
-                contentAlignment = Alignment.Center,
-            ) {
-                PickCatImage(
-                    url = "$PICKCAT_ORIGIN/api/v1/files/${file.id}",
-                    contentDescription = file.name,
-                    modifier = Modifier.fillMaxWidth().aspectRatio(1f),
-                    contentScale = ContentScale.Fit,
-                    corner = 0.dp,
-                )
-                Text(
-                    "点击任意位置关闭",
-                    color = Color.White.copy(alpha = 0.8f),
-                    style = MaterialTheme.typography.labelSmall,
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(24.dp),
-                )
-            }
-        }
+        MediaPreviewDialog(file = file, onDismiss = { previewFile = null })
     }
 
     if (confirmPurge) {
@@ -558,132 +560,221 @@ fun MediaScreen(
 }
 
 @Composable
-private fun StorageBar(state: MediaUiState) {
+private fun StorageSummary(state: MediaUiState, modifier: Modifier = Modifier) {
     val storage = state.storage
-    if (storage == null) {
-        if (state.storageError) {
-            Text(
-                "容量额度读取失败",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(horizontal = 16.dp),
-            )
-        }
-        return
+    val unlimited = storage != null && storage.limitBytes >= FileStorage.UNLIMITED
+    val used = storage?.let {
+        it.usedBytes ?: (it.limitBytes - it.remainingBytes).coerceAtLeast(0)
+    } ?: 0L
+    val percent = if (storage == null || unlimited || storage.limitBytes <= 0) {
+        0f
+    } else {
+        (used.toDouble() / storage.limitBytes).toFloat().coerceIn(0f, 1f)
     }
-    val unlimited = storage.limitBytes >= FileStorage.UNLIMITED
-    val used = storage.usedBytes ?: (storage.limitBytes - storage.remainingBytes).coerceAtLeast(0)
-    val percent = if (unlimited || storage.limitBytes <= 0) 0f
-    else (used.toDouble() / storage.limitBytes).toFloat().coerceIn(0f, 1f)
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        Row {
-            Text(
-                "已用 ${formatBytes(used).ifBlank { "0 B" }}",
-                style = MaterialTheme.typography.labelMedium,
-            )
-            if (!unlimited) {
-                Spacer(Modifier.width(12.dp))
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "上限 ${formatBytes(storage.limitBytes)}",
+                    "存储空间",
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    when {
+                        storage == null && state.storageError -> "读取失败"
+                        storage == null -> "读取中"
+                        unlimited -> "无上限"
+                        else -> "${(percent * 100).toInt()}%"
+                    },
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            Spacer(Modifier.weight(1f))
-            Text(
-                if (unlimited) "无上限" else "${(percent * 100).toInt()}%",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            if (storage == null) {
+                Text(
+                    if (state.storageError) "容量额度读取失败" else "正在读取容量",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                Text(
+                    "已用 ${formatBytes(used).ifBlank { "0 B" }}" +
+                        if (unlimited) "" else " / ${formatBytes(storage.limitBytes)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (!unlimited) {
+                    LinearProgressIndicator(
+                        progress = { percent },
+                        modifier = Modifier.fillMaxWidth().height(4.dp).clip(MaterialTheme.shapes.extraSmall),
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun MediaTile(
+    file: StoredFile,
+    selected: Boolean,
+    selectionMode: Boolean,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    onToggleSelection: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val url = "$PICKCAT_ORIGIN/api/v1/files/${file.id}"
+    Box(
+        modifier = modifier
+            .aspectRatio(1f)
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+            ),
+    ) {
+        PickCatImage(
+            url = url,
+            contentDescription = file.name,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+            corner = 0.dp,
+        )
+        if (selected) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
             )
         }
-        if (!unlimited) {
-            LinearProgressIndicator(
-                progress = { percent },
-                modifier = Modifier.fillMaxWidth().height(5.dp).clip(MaterialTheme.shapes.extraSmall),
-            )
+        if (selectionMode) {
+            Surface(
+                modifier = Modifier.align(Alignment.TopEnd).padding(6.dp),
+                shape = androidx.compose.foundation.shape.CircleShape,
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+            ) {
+                IconButton(
+                    onClick = onToggleSelection,
+                    modifier = Modifier.size(32.dp),
+                ) {
+                    Icon(
+                        if (selected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
+                        contentDescription = if (selected) "取消选择" else "选择",
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun MediaTile(
-    file: StoredFile,
-    selected: Boolean,
-    inTrash: Boolean,
-    onClick: () -> Unit,
-    onPreview: () -> Unit,
-    modifier: Modifier = Modifier,
+private fun SelectionActionBar(
+    tab: FileStateTab,
+    selectedCount: Int,
+    busy: Boolean,
+    onTrash: () -> Unit,
+    onRestore: () -> Unit,
+    onPurge: () -> Unit,
 ) {
-    val url = "$PICKCAT_ORIGIN/api/v1/files/${file.id}"
-    Column(
-        modifier = modifier
-            .clip(MaterialTheme.shapes.medium)
-            .background(
-                if (selected) MaterialTheme.colorScheme.secondaryContainer
-                else MaterialTheme.colorScheme.surfaceContainerLow,
+    Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                "已选 $selectedCount",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.weight(1f),
             )
-            .clickable(onClick = onClick),
-    ) {
-        Box(Modifier.fillMaxWidth().aspectRatio(1f)) {
-            PickCatImage(
-                url = url,
-                contentDescription = file.name,
-                modifier = Modifier.fillMaxSize(),
-                corner = 12.dp,
-            )
-            if (selected) {
-                Box(
-                    Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary.copy(alpha = 0.22f)),
-                )
-                Icon(
-                    Icons.Default.CheckCircle,
-                    contentDescription = "已选择",
-                    tint = Color.White,
-                    modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
-                )
-            } else if (!inTrash) {
-                IconButton(
-                    onClick = onPreview,
-                    modifier = Modifier.align(Alignment.TopEnd),
-                ) {
-                    Icon(Icons.Default.Visibility, contentDescription = "查看原图", tint = Color.White)
+            if (tab == FileStateTab.READY) {
+                TextButton(onClick = onTrash, enabled = !busy) {
+                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("移入回收站")
+                }
+            } else {
+                TextButton(onClick = onRestore, enabled = !busy) {
+                    Icon(Icons.Default.Restore, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("恢复")
+                }
+                TextButton(onClick = onPurge, enabled = !busy) {
+                    Icon(Icons.Default.DeleteForever, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("彻底删除")
                 }
             }
         }
-        Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                file.name ?: file.id.take(8),
-                style = MaterialTheme.typography.labelMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+    }
+}
+
+@Composable
+private fun MediaPreviewDialog(
+    file: StoredFile,
+    onDismiss: () -> Unit,
+) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.scrim)
+                .clickable(onClick = onDismiss),
+        ) {
+            PickCatImage(
+                url = "$PICKCAT_ORIGIN/api/v1/files/${file.id}",
+                contentDescription = file.name,
+                modifier = Modifier.fillMaxSize().padding(16.dp),
+                contentScale = ContentScale.Fit,
+                corner = 0.dp,
             )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            Surface(
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surfaceContainer,
             ) {
-                val size = formatBytes(file.size)
-                if (size.isNotBlank()) {
-                    Text(
-                        size,
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                    )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(
+                            file.name ?: file.id.take(8),
+                            style = MaterialTheme.typography.titleSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        val size = formatBytes(file.size)
+                        Text(
+                            listOfNotNull(
+                                size.ifBlank { null },
+                                relativeTime(file.createdAt),
+                            ).joinToString("  "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    IconButton(onClick = onDismiss) {
+                        Icon(Icons.Default.Close, contentDescription = "关闭预览")
+                    }
                 }
-                Text(
-                    if (inTrash) {
-                        if (file.deletedAt != null) relativeTime(file.deletedAt) + "删除" else ""
-                    } else {
-                        relativeTime(file.createdAt)
-                    },
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
             }
         }
     }
