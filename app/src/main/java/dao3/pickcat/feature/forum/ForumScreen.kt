@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -29,11 +30,9 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -362,14 +361,21 @@ private fun TopicFeedScaffold(
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (showTags && state.tags.isNotEmpty()) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
+                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 2.dp),
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                 ) {
-                    CategoryMenu(
-                        tags = state.tags,
-                        onTag = onOpenCategory,
-                    )
-                    Spacer(Modifier.weight(1f))
+                    LazyRow(
+                        modifier = Modifier.weight(1f),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(end = 8.dp),
+                    ) {
+                        items(state.tags, key = { it.id }) { tag ->
+                            AssistChip(
+                                onClick = { onOpenCategory(tag) },
+                                label = { Text("#${tag.name}") },
+                            )
+                        }
+                    }
                     SortSelector(
                         sort = state.sort,
                         onSort = viewModel::setSort,
@@ -455,44 +461,6 @@ private fun TopicFeedScaffold(
                         }
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun CategoryMenu(
-    tags: List<Tag>,
-    onTag: (Tag) -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        FilledTonalButton(onClick = { expanded = true }) {
-            Icon(
-                Icons.Default.Category,
-                contentDescription = null,
-                modifier = Modifier.width(18.dp),
-            )
-            Spacer(Modifier.width(8.dp))
-            Text("浏览分类")
-            Icon(
-                Icons.Default.ArrowDropDown,
-                contentDescription = null,
-                modifier = Modifier.width(18.dp),
-            )
-        }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-        ) {
-            tags.forEach { tag ->
-                DropdownMenuItem(
-                    text = { Text("#${tag.name}") },
-                    onClick = {
-                        expanded = false
-                        onTag(tag)
-                    },
-                )
             }
         }
     }
