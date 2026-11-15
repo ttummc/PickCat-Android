@@ -9,10 +9,15 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -25,6 +30,7 @@ import androidx.compose.ui.unit.dp
 fun OfflineBanner(
     visible: Boolean,
     modifier: Modifier = Modifier,
+    onDismiss: (() -> Unit)? = null,
 ) {
     AnimatedVisibility(
         visible = visible,
@@ -47,7 +53,7 @@ fun OfflineBanner(
                     Icons.Default.CloudOff,
                     contentDescription = null,
                 )
-                Column {
+                Column(Modifier.weight(1f)) {
                     Text(
                         "当前没有网络连接",
                         style = MaterialTheme.typography.titleSmall,
@@ -56,6 +62,19 @@ fun OfflineBanner(
                         "请检查 Wi-Fi 或移动网络",
                         style = MaterialTheme.typography.bodySmall,
                     )
+                }
+                if (onDismiss != null) {
+                    Spacer(Modifier.width(4.dp))
+                    IconButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.size(32.dp),
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "关闭网络提示",
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
                 }
             }
         }

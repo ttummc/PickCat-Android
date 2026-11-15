@@ -140,6 +140,10 @@ fun PickCatMainShell(
     val navController = rememberNavController()
     val session by appViewModel.session.collectAsStateWithLifecycle()
     val isOnline by appViewModel.isOnline.collectAsStateWithLifecycle()
+    var offlineBannerDismissed by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(isOnline) {
+        if (isOnline) offlineBannerDismissed = false
+    }
     val context = LocalContext.current
     LaunchedEffect(Unit) {
         val activity = context as? android.app.Activity
@@ -500,7 +504,8 @@ fun PickCatMainShell(
                         content()
                     }
                     OfflineBanner(
-                        visible = !isOnline,
+                        visible = !isOnline && !offlineBannerDismissed,
+                        onDismiss = { offlineBannerDismissed = true },
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
@@ -550,7 +555,8 @@ fun PickCatMainShell(
                     content()
                 }
                 OfflineBanner(
-                    visible = !isOnline,
+                    visible = !isOnline && !offlineBannerDismissed,
+                    onDismiss = { offlineBannerDismissed = true },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(start = 16.dp, end = 16.dp, bottom = 84.dp),
