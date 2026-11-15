@@ -144,9 +144,16 @@ fun htmlToAnnotated(html: String?): AnnotatedString {
             if (annotationStack.isNotEmpty()) { annotationStack.removeLast(); pop() }
         }
     }.let { annotated ->
-        // Collapse runs of blank lines produced by block tags.
-        val text = annotated.text.replace(Regex("[ \\t]+\\n"), "\n").replace(Regex("\\n{3,}"), "\n\n").trim()
-        AnnotatedString(text, annotated.spanStyles, annotated.paragraphStyles)
+        // Trim without rebuilding spans: rebuilding from raw ranges after trim
+        // can leave spans beyond the new text length.
+        val raw = annotated.text
+        val start = raw.indexOfFirst { !it.isWhitespace() }
+        if (start < 0) {
+            AnnotatedString("")
+        } else {
+            val end = raw.indexOfLast { !it.isWhitespace() } + 1
+            annotated.subSequence(start, end)
+        }
     }
 }
 
