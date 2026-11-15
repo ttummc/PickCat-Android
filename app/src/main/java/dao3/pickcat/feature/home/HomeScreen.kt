@@ -55,6 +55,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -222,6 +223,15 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val visibleItems = remember(state.items, state.kind) {
+        if (state.kind == HomeFeedKind.LATEST) {
+            state.items.filterNot { topic ->
+                topic.pinned || topic.pinnedGlobally || !topic.pinnedTagId.isNullOrBlank()
+            }
+        } else {
+            state.items
+        }
+    }
     val unread by appViewModel.unreadCount.collectAsStateWithLifecycle()
     val session by appViewModel.session.collectAsStateWithLifecycle()
     val currentUser = session.user
@@ -354,8 +364,21 @@ fun HomeScreen(
                             modifier = Modifier.fillParentMaxHeight(0.7f),
                         )
                     }
+                    visibleItems.isEmpty() && !state.endReached -> item(key = "home-footer") {
+                        LaunchedEffect(state.cursor, state.endReached) {
+                            viewModel.loadMore()
+                        }
+                        PagedFooter(loading = true, endReached = false)
+                    }
+                    visibleItems.isEmpty() -> item {
+                        EmptyState(
+                            title = "还没有内容",
+                            description = "稍后再来看看。",
+                            modifier = Modifier.fillParentMaxHeight(0.7f),
+                        )
+                    }
                     else -> {
-                        items(state.items, key = { it.id }) { topic ->
+                        items(visibleItems, key = { it.id }) { topic ->
                             TopicCard(
                                 topic = topic,
                                 onClick = { onOpenTopic(topic) },
