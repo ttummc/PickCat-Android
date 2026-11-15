@@ -382,6 +382,12 @@ data class NotificationDetails(
     val topic: TopicRef? = null,
     val post: PostRef? = null,
     val work: WorkRef? = null,
+    val summary: String? = null,
+    val postTitle: String? = null,
+    val excerpt: String? = null,
+    val replyExcerpt: String? = null,
+    val reply: String? = null,
+    val publicReasonDetail: String? = null,
     val payload: JsonElement? = null,
 )
 
@@ -402,19 +408,29 @@ data class NotificationItem(
     val id: String = "",
     val type: String = "",
     val read: Boolean = false,
+    val readAt: String? = null,
     val createdAt: String = "",
     val actor: UserRef? = null,
     val topic: TopicRef? = null,
     val post: PostRef? = null,
     val work: WorkRef? = null,
+    val summary: String? = null,
+    val postTitle: String? = null,
+    val excerpt: String? = null,
+    val replyExcerpt: String? = null,
     val payload: JsonElement? = null,
     val details: NotificationDetails? = null,
 ) {
     fun normalized(): NotificationItem = copy(
+        read = read || readAt != null,
         actor = actor ?: details?.actor,
         topic = topic ?: details?.topic,
         post = post ?: details?.post,
         work = work ?: details?.work,
+        summary = summary ?: details?.summary,
+        postTitle = postTitle ?: details?.postTitle,
+        excerpt = excerpt ?: details?.excerpt ?: details?.reply,
+        replyExcerpt = replyExcerpt ?: details?.replyExcerpt,
     )
 }
 

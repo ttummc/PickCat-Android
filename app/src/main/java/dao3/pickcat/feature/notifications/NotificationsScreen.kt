@@ -1,10 +1,5 @@
 package dao3.pickcat.feature.notifications
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,12 +24,13 @@ import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.AlternateEmail
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -42,14 +38,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryScrollableTabRow
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -63,8 +58,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -103,6 +101,15 @@ private enum class NotificationFilter(val label: String) {
     SYSTEM("系统通知"),
 }
 
+private val systemNotificationTypes = setOf(
+    "USER_FOLLOWED",
+    "MANAGEMENT_ACTION",
+    "TOPIC_EVENT",
+    "LEVEL_CERTIFICATION",
+    "TAKEDOWN_APPEAL_DECIDED",
+    "QUESTION_DUPLICATE_REQUEST_DECIDED",
+)
+
 private fun matchesFilter(item: NotificationItem, filter: NotificationFilter): Boolean {
     return when (filter) {
         NotificationFilter.ALL -> true
@@ -112,15 +119,57 @@ private fun matchesFilter(item: NotificationItem, filter: NotificationFilter): B
             "WORK_COMMENT_CREATED",
             "WORK_COMMENT_REPLY_CREATED",
         )
-        NotificationFilter.SYSTEM -> item.type in setOf(
-            "USER_FOLLOWED",
-            "MANAGEMENT_ACTION",
-            "TOPIC_EVENT",
-            "LEVEL_CERTIFICATION",
-            "TAKEDOWN_APPEAL_DECIDED",
-            "QUESTION_DUPLICATE_REQUEST_DECIDED",
-        )
+        NotificationFilter.SYSTEM -> item.type in systemNotificationTypes
     }
+}
+
+private fun notificationAction(item: NotificationItem): String = when (item.type) {
+    "REPLY_CREATED" -> "回复了你的帖子"
+    "POST_LIKED" -> "赞了你的帖子"
+    "USER_MENTIONED" -> "在帖子中 @了你"
+    "WORK_COMMENT_CREATED" -> "评论了你的作品"
+    "WORK_COMMENT_REPLY_CREATED" -> "回复了你的评论"
+    "WORK_COMMENT_MENTIONED" -> "在评论中 @了你"
+    "WORK_LIKED" -> "赞了你的作品"
+    "WORK_COMMENT_LIKED" -> "赞了你的评论"
+    "USER_FOLLOWED" -> "关注了你"
+    "MANAGEMENT_ACTION" -> "发布了社区管理通知"
+    "TOPIC_EVENT" -> "帖子状态有了新变化"
+    "LEVEL_CERTIFICATION" -> "等级认证状态更新"
+    "TAKEDOWN_APPEAL_DECIDED" -> "下架申诉有结果了"
+    "QUESTION_DUPLICATE_REQUEST_DECIDED" -> "问答重复申请有结果了"
+    else -> "发来一条通知"
+}
+
+private fun notificationActor(item: NotificationItem): String =
+    item.actor?.username?.takeIf { it.isNotBlank() }
+        ?: if (item.type in systemNotificationTypes) "社区" else "系统"
+
+private fun notificationTarget(item: NotificationItem): String? =
+    item.topic?.title?.takeIf { it.isNotBlank() }
+        ?: item.work?.workName?.takeIf { it.isNotBlank() }
+        ?: item.details?.postTitle?.takeIf { it.isNotBlank() }
+        ?: item.postTitle?.takeIf { it.isNotBlank() }
+
+private fun notificationDetail(item: NotificationItem): String? {
+    return sequenceOf(
+        item.excerpt,
+        item.replyExcerpt,
+        item.details?.excerpt,
+        item.details?.replyExcerpt,
+        item.details?.reply,
+        item.details?.publicReasonDetail,
+        item.details?.summary,
+        item.summary,
+    ).firstOrNull { !it.isNullOrBlank() }?.trim()
+}
+
+private fun notificationIcon(type: String): ImageVector = when {
+    type.contains("FOLLOW") -> Icons.Default.PersonAdd
+    type.contains("LIKE") -> Icons.Default.Favorite
+    type.contains("MENTION") -> Icons.Default.AlternateEmail
+    type.contains("REPLY") || type.contains("COMMENT") -> Icons.AutoMirrored.Filled.Message
+    else -> Icons.Default.Shield
 }
 
 data class NotificationsUiState(
@@ -181,7 +230,8 @@ class NotificationsViewModel : ViewModel() {
                 val page = api.getNotifications(limit = 20, cursor = cursor)
                 _state.update {
                     it.copy(
-                        items = (it.items + page.items.map { item -> item.normalized() }).distinctBy { item -> item.id },
+                        items = (it.items + page.items.map { item -> item.normalized() })
+                            .distinctBy { item -> item.id },
                         cursor = page.cursor,
                         endReached = !page.canLoadMore,
                         loadingMore = false,
@@ -189,6 +239,36 @@ class NotificationsViewModel : ViewModel() {
                 }
             } catch (_: Exception) {
                 _state.update { it.copy(loadingMore = false) }
+            }
+        }
+    }
+
+    fun markRead(item: NotificationItem) {
+        if (item.read) return
+        val sameTypeUnread = _state.value.items.count {
+            !it.read && (it.id == item.id || (item.type.isNotBlank() && it.type == item.type))
+        }
+        _state.update { state ->
+            val currentUnread = state.summary?.unreadCount ?: state.items.count { !it.read }
+            state.copy(
+                items = state.items.map {
+                    if (it.id == item.id || (item.type.isNotBlank() && it.type == item.type)) {
+                        it.copy(read = true)
+                    } else {
+                        it
+                    }
+                },
+                summary = (state.summary ?: NotificationSummary()).copy(
+                    unreadCount = (currentUnread - sameTypeUnread).coerceAtLeast(0),
+                ),
+            )
+        }
+        if (item.type.isBlank()) return
+        viewModelScope.launch {
+            try {
+                api.markNotificationsRead(type = item.type)
+            } catch (_: Exception) {
+                _messages.tryEmit("已读状态同步失败")
             }
         }
     }
@@ -247,10 +327,10 @@ fun NotificationsScreen(
                 TopAppBar(
                     title = {
                         Column {
-                            Text("通知", style = MaterialTheme.typography.titleLarge)
+                            Text("通知")
                             Text(
-                                if (unread > 0) "$unread 条未读" else "暂时没有未读通知",
-                                style = MaterialTheme.typography.labelSmall,
+                                if (unread > 0) "$unread 条未读" else "没有未读通知",
+                                style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
@@ -261,19 +341,28 @@ fun NotificationsScreen(
                         }
                     },
                     actions = {
+                        IconButton(onClick = onOpenLikes) {
+                            Icon(Icons.Default.FavoriteBorder, contentDescription = "收到的赞")
+                        }
                         if (unread > 0) {
-                            TextButton(
+                            IconButton(
                                 onClick = viewModel::markAllRead,
                                 enabled = !state.marking,
                             ) {
-                                Text("全部已读")
+                                if (state.marking) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(18.dp),
+                                        strokeWidth = 2.dp,
+                                    )
+                                } else {
+                                    Icon(Icons.Default.DoneAll, contentDescription = "全部已读")
+                                }
                             }
                         }
                     },
                 )
-                PrimaryScrollableTabRow(
+                PrimaryTabRow(
                     selectedTabIndex = filter.ordinal,
-                    edgePadding = 12.dp,
                     containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.onSurface,
                 ) {
@@ -281,24 +370,9 @@ fun NotificationsScreen(
                         Tab(
                             selected = filter == tab,
                             onClick = { filter = tab },
-                            text = {
-                                Text(
-                                    tab.label,
-                                    style = MaterialTheme.typography.labelLarge,
-                                )
-                            },
+                            text = { Text(tab.label) },
                         )
                     }
-                    Tab(
-                        selected = false,
-                        onClick = onOpenLikes,
-                        text = {
-                            Text(
-                                "收到的赞",
-                                style = MaterialTheme.typography.labelLarge,
-                            )
-                        },
-                    )
                 }
             }
         },
@@ -310,13 +384,8 @@ fun NotificationsScreen(
             filteredItems.isEmpty() -> NotificationPageState.EMPTY
             else -> NotificationPageState.CONTENT
         }
-        AnimatedContent(
-            targetState = pageState,
-            modifier = Modifier.fillMaxSize().padding(padding),
-            transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(120)) },
-            label = "notifications-content",
-        ) { stage ->
-            when (stage) {
+        Box(Modifier.fillMaxSize().padding(padding)) {
+            when (pageState) {
                 NotificationPageState.LOADING -> NotificationListSkeleton(
                     modifier = Modifier.padding(16.dp),
                 )
@@ -344,15 +413,18 @@ fun NotificationsScreen(
                             NotificationRow(
                                 item = item,
                                 onClick = {
-                                    if (item.topic?.id != null) {
-                                        onOpenTopic(item.topic!!.id, item.post?.postNumber)
-                                    } else if (item.work?.id != null) {
-                                        onOpenWork(item.work!!.id)
+                                    viewModel.markRead(item)
+                                    val topicId = item.topic?.id
+                                    val workId = item.work?.id
+                                    if (topicId != null) {
+                                        onOpenTopic(topicId, item.post?.postNumber)
+                                    } else if (workId != null) {
+                                        onOpenWork(workId)
                                     }
                                 },
                             )
                             HorizontalDivider(
-                                modifier = Modifier.padding(start = 16.dp),
+                                modifier = Modifier.padding(start = 72.dp),
                                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f),
                             )
                         }
@@ -374,7 +446,22 @@ private fun NotificationRow(
     item: NotificationItem,
     onClick: () -> Unit,
 ) {
-    val target = item.topic?.title ?: item.work?.workName
+    val target = notificationTarget(item)
+    val detail = notificationDetail(item)?.takeIf { it != target }
+    val actor = notificationActor(item)
+    val headline = buildAnnotatedString {
+        withStyle(
+            SpanStyle(
+                fontWeight = if (item.read) FontWeight.Medium else FontWeight.SemiBold,
+            ),
+        ) {
+            append(actor)
+        }
+        append(" ")
+        withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurfaceVariant)) {
+            append(notificationAction(item))
+        }
+    }
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
         colors = ListItemDefaults.colors(
@@ -394,7 +481,7 @@ private fun NotificationRow(
                 ) {
                     Box(Modifier.size(40.dp), contentAlignment = Alignment.Center) {
                         Icon(
-                            Icons.Default.Notifications,
+                            notificationIcon(item.type),
                             contentDescription = null,
                             modifier = Modifier.size(20.dp),
                             tint = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -405,19 +492,27 @@ private fun NotificationRow(
         },
         headlineContent = {
             Text(
-                item.actor?.username ?: "系统",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = if (item.read) FontWeight.Medium else FontWeight.SemiBold,
-                maxLines = 1,
+                headline,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
         },
         supportingContent = {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                if (!detail.isNullOrBlank()) {
+                    Text(
+                        detail,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 if (!target.isNullOrBlank()) {
                     Text(
                         target,
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -512,13 +607,8 @@ fun LikesScreen(
             state.groups.isEmpty() -> LikesPageState.EMPTY
             else -> LikesPageState.CONTENT
         }
-        AnimatedContent(
-            targetState = pageState,
-            modifier = Modifier.fillMaxSize().padding(padding),
-            transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(120)) },
-            label = "likes-content",
-        ) { stage ->
-            when (stage) {
+        Box(Modifier.fillMaxSize().padding(padding)) {
+            when (pageState) {
                 LikesPageState.LOADING -> LoadingState()
                 LikesPageState.ERROR -> ErrorState(
                     message = state.error.orEmpty(),
@@ -541,9 +631,14 @@ fun LikesScreen(
                         Card(
                             modifier = Modifier.animateItem(),
                             shape = MaterialTheme.shapes.medium,
-                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            ),
                         ) {
-                            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Column(
+                                Modifier.padding(14.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
                                         Icons.Default.Favorite,
@@ -554,12 +649,13 @@ fun LikesScreen(
                                     Spacer(Modifier.width(8.dp))
                                     Text(
                                         group.topicTitle ?: group.workName ?: group.topic?.title
-                                    ?: group.work?.workName ?: group.groupKey,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f),
-                                )
+                                        ?: group.work?.workName ?: group.groupKey,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                }
                                 Text(
                                     relativeTime(group.createdAt),
                                     style = MaterialTheme.typography.labelSmall,
@@ -586,5 +682,4 @@ fun LikesScreen(
             }
         }
     }
-}
 }

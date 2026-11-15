@@ -3,6 +3,14 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.19] - 2026-11-15
+
+### 变更
+
+- 通知中心改为标准 Material 3 列表结构，补充动作说明、通知正文摘要、目标标题和时间。
+- 点击通知后立即标记为已读，并同步服务端已读状态。
+- 修复服务端 `readAt` 字段未映射导致已读通知仍显示未读的问题。
+
 ## [0.1.18] - 2026-11-15
 
 ### 新增
@@ -138,6 +146,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.19]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.19
 [0.1.18]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.18
 [0.1.17]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.17
 [0.1.16]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.16

@@ -361,10 +361,11 @@ class PickCatApi(
 
     suspend fun getNotificationSummary(): NotificationSummary = getJson("/notification-summary")
 
-    suspend fun markNotificationsRead() {
+    suspend fun markNotificationsRead(type: String? = null) {
         execute(
             "PATCH",
             "/notifications",
+            query = if (type.isNullOrBlank()) emptyMap() else mapOf("type" to type),
             jsonBody = buildJsonObject { put("read", true) },
         )
     }
