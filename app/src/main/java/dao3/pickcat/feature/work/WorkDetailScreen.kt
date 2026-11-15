@@ -621,7 +621,11 @@ fun WorkDetailScreen(
                     }
                     if (threadedComments.isEmpty()) {
                         item {
-                            EmptyState(title = "还没有评论", description = "来说点什么吧。")
+                            EmptyState(
+                                title = "还没有评论",
+                                description = "来说点什么吧。",
+                                modifier = Modifier.fillParentMaxHeight(0.35f),
+                            )
                         }
                     } else {
                         items(threadedComments, key = { it.comment.commentNumber }) { item ->

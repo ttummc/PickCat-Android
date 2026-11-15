@@ -604,7 +604,7 @@ fun ProfileScreen(
                                     title = "还没有动态",
                                     description = "参与讨论后会出现在这里。",
                                     icon = Icons.Default.History,
-                                    modifier = Modifier.animateItem(),
+                                    modifier = Modifier.fillParentMaxHeight(0.75f).animateItem(),
                                 )
                             }
                         } else {
@@ -625,7 +625,7 @@ fun ProfileScreen(
                                     title = "还没有合集",
                                     description = "整理的帖子合集会出现在这里。",
                                     icon = Icons.Default.Article,
-                                    modifier = Modifier.animateItem(),
+                                    modifier = Modifier.fillParentMaxHeight(0.75f).animateItem(),
                                 )
                             }
                         } else {
@@ -646,7 +646,7 @@ fun ProfileScreen(
                                 EmptyState(
                                     title = "还没有发过帖子",
                                     icon = Icons.Default.Article,
-                                    modifier = Modifier.animateItem(),
+                                    modifier = Modifier.fillParentMaxHeight(0.75f).animateItem(),
                                 )
                             }
                         } else {
@@ -667,7 +667,7 @@ fun ProfileScreen(
                                 EmptyState(
                                     title = "还没有发布作品",
                                     icon = Icons.Default.VideoLibrary,
-                                    modifier = Modifier.animateItem(),
+                                    modifier = Modifier.fillParentMaxHeight(0.75f).animateItem(),
                                 )
                             }
                         } else {
@@ -686,7 +686,7 @@ fun ProfileScreen(
                                 EmptyState(
                                     title = "还没有回复过",
                                     icon = Icons.Default.ChatBubbleOutline,
-                                    modifier = Modifier.animateItem(),
+                                    modifier = Modifier.fillParentMaxHeight(0.75f).animateItem(),
                                 )
                             }
                         } else {
@@ -720,7 +720,7 @@ fun ProfileScreen(
                                 EmptyState(
                                     title = if (relationMode == 0) "还没有关注任何人" else "还没有粉丝",
                                     icon = Icons.Default.People,
-                                    modifier = Modifier.animateItem(),
+                                    modifier = Modifier.fillParentMaxHeight(0.75f).animateItem(),
                                 )
                             }
                         } else {
@@ -740,7 +740,7 @@ fun ProfileScreen(
                                     title = "还没有徽章",
                                     description = "参与社区活动后可以获得徽章。",
                                     icon = Icons.Default.Badge,
-                                    modifier = Modifier.animateItem(),
+                                    modifier = Modifier.fillParentMaxHeight(0.75f).animateItem(),
                                 )
                             }
                         } else {

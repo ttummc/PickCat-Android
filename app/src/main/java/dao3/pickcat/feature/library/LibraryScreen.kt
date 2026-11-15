@@ -1,4 +1,4 @@
-﻿package dao3.pickcat.feature.library
+package dao3.pickcat.feature.library
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -154,12 +154,14 @@ fun LibraryScreen(
                     icon = Icons.Default.Collections,
                     actionLabel = "重试",
                     onAction = viewModel::load,
+                    modifier = Modifier.fillMaxSize(),
                 )
                 state.tab == LibraryTab.WORKS -> {
                     if (state.works.isEmpty()) {
                         EmptyState(
                             title = "还没有作品",
                             description = "去 KittenN 或 BoxPlay 做一个吧。",
+                            modifier = Modifier.fillMaxSize(),
                         )
                     } else {
                         LazyColumn(
@@ -190,7 +192,10 @@ fun LibraryScreen(
                 }
                 else -> {
                     if (state.topics.isEmpty()) {
-                        EmptyState(title = "还没有发过帖子")
+                        EmptyState(
+                            title = "还没有发过帖子",
+                            modifier = Modifier.fillMaxSize(),
+                        )
                     } else {
                         LazyColumn(
                             contentPadding = PaddingValues(

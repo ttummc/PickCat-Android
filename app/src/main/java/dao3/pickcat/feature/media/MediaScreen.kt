@@ -477,6 +477,7 @@ fun MediaScreen(
                         description = if (state.tab == FileStateTab.DELETED) "删除的图片会先放在这里。"
                         else "发帖时上传的图片会先存在这里。",
                         icon = Icons.Default.Image,
+                        modifier = Modifier.fillMaxSize(),
                     )
                     MediaPageState.CONTENT -> LazyVerticalGrid(
                         columns = GridCells.Adaptive(142.dp),

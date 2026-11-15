@@ -247,6 +247,7 @@ fun WorksScreen(
                     )
                     WorksPageState.EMPTY -> EmptyState(
                         title = "还没有作品",
+                        modifier = Modifier.fillMaxSize(),
                     )
                     WorksPageState.CONTENT -> LazyVerticalGrid(
                         columns = GridCells.Adaptive(168.dp),

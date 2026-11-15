@@ -326,6 +326,7 @@ fun NotificationsScreen(
                 NotificationPageState.EMPTY -> EmptyState(
                     title = if (filter == NotificationFilter.ALL) "没有通知" else "暂无此类通知",
                     icon = Icons.Default.Notifications,
+                    modifier = Modifier.fillMaxSize(),
                 )
                 NotificationPageState.CONTENT -> LazyColumn(
                     state = listState,
@@ -525,6 +526,7 @@ fun LikesScreen(
                 LikesPageState.EMPTY -> EmptyState(
                     title = "还没有收到点赞",
                     icon = Icons.Default.Favorite,
+                    modifier = Modifier.fillMaxSize(),
                 )
                 LikesPageState.CONTENT -> LazyColumn(
                     modifier = Modifier.fillMaxSize(),

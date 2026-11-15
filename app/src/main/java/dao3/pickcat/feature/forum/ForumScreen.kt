@@ -1,4 +1,4 @@
-﻿package dao3.pickcat.feature.forum
+package dao3.pickcat.feature.forum
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -428,6 +428,7 @@ private fun TopicFeedScaffold(
                             title = "还没有帖子",
                             actionLabel = "发帖",
                             onAction = onCompose,
+                            modifier = Modifier.fillMaxSize(),
                         )
                         TopicFeedPageState.CONTENT -> LazyColumn(
                             state = listState,

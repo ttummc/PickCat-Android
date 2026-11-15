@@ -542,6 +542,7 @@ fun TopicDetailScreen(
                         EmptyState(
                             title = "还没有回复",
                             description = "来抢第一个沙发。",
+                            modifier = Modifier.fillParentMaxHeight(0.35f),
                         )
                     }
                 }

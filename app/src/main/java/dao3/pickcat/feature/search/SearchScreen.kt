@@ -247,6 +247,7 @@ fun SearchScreen(
                                 title = "开始搜索",
                                 description = "输入关键词开始搜索。",
                                 icon = Icons.Default.Search,
+                                modifier = Modifier.fillMaxSize(),
                             )
                         } else {
                             Column(Modifier.fillMaxSize()) {
@@ -294,6 +295,7 @@ fun SearchScreen(
                         title = "没有找到相关内容",
                         description = "换一个关键词。",
                         icon = Icons.Default.Search,
+                        modifier = Modifier.fillMaxSize(),
                     )
                     SearchContentPhase.RESULTS -> Column(Modifier.fillMaxSize()) {
                         PrimaryScrollableTabRow(
@@ -411,7 +413,12 @@ private fun SearchResults(
             }
             SearchTab.TOPICS -> {
                 if (state.topics.isEmpty()) {
-                    item { EmptyState(title = "没有找到帖子") }
+                    item {
+                        EmptyState(
+                            title = "没有找到帖子",
+                            modifier = Modifier.fillParentMaxHeight(0.5f),
+                        )
+                    }
                 } else {
                     items(state.topics, key = { it.id }) { topic ->
                         TopicCard(
@@ -424,7 +431,12 @@ private fun SearchResults(
             }
             SearchTab.USERS -> {
                 if (state.users.isEmpty()) {
-                    item { EmptyState(title = "没有找到用户") }
+                    item {
+                        EmptyState(
+                            title = "没有找到用户",
+                            modifier = Modifier.fillParentMaxHeight(0.5f),
+                        )
+                    }
                 } else {
                     items(state.users, key = { it.id }) { user ->
                         UserRow(
@@ -437,14 +449,24 @@ private fun SearchResults(
             }
             SearchTab.WORKS -> {
                 if (state.works.isEmpty()) {
-                    item { EmptyState(title = "没有找到作品") }
+                    item {
+                        EmptyState(
+                            title = "没有找到作品",
+                            modifier = Modifier.fillParentMaxHeight(0.5f),
+                        )
+                    }
                 } else {
                     item { SimpleWorkGrid(state.works, onOpenWork) }
                 }
             }
             SearchTab.TAGS -> {
                 if (state.tags.isEmpty()) {
-                    item { EmptyState(title = "没有找到标签") }
+                    item {
+                        EmptyState(
+                            title = "没有找到标签",
+                            modifier = Modifier.fillParentMaxHeight(0.5f),
+                        )
+                    }
                 } else {
                     items(state.tags, key = { it.id }) { tag ->
                         TagResultRow(

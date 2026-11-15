@@ -192,6 +192,7 @@ fun CollectionScreen(
                         EmptyState(
                             title = "合集里还没有帖子",
                             description = "作者整理后会出现在这里。",
+                            modifier = Modifier.fillParentMaxHeight(0.75f),
                         )
                     }
                 } else {

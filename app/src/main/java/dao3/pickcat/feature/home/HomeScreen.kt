@@ -350,6 +350,7 @@ fun HomeScreen(
                         EmptyState(
                             title = "还没有内容",
                             description = "稍后再来看看。",
+                            modifier = Modifier.fillParentMaxHeight(0.7f),
                         )
                     }
                     else -> {
