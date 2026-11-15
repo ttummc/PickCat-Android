@@ -554,7 +554,7 @@ fun ProfileScreen(
                             item {
                                 SectionHeader(
                                     "精选帖子",
-                                    Modifier.padding(horizontal = 16.dp).animateItem(),
+                                    Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp).animateItem(),
                                 )
                             }
                             items(state.featuredTopics, key = { "ft-${it.id}" }) { topic ->
@@ -571,7 +571,7 @@ fun ProfileScreen(
                             item {
                                 SectionHeader(
                                     "精选作品",
-                                    Modifier.padding(horizontal = 16.dp).animateItem(),
+                                    Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp).animateItem(),
                                 )
                             }
                             item {
@@ -585,7 +585,7 @@ fun ProfileScreen(
                         item {
                             SectionHeader(
                                 "贡献",
-                                Modifier.padding(horizontal = 16.dp).animateItem(),
+                                Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp).animateItem(),
                             )
                             ContributionHeatmap(
                                 contributions = state.contributions,
@@ -595,7 +595,7 @@ fun ProfileScreen(
                         item {
                             SectionHeader(
                                 "最近动态",
-                                Modifier.padding(horizontal = 16.dp).animateItem(),
+                                Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp).animateItem(),
                             )
                         }
                         if (state.activities.isEmpty()) {
