@@ -363,6 +363,9 @@ fun PickCatMainShell(
                     onOpenTopic = { topic -> navController.navigate(Routes.topic(topic.id)) },
                     onOpenWork = { work -> navController.navigate(Routes.work(work.id)) },
                     onOpenUser = { user -> navController.navigate(Routes.profile(user.id)) },
+                    onOpenActivity = { activity ->
+                        navController.navigate(Routes.topic(activity.topicId, activity.postNumber))
+                    },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     onOpenMedia = { navController.navigate(Routes.MEDIA) },
                     onOpenLibrary = { navController.navigate(Routes.LIBRARY) },
@@ -391,6 +394,9 @@ fun PickCatMainShell(
                     onOpenTopic = { topic -> navController.navigate(Routes.topic(topic.id)) },
                     onOpenWork = { work -> navController.navigate(Routes.work(work.id)) },
                     onOpenUser = { user -> navController.navigate(Routes.profile(user.id)) },
+                    onOpenActivity = { activity ->
+                        navController.navigate(Routes.topic(activity.topicId, activity.postNumber))
+                    },
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     onOpenMedia = { navController.navigate(Routes.MEDIA) },
                     onOpenLibrary = { navController.navigate(Routes.LIBRARY) },

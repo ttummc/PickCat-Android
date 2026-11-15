@@ -476,6 +476,9 @@ data class ProfileActivity(
     val occurredAt: String = "",
     val title: String = "",
     val level: Int? = null,
+    val topicId: String = "",
+    val postId: String = "",
+    val postNumber: Int? = null,
 )
 
 @Serializable

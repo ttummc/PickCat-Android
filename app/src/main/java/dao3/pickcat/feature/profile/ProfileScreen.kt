@@ -1,5 +1,6 @@
 package dao3.pickcat.feature.profile
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -387,6 +388,7 @@ fun ProfileScreen(
     onOpenTopic: (Topic) -> Unit,
     onOpenWork: (Work) -> Unit,
     onOpenUser: (UserProfile) -> Unit,
+    onOpenActivity: (ProfileActivity) -> Unit,
     onOpenSettings: () -> Unit,
     onOpenMedia: () -> Unit,
     onOpenLibrary: () -> Unit,
@@ -613,6 +615,11 @@ fun ProfileScreen(
                                     ActivityRow(
                                         activity = activity,
                                         isLast = index == state.activities.lastIndex,
+                                        onClick = if (activity.topicId.isNotBlank()) {
+                                            { onOpenActivity(activity) }
+                                        } else {
+                                            null
+                                        },
                                     )
                                 }
                             }
@@ -1283,7 +1290,11 @@ private fun WorkGrid(
 }
 
 @Composable
-private fun ActivityRow(activity: ProfileActivity, isLast: Boolean) {
+private fun ActivityRow(
+    activity: ProfileActivity,
+    isLast: Boolean,
+    onClick: (() -> Unit)? = null,
+) {
     val isLike = activity.kind.contains("LIKE")
     val isReply = activity.kind.contains("REPLY")
     val isPost = activity.kind.contains("POST") || activity.kind.contains("TOPIC")
@@ -1317,7 +1328,16 @@ private fun ActivityRow(activity: ProfileActivity, isLast: Boolean) {
         else -> "动态"
     }
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (onClick != null) {
+                    Modifier.clickable(onClick = onClick)
+                } else {
+                    Modifier
+                },
+            )
+            .padding(horizontal = 16.dp, vertical = 6.dp),
         verticalAlignment = Alignment.Top,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -1367,6 +1387,13 @@ private fun ActivityRow(activity: ProfileActivity, isLast: Boolean) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+        if (onClick != null) {
+            Icon(
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = "打开动态",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

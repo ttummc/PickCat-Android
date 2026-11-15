@@ -3,6 +3,12 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.5] - 2026-11-15
+
+### 新增
+
+- 个人主页最近动态支持点击，打开对应帖子并定位到相关回复楼层。
+
 ## [0.1.4] - 2026-11-15
 
 ### 修复
@@ -49,6 +55,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.5]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.5
 [0.1.4]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.4
 [0.1.3]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.3
 [0.1.2]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.2
