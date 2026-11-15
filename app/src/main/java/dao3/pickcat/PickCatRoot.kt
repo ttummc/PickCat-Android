@@ -70,8 +70,8 @@ fun PickCatRoot(viewModel: AppViewModel) {
     val updateViewModel: UpdateViewModel = viewModel()
     val updateState by updateViewModel.state.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
-        updateViewModel.check(context)
+    LaunchedEffect(preferences.updateSource) {
+        updateViewModel.check(context, preferences.updateSource)
     }
     LaunchedEffect(updateState.installFile) {
         val file = updateState.installFile ?: return@LaunchedEffect

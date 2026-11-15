@@ -116,6 +116,9 @@ private fun themeLabel(mode: String): String = when (mode) {
     else -> "跟随系统"
 }
 
+private fun updateSourceLabel(source: String): String =
+    if (source == "mirror") "Kitter镜像源" else "GitHub Releases"
+
 class SettingsViewModel : ViewModel() {
     private val api = AppGraph.container.api
     private val _state = MutableStateFlow(SettingsUiState())
@@ -182,6 +185,7 @@ fun SettingsScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var showThemeDialog by remember { mutableStateOf(false) }
+    var showUpdateSourceDialog by remember { mutableStateOf(false) }
 
     val copyAccountId: () -> Unit = {
         val id = user?.id.orEmpty()
@@ -431,14 +435,14 @@ fun SettingsScreen(
                         icon = Icons.Default.Refresh,
                         title = "检查更新",
                         summary = when {
-                            updateState.checking -> "正在检查 GitHub Releases"
+                            updateState.checking -> "正在检查更新"
                             updateState.downloading -> "正在下载更新"
                             updateState.update != null -> "发现 ${updateState.update?.tag}"
-                            else -> "从 GitHub Releases 获取最新版本"
+                            else -> "GitHub Releases 或 Kitter镜像源"
                         },
                         onClick = {
                             if (!updateState.checking && !updateState.downloading) {
-                                updateViewModel.check(context)
+                                updateViewModel.check(context, preferences.updateSource)
                             }
                         },
                         trailing = {
@@ -454,6 +458,18 @@ fun SettingsScreen(
                                 )
                             }
                         },
+                    )
+                    HorizontalDivider(Modifier.padding(start = 56.dp))
+                    SettingsRow(
+                        icon = Icons.Default.Refresh,
+                        title = "更新来源",
+                        summary = if (preferences.updateSource == "mirror") {
+                            "Kitter镜像源，失败时自动切 GitHub"
+                        } else {
+                            "GitHub Releases，失败时自动切 Kitter镜像源"
+                        },
+                        onClick = { showUpdateSourceDialog = true },
+                        showChevron = true,
                     )
                     HorizontalDivider(Modifier.padding(start = 56.dp))
                     SettingsRow(
@@ -535,6 +551,46 @@ fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { showThemeDialog = false }) { Text("关闭") }
+            },
+        )
+    }
+
+    if (showUpdateSourceDialog) {
+        AlertDialog(
+            onDismissRequest = { showUpdateSourceDialog = false },
+            title = { Text("更新来源") },
+            text = {
+                Column {
+                    val options = listOf(
+                        "github" to "GitHub Releases",
+                        "mirror" to "Kitter镜像源",
+                    )
+                    options.forEach { (value, label) ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    appViewModel.updateUpdateSource(value)
+                                    showUpdateSourceDialog = false
+                                }
+                                .padding(vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(
+                                selected = preferences.updateSource == value,
+                                onClick = {
+                                    appViewModel.updateUpdateSource(value)
+                                    showUpdateSourceDialog = false
+                                },
+                            )
+                            Spacer(Modifier.width(12.dp))
+                            Text(label)
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showUpdateSourceDialog = false }) { Text("关闭") }
             },
         )
     }

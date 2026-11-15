@@ -16,6 +16,7 @@ import okhttp3.Request
 import org.json.JSONObject
 import java.io.File
 import java.io.IOException
+import java.security.MessageDigest
 
 data class AvailableUpdate(
     val tag: String,
@@ -25,6 +26,7 @@ data class AvailableUpdate(
     val releaseUrl: String,
     val apkUrl: String,
     val apkSize: Long,
+    val sha256: String? = null,
 )
 
 data class UpdateUiState(
@@ -43,7 +45,7 @@ class UpdateViewModel : ViewModel() {
     private val _state = MutableStateFlow(UpdateUiState())
     val state: StateFlow<UpdateUiState> = _state.asStateFlow()
 
-    fun check(context: Context) {
+    fun check(context: Context, source: String = "github") {
         if (_state.value.checking || _state.value.downloading) return
         _state.update {
             it.copy(
@@ -55,7 +57,7 @@ class UpdateViewModel : ViewModel() {
             )
         }
         viewModelScope.launch {
-            runCatching { repository.latestRelease() }
+            runCatching { repository.latestRelease(source) }
                 .onSuccess { release ->
                     val current = installedVersionName(context)
                     val newer = compareVersions(release.versionName, current) > 0
@@ -90,6 +92,14 @@ class UpdateViewModel : ViewModel() {
             runCatching {
                 repository.download(update.apkUrl, target) { progress ->
                     _state.update { it.copy(progress = progress) }
+                }
+                if (update.apkSize > 0 && target.length() != update.apkSize) {
+                    throw IOException("更新包大小校验失败")
+                }
+                if (!update.sha256.isNullOrBlank() &&
+                    !sha256(target).equals(update.sha256, ignoreCase = true)
+                ) {
+                    throw IOException("更新包 SHA-256 校验失败")
                 }
                 val validationError = validateApk(context, target)
                 if (validationError != null) throw IOException(validationError)
@@ -139,8 +149,7 @@ class UpdateViewModel : ViewModel() {
         packageInfo.versionName.orEmpty()
     }.getOrDefault("")
 
-    private fun validateApk(context: Context, file: File): String? {
-        if (!file.exists() || file.length() == 0L) return "更新包为空"
+    private fun validateApk(context: Context, file: File): String? {        if (!file.exists() || file.length() == 0L) return "更新包为空"
         val packageManager = context.packageManager
         @Suppress("DEPRECATION")
         val archive = packageManager.getPackageArchiveInfo(
@@ -158,20 +167,65 @@ class UpdateViewModel : ViewModel() {
         if (archiveSignatures != null && currentSignatures != null &&
             !archiveSignatures.contentEquals(currentSignatures)
         ) {
-            return "更新包签名与当前应用不一致，无法直接覆盖安装。请先在 GitHub Releases 手动安装一次正式签名版本。"
+            return "更新包签名与当前应用不一致，无法直接覆盖安装。请先手动安装一次官方发行版。"
         }
         if (archive.versionCode <= current.versionCode) return "更新包版本不高于当前版本"
         return null
     }
+
+    private fun sha256(file: File): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        file.inputStream().use { input ->
+            val buffer = ByteArray(16 * 1024)
+            while (true) {
+                val read = input.read(buffer)
+                if (read <= 0) break
+                digest.update(buffer, 0, read)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
 }
+
+private const val MIRROR_BASE = "https://pickcat-android.kitter.cn"
+private const val MIRROR_LATEST_JSON = "$MIRROR_BASE/latest.json"
+private const val MIRROR_VERSION = "$MIRROR_BASE/version"
+private const val MIRROR_APK = "$MIRROR_BASE/latest.apk"
 
 private class UpdateRepository(
     private val client: OkHttpClient = OkHttpClient(),
 ) {
-    suspend fun latestRelease(): AvailableUpdate = withContext(Dispatchers.IO) {
+    suspend fun latestRelease(source: String): AvailableUpdate = withContext(Dispatchers.IO) {
+        val githubFirst = source != "mirror"
+        val primary: suspend () -> AvailableUpdate = if (githubFirst) {
+            { fetchGitHub() }
+        } else {
+            { fetchMirror() }
+        }
+        val fallback: suspend () -> AvailableUpdate = if (githubFirst) {
+            { fetchMirror() }
+        } else {
+            { fetchGitHub() }
+        }
+        try {
+            primary()
+        } catch (primaryError: Exception) {
+            try {
+                fallback()
+            } catch (fallbackError: Exception) {
+                throw IOException(
+                    "GitHub 和镜像均不可用：${primaryError.message.orEmpty()} / " +
+                        fallbackError.message.orEmpty(),
+                )
+            }
+        }
+    }
+
+    private suspend fun fetchGitHub(): AvailableUpdate = withContext(Dispatchers.IO) {
         val request = Request.Builder()
             .url("https://api.github.com/repos/ttummc/PickCat-Android/releases/latest")
             .header("Accept", "application/vnd.github+json")
+            .header("Cache-Control", "no-cache")
             .header("User-Agent", "PickCat-Android")
             .build()
         client.newCall(request).execute().use { response ->
@@ -207,6 +261,66 @@ private class UpdateRepository(
         }
     }
 
+    private suspend fun fetchMirror(): AvailableUpdate = withContext(Dispatchers.IO) {
+        val detailed = runCatching { fetchMirrorJson() }.getOrNull()
+        if (detailed != null) return@withContext detailed
+
+        val version = fetchMirrorVersion()
+        if (version.isBlank()) throw IOException("镜像没有返回版本号")
+        AvailableUpdate(
+            tag = version,
+            versionName = version.removePrefix("v"),
+            title = "PickCat Android $version",
+            notes = "来自 Kitter 镜像。",
+            releaseUrl = MIRROR_BASE,
+            apkUrl = MIRROR_APK,
+            apkSize = 0L,
+        )
+    }
+
+    private fun fetchMirrorJson(): AvailableUpdate {
+        val request = Request.Builder()
+            .url(MIRROR_LATEST_JSON)
+            .header("Cache-Control", "no-cache")
+            .header("User-Agent", "PickCat-Android")
+            .build()
+        return client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) throw IOException("镜像返回 HTTP ${response.code}")
+            val root = JSONObject(response.body?.string().orEmpty())
+            val tag = root.optString("tag")
+            if (tag.isBlank()) throw IOException("镜像 JSON 没有版本号")
+            val syncedAt = root.optString("synced_at")
+            AvailableUpdate(
+                tag = tag,
+                versionName = tag.removePrefix("v"),
+                title = "PickCat Android $tag",
+                notes = buildString {
+                    append("来自 Kitter 镜像。")
+                    if (syncedAt.isNotBlank()) {
+                        append("\n同步时间：")
+                        append(syncedAt)
+                    }
+                },
+                releaseUrl = MIRROR_BASE,
+                apkUrl = root.optString("url").ifBlank { MIRROR_APK },
+                apkSize = root.optLong("size"),
+                sha256 = root.optString("sha256").takeIf { it.isNotBlank() },
+            )
+        }
+    }
+
+    private fun fetchMirrorVersion(): String {
+        val request = Request.Builder()
+            .url(MIRROR_VERSION)
+            .header("Cache-Control", "no-cache")
+            .header("User-Agent", "PickCat-Android")
+            .build()
+        client.newCall(request).execute().use { response ->
+            if (!response.isSuccessful) throw IOException("镜像返回 HTTP ${response.code}")
+            return response.body?.string()?.trim().orEmpty()
+        }
+    }
+
     suspend fun download(
         url: String,
         target: File,
@@ -216,6 +330,7 @@ private class UpdateRepository(
         if (target.exists()) target.delete()
         val request = Request.Builder()
             .url(url)
+            .header("Cache-Control", "no-cache")
             .header("User-Agent", "PickCat-Android")
             .build()
         client.newCall(request).execute().use { response ->

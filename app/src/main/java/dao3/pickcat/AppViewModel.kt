@@ -148,6 +148,10 @@ class AppViewModel : ViewModel() {
         viewModelScope.launch { preferencesRepository.markGateCompleted(userId) }
     }
 
+    fun updateUpdateSource(source: String) {
+        viewModelScope.launch { preferencesRepository.setUpdateSource(source) }
+    }
+
     fun recordSearch(query: String) {
         viewModelScope.launch { preferencesRepository.recordSearch(query) }
     }

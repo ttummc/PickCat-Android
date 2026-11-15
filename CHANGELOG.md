@@ -3,6 +3,14 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.14] - 2026-11-15
+
+### Added
+
+- Choose between GitHub Releases and Kitter镜像源 as the update source.
+- Automatic fallback to the other source when the preferred source is unreachable.
+- Mirror downloads validate the published APK size and SHA-256.
+
 ## [0.1.13] - 2026-11-15
 
 ### Added
@@ -106,6 +114,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.14]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.14
 [0.1.13]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.13
 [0.1.12]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.12
 [0.1.11]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.11

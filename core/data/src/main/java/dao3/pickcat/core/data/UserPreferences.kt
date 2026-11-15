@@ -19,6 +19,7 @@ data class AppPreferences(
     val dynamicColor: Boolean = true,
     val backgroundNotifications: Boolean = true,
     val gateCompletedUserIds: Set<String> = emptySet(),
+    val updateSource: String = "github",
 )
 
 class UserPreferences(private val context: Context) {
@@ -30,6 +31,7 @@ class UserPreferences(private val context: Context) {
             dynamicColor = values[KEY_DYNAMIC] ?: true,
             backgroundNotifications = values[KEY_BACKGROUND_NOTIFICATIONS] ?: true,
             gateCompletedUserIds = values[KEY_GATE_COMPLETED] ?: emptySet(),
+            updateSource = values[KEY_UPDATE_SOURCE] ?: "github",
         )
     }
 
@@ -54,6 +56,10 @@ class UserPreferences(private val context: Context) {
             values[KEY_GATE_COMPLETED] =
                 (values[KEY_GATE_COMPLETED] ?: emptySet()) + userId
         }
+    }
+
+    suspend fun setUpdateSource(source: String) {
+        store.edit { it[KEY_UPDATE_SOURCE] = source }
     }
 
     suspend fun recordSearch(query: String) {
@@ -82,6 +88,7 @@ class UserPreferences(private val context: Context) {
         val KEY_DYNAMIC = booleanPreferencesKey("dynamic_color")
         val KEY_BACKGROUND_NOTIFICATIONS = booleanPreferencesKey("background_notifications")
         val KEY_GATE_COMPLETED = stringSetPreferencesKey("gate_completed_user_ids")
+        val KEY_UPDATE_SOURCE = stringPreferencesKey("update_source")
         val KEY_SEARCH_HISTORY = stringPreferencesKey("search_history")
     }
 }

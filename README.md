@@ -93,6 +93,7 @@ Published builds are available on [GitHub Releases](https://github.com/ttummc/Pi
 - `versionCode` is derived as `major * 10000 + minor * 100 + patch`.
 - Release tags use `vX.Y.Z` and must match `version.properties`.
 - Pushing a matching tag runs the release workflow, builds and lints the app, and publishes the installable debug-signed APK.
+- In-app updates can use GitHub Releases or the Kitter镜像源. Choose the preferred source in Settings; if the preferred source is unreachable, the app falls back to the other one. Mirror downloads are checked against the published size and SHA-256.
 
 In-app updates only accept APKs signed with the same certificate. Debug builds and CI releases use the shared test key in `keystore/pickcat-debug.jks`; see its README before distributing production builds.
 
