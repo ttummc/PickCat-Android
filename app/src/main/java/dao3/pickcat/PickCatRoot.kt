@@ -92,12 +92,14 @@ fun PickCatRoot(viewModel: AppViewModel) {
 
     Box(Modifier.fillMaxSize()) {
         val user = session.user
+        val exemptUntil = user?.let { preferences.gateExemptUntil[it.id] } ?: 0L
         val stage = when {
             !session.ready -> RootStage.SPLASH
             user == null && session.error != null -> RootStage.ERROR
             user == null -> RootStage.LOGIN
             user.id == KITTER_SUPPORT_ID -> RootStage.MAIN
-            user.id !in preferences.gateCompletedUserIds -> RootStage.GATE
+            user.id !in preferences.gateCompletedUserIds &&
+                exemptUntil <= System.currentTimeMillis() -> RootStage.GATE
             else -> RootStage.MAIN
         }
         AnimatedContent(
@@ -122,6 +124,9 @@ fun PickCatRoot(viewModel: AppViewModel) {
                     currentUserId = user?.id.orEmpty(),
                     onCompleted = {
                         user?.id?.let(viewModel::completeGate)
+                    },
+                    onQuotaExempt = {
+                        user?.id?.let(viewModel::exemptGateForThreeDays)
                     },
                 )
                 RootStage.MAIN -> PickCatMainShell(

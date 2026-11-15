@@ -3,6 +3,12 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.18] - 2026-11-15
+
+### Added
+
+- When the experience gate fails because the account has insufficient quota or participation limits, the user can take a three-day exemption instead of being blocked.
+
 ## [0.1.17] - 2026-11-15
 
 ### Fixed
@@ -132,6 +138,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.18]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.18
 [0.1.17]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.17
 [0.1.16]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.16
 [0.1.15]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.15

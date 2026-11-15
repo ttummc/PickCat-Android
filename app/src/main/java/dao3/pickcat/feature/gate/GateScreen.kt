@@ -22,11 +22,13 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -42,6 +44,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dao3.pickcat.AppGraph
 import dao3.pickcat.R
+import dao3.pickcat.core.network.ApiException
 import dao3.pickcat.core.network.Post
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -56,6 +59,7 @@ private const val EXPERIENCE_COMMENT = "已亲身体验"
 data class GateUiState(
     val busy: Boolean = false,
     val error: String? = null,
+    val quotaExemptOffered: Boolean = false,
 )
 
 class GateViewModel : ViewModel() {
@@ -101,15 +105,48 @@ class GateViewModel : ViewModel() {
                 onCompleted()
                 _state.update { it.copy(busy = false) }
             } catch (error: Exception) {
-                _state.update {
-                    it.copy(
-                        busy = false,
-                        error = error.message ?: "体验确认失败，请重试",
-                    )
+                if (error.isQuotaInsufficient()) {
+                    _state.update {
+                        it.copy(
+                            busy = false,
+                            error = null,
+                            quotaExemptOffered = true,
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            busy = false,
+                            error = error.message ?: "体验确认失败，请重试",
+                        )
+                    }
                 }
             }
         }
     }
+
+    fun dismissQuotaOffer() {
+        _state.update { it.copy(quotaExemptOffered = false) }
+    }
+}
+
+private fun Throwable.isQuotaInsufficient(): Boolean {
+    val apiError = this as? ApiException ?: return false
+    val text = "${apiError.code.orEmpty()} ${apiError.message}".lowercase()
+    return listOf(
+        "quota",
+        "额度",
+        "配额",
+        "token",
+        "积分",
+        "次数",
+        "不足",
+        "insufficient",
+        "exceeded",
+        "rate limit",
+        "participation",
+        "level",
+    ).any { keyword -> text.contains(keyword) }
 }
 
 private fun List<Post>.containsExperienceComment(userId: String): Boolean =
@@ -122,6 +159,7 @@ private fun List<Post>.containsExperienceComment(userId: String): Boolean =
 fun GateScreen(
     currentUserId: String,
     onCompleted: () -> Unit,
+    onQuotaExempt: () -> Unit,
 ) {
     BackHandler(enabled = true) {}
     val viewModel: GateViewModel = viewModel()
@@ -219,6 +257,27 @@ fun GateScreen(
                 }
             }
         }
+    }
+
+    if (state.quotaExemptOffered) {
+        AlertDialog(
+            onDismissRequest = viewModel::dismissQuotaOffer,
+            title = { Text("额度不足") },
+            text = {
+                Text("当前账号额度不足，无法完成关注、点赞或评论。可以豁免 3 天后继续使用。")
+            },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.dismissQuotaOffer()
+                    onQuotaExempt()
+                }) { Text("豁免 3 天") }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::dismissQuotaOffer) {
+                    Text("稍后重试")
+                }
+            },
+        )
     }
 }
 

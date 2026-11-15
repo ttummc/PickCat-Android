@@ -19,6 +19,7 @@ data class AppPreferences(
     val dynamicColor: Boolean = true,
     val backgroundNotifications: Boolean = true,
     val gateCompletedUserIds: Set<String> = emptySet(),
+    val gateExemptUntil: Map<String, Long> = emptyMap(),
     val updateSource: String = "github",
 )
 
@@ -31,6 +32,7 @@ class UserPreferences(private val context: Context) {
             dynamicColor = values[KEY_DYNAMIC] ?: true,
             backgroundNotifications = values[KEY_BACKGROUND_NOTIFICATIONS] ?: true,
             gateCompletedUserIds = values[KEY_GATE_COMPLETED] ?: emptySet(),
+            gateExemptUntil = parseGateExemptions(values[KEY_GATE_EXEMPT]),
             updateSource = values[KEY_UPDATE_SOURCE] ?: "github",
         )
     }
@@ -58,6 +60,15 @@ class UserPreferences(private val context: Context) {
         }
     }
 
+    suspend fun grantGateExemption(userId: String, untilEpochMillis: Long) {
+        store.edit { values ->
+            val current = parseGateExemptions(values[KEY_GATE_EXEMPT])
+            values[KEY_GATE_EXEMPT] = (current + (userId to untilEpochMillis))
+                .map { (id, until) -> "$id|$until" }
+                .toSet()
+        }
+    }
+
     suspend fun setUpdateSource(source: String) {
         store.edit { it[KEY_UPDATE_SOURCE] = source }
     }
@@ -82,12 +93,20 @@ class UserPreferences(private val context: Context) {
         return value.split(SEPARATOR).filter { it.isNotBlank() }
     }
 
+    private fun parseGateExemptions(value: Set<String>?): Map<String, Long> =
+        value.orEmpty().mapNotNull { entry ->
+            val id = entry.substringBefore('|')
+            val until = entry.substringAfter('|', "").toLongOrNull()
+            if (id.isBlank() || until == null) null else id to until
+        }.toMap()
+
     private companion object {
         const val SEPARATOR = "\u001F"
         val KEY_THEME = stringPreferencesKey("theme_mode")
         val KEY_DYNAMIC = booleanPreferencesKey("dynamic_color")
         val KEY_BACKGROUND_NOTIFICATIONS = booleanPreferencesKey("background_notifications")
         val KEY_GATE_COMPLETED = stringSetPreferencesKey("gate_completed_user_ids")
+        val KEY_GATE_EXEMPT = stringSetPreferencesKey("gate_exempt_until")
         val KEY_UPDATE_SOURCE = stringPreferencesKey("update_source")
         val KEY_SEARCH_HISTORY = stringPreferencesKey("search_history")
     }
