@@ -1,8 +1,8 @@
 package dao3.pickcat.feature.settings
 
-import android.app.Application
+import android.content.Context
 import android.content.pm.PackageManager
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,12 +38,12 @@ data class UpdateUiState(
     val installError: String? = null,
 )
 
-class UpdateViewModel(application: Application) : AndroidViewModel(application) {
+class UpdateViewModel : ViewModel() {
     private val repository = UpdateRepository()
     private val _state = MutableStateFlow(UpdateUiState())
     val state: StateFlow<UpdateUiState> = _state.asStateFlow()
 
-    fun check() {
+    fun check(context: Context) {
         if (_state.value.checking || _state.value.downloading) return
         _state.update {
             it.copy(
@@ -57,7 +57,7 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             runCatching { repository.latestRelease() }
                 .onSuccess { release ->
-                    val current = installedVersionName()
+                    val current = installedVersionName(context)
                     val newer = compareVersions(release.versionName, current) > 0
                     _state.update {
                         it.copy(
@@ -78,20 +78,20 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun download() {
+    fun download(context: Context) {
         val update = _state.value.update ?: return
         if (_state.value.downloading) return
         _state.update { it.copy(downloading = true, progress = 0f, installError = null) }
         viewModelScope.launch {
             val target = File(
-                getApplication<Application>().cacheDir,
+                context.cacheDir,
                 "updates/pickcat-${update.versionName}.apk",
             )
             runCatching {
                 repository.download(update.apkUrl, target) { progress ->
                     _state.update { it.copy(progress = progress) }
                 }
-                val validationError = validateApk(target)
+                val validationError = validateApk(context, target)
                 if (validationError != null) throw IOException(validationError)
                 target
             }.onSuccess { file ->
@@ -133,24 +133,26 @@ class UpdateViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    private fun installedVersionName(): String = runCatching {
-        val packageInfo = getApplication<Application>().packageManager
-            .getPackageInfo(getApplication<Application>().packageName, 0)
+    private fun installedVersionName(context: Context): String = runCatching {
+        val packageInfo = context.packageManager
+            .getPackageInfo(context.packageName, 0)
         packageInfo.versionName.orEmpty()
     }.getOrDefault("")
 
-    private fun validateApk(file: File): String? {
+    private fun validateApk(context: Context, file: File): String? {
         if (!file.exists() || file.length() == 0L) return "更新包为空"
-        val app = getApplication<Application>()
-        val packageManager = app.packageManager
+        val packageManager = context.packageManager
         @Suppress("DEPRECATION")
         val archive = packageManager.getPackageArchiveInfo(
             file.absolutePath,
             PackageManager.GET_SIGNATURES,
         ) ?: return "无法读取更新包"
-        if (archive.packageName != app.packageName) return "更新包不属于 PickCat"
+        if (archive.packageName != context.packageName) return "更新包不属于 PickCat"
         @Suppress("DEPRECATION")
-        val current = packageManager.getPackageInfo(app.packageName, PackageManager.GET_SIGNATURES)
+        val current = packageManager.getPackageInfo(
+            context.packageName,
+            PackageManager.GET_SIGNATURES,
+        )
         val archiveSignatures = archive.signatures
         val currentSignatures = current.signatures
         if (archiveSignatures != null && currentSignatures != null &&

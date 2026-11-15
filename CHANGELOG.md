@@ -3,6 +3,12 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.2] - 2026-11-15
+
+### Fixed
+
+- Crash when scrolling a topic's comment thread to the bottom: the thread rail no longer requests unsupported intrinsic measurements from SubcomposeLayout content.
+
 ## [0.1.1] - 2026-11-15
 
 ### Added
@@ -30,5 +36,6 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.2]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.2
 [0.1.1]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.1
 [0.1.0]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.0

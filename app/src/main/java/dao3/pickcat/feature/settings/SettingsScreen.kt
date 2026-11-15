@@ -415,7 +415,7 @@ fun SettingsScreen(
                                     )
                                 } else {
                                     TextButton(
-                                        onClick = { updateViewModel.check() },
+                                        onClick = { updateViewModel.check(context) },
                                     ) {
                                         Text(if (updateState.update != null) "查看" else "检查")
                                     }
@@ -423,7 +423,7 @@ fun SettingsScreen(
                             },
                             modifier = Modifier.clickableRow {
                                 if (!updateState.checking && !updateState.downloading) {
-                                    updateViewModel.check()
+                                    updateViewModel.check(context)
                                 }
                             },
                         )
@@ -565,7 +565,7 @@ fun SettingsScreen(
                 }
             },
             confirmButton = {
-                Button(onClick = updateViewModel::download) { Text("下载并安装") }
+                Button(onClick = { updateViewModel.download(context) }) { Text("下载并安装") }
             },
             dismissButton = {
                 TextButton(onClick = updateViewModel::dismiss) { Text("稍后") }
