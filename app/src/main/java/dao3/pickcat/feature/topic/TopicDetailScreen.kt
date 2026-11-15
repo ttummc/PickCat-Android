@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -81,6 +82,7 @@ import dao3.pickcat.AppGraph
 import dao3.pickcat.core.network.ApiException
 import dao3.pickcat.core.network.Post
 import dao3.pickcat.core.network.Tag
+import dao3.pickcat.core.network.UserRef
 import dao3.pickcat.core.network.TopicDetail
 import dao3.pickcat.core.ui.AuthorRow
 import dao3.pickcat.core.ui.EmptyState
@@ -360,6 +362,7 @@ fun TopicDetailScreen(
     postNumber: Int?,
     onBack: () -> Unit,
     onOpenCategory: (Tag) -> Unit,
+    onOpenUser: (UserRef) -> Unit,
 ) {
     val viewModel: TopicDetailViewModel = viewModel(
         key = "topic-$topicId",
@@ -498,6 +501,7 @@ fun TopicDetailScreen(
                             onLike = { viewModel.togglePostLike(post) },
                             onReply = { replyTo = post },
                             onReport = { reportTarget = post },
+                            onOpenUser = onOpenUser,
                         )
                     }
                 }
@@ -542,7 +546,7 @@ fun TopicDetailScreen(
                     }
                 }
                 items(threadedPosts, key = { it.post.id }) { item ->
-                    ThreadedReply(depth = item.depth) {
+                        ThreadedReply(depth = item.depth) {
                         CommentRow(
                             post = item.post,
                             liked = item.post.id in state.likedPosts,
@@ -550,6 +554,7 @@ fun TopicDetailScreen(
                             onLike = { viewModel.togglePostLike(item.post) },
                             onReply = { replyTo = item.post },
                             onReport = { reportTarget = item.post },
+                            onOpenUser = onOpenUser,
                             showDivider = item.depth == 0,
                         )
                     }
@@ -685,6 +690,7 @@ private fun CommentRow(
     onLike: () -> Unit,
     onReply: () -> Unit,
     onReport: () -> Unit,
+    onOpenUser: (UserRef) -> Unit,
     showDivider: Boolean,
 ) {
     Column(
@@ -696,6 +702,7 @@ private fun CommentRow(
         AuthorRow(
             user = post.author,
             time = post.createdAt,
+            modifier = Modifier.clickable { onOpenUser(post.author) },
             trailing = {
                 Text(
                     "#${post.postNumber}",
@@ -776,6 +783,7 @@ private fun PostCard(
     onLike: () -> Unit,
     onReply: () -> Unit,
     onReport: () -> Unit,
+    onOpenUser: (UserRef) -> Unit,
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -786,6 +794,7 @@ private fun PostCard(
             AuthorRow(
                 user = post.author,
                 time = post.createdAt,
+                modifier = Modifier.clickable { onOpenUser(post.author) },
                 trailing = {
                     Text(
                         "#${post.postNumber}",

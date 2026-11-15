@@ -242,6 +242,7 @@ fun TopicCard(
     topic: Topic,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    onAuthorClick: (() -> Unit)? = null,
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -251,7 +252,14 @@ fun TopicCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = if (onAuthorClick != null) {
+                    Modifier.clickable { onAuthorClick() }
+                } else {
+                    Modifier
+                },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 UserAvatar(topic.author, 32.dp)
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.weight(1f)) {

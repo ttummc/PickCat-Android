@@ -65,6 +65,7 @@ import dao3.pickcat.AppGraph
 import dao3.pickcat.LocalTabReselect
 import dao3.pickcat.core.network.Tag
 import dao3.pickcat.core.network.Topic
+import dao3.pickcat.core.network.UserRef
 import dao3.pickcat.core.ui.EmptyState
 import dao3.pickcat.core.ui.ErrorState
 import dao3.pickcat.core.ui.PagedFooter
@@ -244,6 +245,7 @@ private fun topicFeedViewModel(tagSlug: String? = null): TopicFeedViewModel {
 fun ForumScreen(
     onOpenTopic: (Topic) -> Unit,
     onOpenCategory: (Tag) -> Unit,
+    onOpenUser: (UserRef) -> Unit,
     onCompose: () -> Unit,
     onSearch: () -> Unit,
 ) {
@@ -256,6 +258,7 @@ fun ForumScreen(
         onBack = {},
         onOpenTopic = onOpenTopic,
         onOpenCategory = onOpenCategory,
+        onOpenUser = onOpenUser,
         onCompose = onCompose,
         onSearch = onSearch,
     )
@@ -267,6 +270,7 @@ fun CategoryScreen(
     tagSlug: String,
     onBack: () -> Unit,
     onOpenTopic: (Topic) -> Unit,
+    onOpenUser: (UserRef) -> Unit,
     onCompose: () -> Unit,
 ) {
     val viewModel: TopicFeedViewModel = topicFeedViewModel(tagSlug)
@@ -279,6 +283,7 @@ fun CategoryScreen(
         onBack = onBack,
         onOpenTopic = onOpenTopic,
         onOpenCategory = {},
+        onOpenUser = onOpenUser,
         onCompose = onCompose,
         onSearch = {},
         showTags = false,
@@ -295,6 +300,7 @@ private fun TopicFeedScaffold(
     onBack: () -> Unit,
     onOpenTopic: (Topic) -> Unit,
     onOpenCategory: (Tag) -> Unit,
+    onOpenUser: (UserRef) -> Unit,
     onCompose: () -> Unit,
     onSearch: () -> Unit,
     showTags: Boolean = true,
@@ -444,6 +450,7 @@ private fun TopicFeedScaffold(
                                 TopicCard(
                                     topic,
                                     onClick = { onOpenTopic(topic) },
+                                    onAuthorClick = { onOpenUser(topic.author) },
                                     modifier = Modifier.animateItem(),
                                 )
                             }

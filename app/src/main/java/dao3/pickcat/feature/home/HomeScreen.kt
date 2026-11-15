@@ -74,6 +74,7 @@ import dao3.pickcat.LocalTabReselect
 import dao3.pickcat.R
 import dao3.pickcat.core.network.Tag
 import dao3.pickcat.core.network.Topic
+import dao3.pickcat.core.network.UserRef
 import dao3.pickcat.core.ui.EmptyState
 import dao3.pickcat.core.ui.ErrorState
 import dao3.pickcat.core.ui.LoadingState
@@ -213,6 +214,7 @@ fun HomeScreen(
     appViewModel: AppViewModel,
     onOpenTopic: (Topic) -> Unit,
     onOpenCategory: (Tag) -> Unit,
+    onOpenUser: (UserRef) -> Unit,
     onCompose: () -> Unit,
     onSearch: () -> Unit,
     onNotifications: () -> Unit,
@@ -355,6 +357,7 @@ fun HomeScreen(
                             TopicCard(
                                 topic = topic,
                                 onClick = { onOpenTopic(topic) },
+                                onAuthorClick = { onOpenUser(topic.author) },
                                 modifier = Modifier.animateItem(),
                             )
                         }

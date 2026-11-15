@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -389,6 +390,7 @@ fun WorkDetailScreen(
                             AuthorRow(
                                 user = work.author,
                                 time = work.createdAt,
+                                modifier = Modifier.clickable { onOpenAuthor(work.author) },
                                 trailing = {
                                     Text(
                                         work.type,
@@ -639,6 +641,7 @@ private fun WorkCommentCard(
             AuthorRow(
                 user = comment.author,
                 time = comment.createdAt,
+                modifier = Modifier.clickable { onOpenAuthor() },
                 trailing = {
                     Text(
                         "#${comment.commentNumber}",

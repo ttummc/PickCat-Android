@@ -252,6 +252,7 @@ fun PickCatMainShell(
                     appViewModel = appViewModel,
                     onOpenTopic = { topic -> navController.navigate(Routes.topic(topic.id)) },
                     onOpenCategory = { tag -> navController.navigate(Routes.category(tag.slug)) },
+                    onOpenUser = { user -> navController.navigate(Routes.profile(user.id)) },
                     onCompose = { navController.navigate(Routes.COMPOSER) },
                     onSearch = { navController.navigate(Routes.SEARCH) },
                     onNotifications = { navigateTopLevel(Routes.NOTIFICATIONS) },
@@ -263,11 +264,13 @@ fun PickCatMainShell(
                         onOpenCategory = { tag -> navController.navigate(Routes.category(tag.slug)) },
                         onCompose = { navController.navigate(Routes.COMPOSER) },
                         onSearch = { navController.navigate(Routes.SEARCH) },
+                        onOpenUser = { user -> navController.navigate(Routes.profile(user.id)) },
                     )
                 } else {
                     ForumScreen(
                         onOpenTopic = { topic -> navController.navigate(Routes.topic(topic.id)) },
                         onOpenCategory = { tag -> navController.navigate(Routes.category(tag.slug)) },
+                        onOpenUser = { user -> navController.navigate(Routes.profile(user.id)) },
                         onCompose = { navController.navigate(Routes.COMPOSER) },
                         onSearch = { navController.navigate(Routes.SEARCH) },
                     )
@@ -281,6 +284,7 @@ fun PickCatMainShell(
                     tagSlug = entry.arguments?.getString("slug").orEmpty(),
                     onBack = { navController.popBackStack() },
                     onOpenTopic = { topic -> navController.navigate(Routes.topic(topic.id)) },
+                    onOpenUser = { user -> navController.navigate(Routes.profile(user.id)) },
                     onCompose = { navController.navigate(Routes.COMPOSER) },
                 )
             }
@@ -300,6 +304,7 @@ fun PickCatMainShell(
                     postNumber = entry.arguments?.getString("postNumber")?.toIntOrNull(),
                     onBack = { navController.popBackStack() },
                     onOpenCategory = { tag -> navController.navigate(Routes.category(tag.slug)) },
+                    onOpenUser = { user -> navController.navigate(Routes.profile(user.id)) },
                 )
             }
             composable(Routes.COMPOSER) {
@@ -556,6 +561,7 @@ private fun ForumTwoPane(
     onOpenCategory: (dao3.pickcat.core.network.Tag) -> Unit,
     onCompose: () -> Unit,
     onSearch: () -> Unit,
+    onOpenUser: (UserRef) -> Unit,
 ) {
     var selectedTopicId by rememberSaveable { mutableStateOf<String?>(null) }
     BackHandler(enabled = selectedTopicId != null) { selectedTopicId = null }
@@ -566,6 +572,7 @@ private fun ForumTwoPane(
                 ForumScreen(
                     onOpenTopic = { topic -> selectedTopicId = topic.id },
                     onOpenCategory = onOpenCategory,
+                    onOpenUser = onOpenUser,
                     onCompose = onCompose,
                     onSearch = onSearch,
                 )
@@ -585,6 +592,7 @@ private fun ForumTwoPane(
                         postNumber = null,
                         onBack = { selectedTopicId = null },
                         onOpenCategory = onOpenCategory,
+                        onOpenUser = onOpenUser,
                     )
                 }
             }
