@@ -77,6 +77,8 @@ app/build/outputs/apk/debug/app-debug.apk
 - Git 标签使用 `vX.Y.Z`，且必须与 `version.properties` 一致。
 - 推送标签后，Release 工作流会自动构建、运行 lint 并发布可安装的 debug 签名 APK。
 
+应用内更新只接受与当前应用签名一致的 APK。Debug 构建和 CI 发行版共用 `keystore/pickcat-debug.jks` 中的测试签名；正式分发前请阅读该目录的说明。
+
 发布步骤：
 
 1. 修改 `version.properties` 中的 `version.major`、`version.minor`、`version.patch`。
