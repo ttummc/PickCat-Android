@@ -21,6 +21,8 @@ fun ThreadedReply(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
+    // Do not measure this row with IntrinsicSize: content can contain
+    // AnimatedContent/SubcomposeLayout, which does not support intrinsic measurement.
     val safeDepth = depth.coerceIn(0, 3)
     val indent = (safeDepth * 16).dp
     val railColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
