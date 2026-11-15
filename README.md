@@ -4,6 +4,8 @@ English | [Chinese](README.zh-CN.md)
 
 A source-available native Android client for [pickcat.dao3.fun](https://pickcat.dao3.fun), built with Kotlin, Jetpack Compose, and Material 3.
 
+[Download the latest APK](https://github.com/ttummc/PickCat-Android/releases/latest)
+
 > This is an unofficial project and is not affiliated with the PickCat site operators. Sign-in happens on the official site. Account credentials and captchas never pass through a project-operated server.
 
 ## Status

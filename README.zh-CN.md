@@ -4,6 +4,8 @@
 
 `pickcat.dao3.fun` 的第三方 Android 客户端，使用 Kotlin、Jetpack Compose 和 Material 3。
 
+[下载最新 APK](https://github.com/ttummc/PickCat-Android/releases/latest)
+
 > 非官方项目，与 PickCat 站点运营方无隶属关系。登录通过站点官方页面完成，账号密码和验证码不会经过本项目服务器。
 
 ## 功能
