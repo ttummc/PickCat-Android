@@ -29,6 +29,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -276,16 +277,14 @@ fun WorksScreen(
                                         style = MaterialTheme.typography.titleLarge,
                                     )
                                 }
-                                SingleChoiceSegmentedButtonRow(Modifier.width(172.dp)) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     val options = WorkSort.entries
-                                    options.forEachIndexed { index, sort ->
-                                        SegmentedButton(
+                                    options.forEach { sort ->
+                                        FilterChip(
                                             selected = state.sort == sort,
                                             onClick = { viewModel.setSort(sort) },
-                                            shape = SegmentedButtonDefaults.itemShape(index, options.size),
-                                        ) {
-                                            Text(sort.label)
-                                        }
+                                            label = { Text(sort.label) },
+                                        )
                                     }
                                 }
                             }

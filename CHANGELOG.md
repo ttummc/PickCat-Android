@@ -3,6 +3,12 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.7] - 2026-11-15
+
+### Changed
+
+- Replaced the large recommended/latest segmented controls on Home and Works with compact filter chips.
+
 ## [0.1.6] - 2026-11-15
 
 ### Changed
@@ -62,6 +68,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.7]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.7
 [0.1.6]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.6
 [0.1.5]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.5
 [0.1.4]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.4

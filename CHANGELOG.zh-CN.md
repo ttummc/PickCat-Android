@@ -3,6 +3,12 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.7] - 2026-11-15
+
+### 变更
+
+- 首页和作品页的大号“推荐/最新”分段按钮改为紧凑的筛选 Chip。
+
 ## [0.1.6] - 2026-11-15
 
 ### 变更
@@ -62,6 +68,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.7]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.7
 [0.1.6]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.6
 [0.1.5]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.5
 [0.1.4]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.4
