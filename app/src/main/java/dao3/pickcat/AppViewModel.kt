@@ -144,6 +144,10 @@ class AppViewModel : ViewModel() {
         viewModelScope.launch { preferencesRepository.setBackgroundNotifications(enabled) }
     }
 
+    fun completeGate(userId: String) {
+        viewModelScope.launch { preferencesRepository.markGateCompleted(userId) }
+    }
+
     fun recordSearch(query: String) {
         viewModelScope.launch { preferencesRepository.recordSearch(query) }
     }

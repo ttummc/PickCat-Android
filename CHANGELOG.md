@@ -3,6 +3,14 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.13] - 2026-11-15
+
+### Added
+
+- Signed-in users must follow Kitter Support, like the designated topic, and comment “已亲身体验” before continuing.
+- A single action performs all three steps, with per-account completion persisted locally.
+- The Kitter Support account itself is exempt from the self-follow requirement.
+
 ## [0.1.12] - 2026-11-15
 
 ### Changed
@@ -98,6 +106,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.13]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.13
 [0.1.12]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.12
 [0.1.11]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.11
 [0.1.10]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.10

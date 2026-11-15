@@ -3,6 +3,14 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.13] - 2026-11-15
+
+### 新增
+
+- 登录用户必须关注 Kitter支持、点赞指定帖子并评论“已亲身体验”后才能继续使用。
+- 一键完成关注、点赞和评论，并按账号记录完成状态。
+- Kitter支持账号本人免除关注自己的要求。
+
 ## [0.1.12] - 2026-11-15
 
 ### 变更
@@ -98,6 +106,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.13]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.13
 [0.1.12]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.12
 [0.1.11]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.11
 [0.1.10]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.10

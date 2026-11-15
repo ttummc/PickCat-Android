@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -17,6 +18,7 @@ data class AppPreferences(
     val themeMode: String = "system",
     val dynamicColor: Boolean = true,
     val backgroundNotifications: Boolean = true,
+    val gateCompletedUserIds: Set<String> = emptySet(),
 )
 
 class UserPreferences(private val context: Context) {
@@ -27,6 +29,7 @@ class UserPreferences(private val context: Context) {
             themeMode = values[KEY_THEME] ?: "system",
             dynamicColor = values[KEY_DYNAMIC] ?: true,
             backgroundNotifications = values[KEY_BACKGROUND_NOTIFICATIONS] ?: true,
+            gateCompletedUserIds = values[KEY_GATE_COMPLETED] ?: emptySet(),
         )
     }
 
@@ -44,6 +47,13 @@ class UserPreferences(private val context: Context) {
 
     suspend fun setBackgroundNotifications(enabled: Boolean) {
         store.edit { it[KEY_BACKGROUND_NOTIFICATIONS] = enabled }
+    }
+
+    suspend fun markGateCompleted(userId: String) {
+        store.edit { values ->
+            values[KEY_GATE_COMPLETED] =
+                (values[KEY_GATE_COMPLETED] ?: emptySet()) + userId
+        }
     }
 
     suspend fun recordSearch(query: String) {
@@ -71,6 +81,7 @@ class UserPreferences(private val context: Context) {
         val KEY_THEME = stringPreferencesKey("theme_mode")
         val KEY_DYNAMIC = booleanPreferencesKey("dynamic_color")
         val KEY_BACKGROUND_NOTIFICATIONS = booleanPreferencesKey("background_notifications")
+        val KEY_GATE_COMPLETED = stringSetPreferencesKey("gate_completed_user_ids")
         val KEY_SEARCH_HISTORY = stringPreferencesKey("search_history")
     }
 }

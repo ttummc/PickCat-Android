@@ -49,6 +49,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dao3.pickcat.core.ui.ErrorState
+import dao3.pickcat.feature.gate.GateScreen
+import dao3.pickcat.feature.gate.KITTER_SUPPORT_ID
 import dao3.pickcat.feature.login.LoginScreen
 import dao3.pickcat.feature.settings.UpdateViewModel
 import dao3.pickcat.feature.settings.launchUpdateInstaller
@@ -56,11 +58,12 @@ import dao3.pickcat.feature.settings.openExternalUrl
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-private enum class RootStage { SPLASH, ERROR, LOGIN, MAIN }
+private enum class RootStage { SPLASH, ERROR, LOGIN, GATE, MAIN }
 
 @Composable
 fun PickCatRoot(viewModel: AppViewModel) {
     val session by viewModel.session.collectAsStateWithLifecycle()
+    val preferences by viewModel.preferences.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -88,10 +91,13 @@ fun PickCatRoot(viewModel: AppViewModel) {
     }
 
     Box(Modifier.fillMaxSize()) {
+        val user = session.user
         val stage = when {
             !session.ready -> RootStage.SPLASH
-            session.user == null && session.error != null -> RootStage.ERROR
-            session.user == null -> RootStage.LOGIN
+            user == null && session.error != null -> RootStage.ERROR
+            user == null -> RootStage.LOGIN
+            user.id == KITTER_SUPPORT_ID -> RootStage.MAIN
+            user.id !in preferences.gateCompletedUserIds -> RootStage.GATE
             else -> RootStage.MAIN
         }
         AnimatedContent(
@@ -112,6 +118,12 @@ fun PickCatRoot(viewModel: AppViewModel) {
                     modifier = Modifier.fillMaxSize(),
                 )
                 RootStage.LOGIN -> LoginScreen(viewModel)
+                RootStage.GATE -> GateScreen(
+                    currentUserId = user?.id.orEmpty(),
+                    onCompleted = {
+                        user?.id?.let(viewModel::completeGate)
+                    },
+                )
                 RootStage.MAIN -> PickCatMainShell(
                     appViewModel = viewModel,
                     snackbarHostState = snackbarHostState,
