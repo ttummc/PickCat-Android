@@ -3,6 +3,12 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.16] - 2026-11-15
+
+### 变更
+
+- 暗色模式优化：启动窗口底色与 Compose 一致，设置分组卡片和图盘存储卡片提升到更清晰的暗色层级并加入细边框，预览信息栏提高对比度。
+
 ## [0.1.15] - 2026-11-15
 
 ### 变更
@@ -120,6 +126,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.16]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.16
 [0.1.15]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.15
 [0.1.14]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.14
 [0.1.13]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.13
