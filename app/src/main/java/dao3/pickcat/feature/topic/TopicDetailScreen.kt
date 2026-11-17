@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -668,13 +667,10 @@ private fun ReplyComposer(
     onSubmit: () -> Unit,
 ) {
     BottomAppBar(
-        modifier = Modifier
-            .imePadding()
-            .navigationBarsPadding(),
+        modifier = Modifier.imePadding(),
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         tonalElevation = 3.dp,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-        windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
     ) {
         Box(
             modifier = Modifier.fillMaxWidth(),
