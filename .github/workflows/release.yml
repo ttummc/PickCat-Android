@@ -76,6 +76,7 @@ jobs:
             echo "::warning::KITTER_SYNC_TOKEN is not configured; skipping Kitter mirror sync."
             exit 0
           fi
+          sleep 10
           for attempt in 1 2 3; do
             echo "Kitter mirror sync attempt ${attempt}"
             if response=$(curl -fsS --max-time 180 -X POST \
@@ -86,13 +87,20 @@ jobs:
                 echo "::error::Kitter mirror reported a failed sync."
                 exit 1
               fi
-              echo "Kitter mirror sync requested."
-              curl -fsS --max-time 30 \
-                "https://pickcat-android.kitter.cn/sync/health" || true
-              exit 0
+              for check in 1 2 3 4 5 6 7 8 9 10 11 12; do
+                health=$(curl -fsS --max-time 30 \
+                  "https://pickcat-android.kitter.cn/sync/health" || true)
+                echo "health check ${check}: ${health}"
+                if echo "${health}" | grep -Eq \
+                  "\"version\"[[:space:]]*:[[:space:]]*\"${GITHUB_REF_NAME}\""; then
+                  echo "Kitter mirror is serving ${GITHUB_REF_NAME}."
+                  exit 0
+                fi
+                sleep 5
+              done
             fi
-            sleep 15
+            sleep 10
           done
-          echo "::error::Kitter mirror sync failed after retries."
+          echo "::error::Kitter mirror did not reach ${GITHUB_REF_NAME} after retries."
           exit 1
 
