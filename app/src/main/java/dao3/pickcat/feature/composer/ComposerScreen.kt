@@ -559,7 +559,7 @@ fun ComposerScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text("预览", style = MaterialTheme.typography.titleMedium)
-                        OutlinedCard(Modifier.fillMaxWidth().weight(1f)) {
+                        OutlinedCard(Modifier.fillMaxWidth().weight(1f), shape = MaterialTheme.shapes.large) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()

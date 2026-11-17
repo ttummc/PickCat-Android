@@ -505,13 +505,14 @@ fun WorkDetailScreen(
                         item {
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
+                                shape = MaterialTheme.shapes.large,
                                 colors = CardDefaults.cardColors(
                                     containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                                 ),
                             ) {
                                 ExpandableText(
                                     text = work.description.orEmpty(),
-                                    modifier = Modifier.padding(14.dp),
+                                    modifier = Modifier.padding(16.dp),
                                 )
                             }
                         }
@@ -520,10 +521,11 @@ fun WorkDetailScreen(
                         item {
                             OutlinedCard(
                                 modifier = Modifier.fillMaxWidth(),
+                                shape = MaterialTheme.shapes.large,
                             ) {
                                 ExpandableText(
                                     text = work.operation.orEmpty(),
-                                    modifier = Modifier.padding(14.dp),
+                                    modifier = Modifier.padding(16.dp),
                                 )
                             }
                         }
@@ -573,11 +575,12 @@ fun WorkDetailScreen(
                     }
                     item {
                         Card(
+                            shape = MaterialTheme.shapes.large,
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                             ),
                         ) {
-                            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 if (replyTo != null) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
@@ -715,10 +718,10 @@ private fun WorkCommentCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             AuthorRow(
                 user = comment.author,
                 time = comment.createdAt,

@@ -20,7 +20,7 @@ data class AppPreferences(
     val backgroundNotifications: Boolean = true,
     val gateCompletedUserIds: Set<String> = emptySet(),
     val gateExemptUntil: Map<String, Long> = emptyMap(),
-    val updateSource: String = "github",
+    val updateSource: String = "mirror",
 )
 
 class UserPreferences(private val context: Context) {
@@ -33,7 +33,7 @@ class UserPreferences(private val context: Context) {
             backgroundNotifications = values[KEY_BACKGROUND_NOTIFICATIONS] ?: true,
             gateCompletedUserIds = values[KEY_GATE_COMPLETED] ?: emptySet(),
             gateExemptUntil = parseGateExemptions(values[KEY_GATE_EXEMPT]),
-            updateSource = values[KEY_UPDATE_SOURCE] ?: "github",
+            updateSource = values[KEY_UPDATE_SOURCE] ?: "mirror",
         )
     }
 

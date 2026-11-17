@@ -333,7 +333,7 @@ fun HomeScreen(
                     top = 12.dp,
                     bottom = 104.dp,
                 ),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 item(key = "home-greeting") {
                     HomeGreeting(

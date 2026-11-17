@@ -45,7 +45,7 @@ class UpdateViewModel : ViewModel() {
     private val _state = MutableStateFlow(UpdateUiState())
     val state: StateFlow<UpdateUiState> = _state.asStateFlow()
 
-    fun check(context: Context, source: String = "github") {
+    fun check(context: Context, source: String = "mirror") {
         if (_state.value.checking || _state.value.downloading) return
         _state.update {
             it.copy(

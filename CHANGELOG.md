@@ -3,6 +3,16 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.22] - 2026-11-17
+
+### Changed
+
+- Rebuilt Settings from scratch as a data-driven Material 3 grouped list with row-level search.
+- Unified screen cards to the 16dp Material 3 large corner shape, with nested controls using smaller 8dp or 12dp corners.
+- Standardized card separation to a 12dp rhythm and screen edges to 16dp across shared cards and primary list screens.
+- Aligned the reply composer input and send action to the same 12dp corner and height.
+- The default update source is now the Kitter mirror for new installs and users without a saved preference.
+
 ## [0.1.21] - 2026-11-17
 
 ### Changed
@@ -160,6 +170,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.22]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.22
 [0.1.21]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.21
 [0.1.20]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.20
 [0.1.19]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.19

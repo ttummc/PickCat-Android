@@ -562,7 +562,7 @@ fun ProfileScreen(
                             items(state.featuredTopics, key = { "ft-${it.id}" }) { topic ->
                                 Box(
                                     Modifier
-                                        .padding(horizontal = 16.dp, vertical = 5.dp)
+                                        .padding(horizontal = 16.dp, vertical = 6.dp)
                                         .animateItem(),
                                 ) {
                                     TopicCard(topic, onClick = { onOpenTopic(topic) })
@@ -641,7 +641,7 @@ fun ProfileScreen(
                                     collection = collection,
                                     onClick = { onOpenCollection(collection) },
                                     modifier = Modifier
-                                        .padding(horizontal = 16.dp, vertical = 5.dp)
+                                        .padding(horizontal = 16.dp, vertical = 6.dp)
                                         .animateItem(),
                                 )
                             }
@@ -660,7 +660,7 @@ fun ProfileScreen(
                             items(state.topics, key = { it.id }) { topic ->
                                 Box(
                                     Modifier
-                                        .padding(horizontal = 16.dp, vertical = 5.dp)
+                                        .padding(horizontal = 16.dp, vertical = 6.dp)
                                         .animateItem(),
                                 ) {
                                     TopicCard(topic, onClick = { onOpenTopic(topic) })
@@ -755,7 +755,7 @@ fun ProfileScreen(
                                 BadgeRow(
                                     grant = grant,
                                     modifier = Modifier
-                                        .padding(horizontal = 16.dp, vertical = 5.dp)
+                                        .padding(horizontal = 16.dp, vertical = 6.dp)
                                         .animateItem(),
                                 )
                             }
@@ -801,8 +801,8 @@ private fun ProfileSidebar(
             Card(
                 modifier = Modifier.fillMaxWidth().height(120.dp),
                 shape = RoundedCornerShape(
-                    topStart = 20.dp,
-                    topEnd = 20.dp,
+                    topStart = 16.dp,
+                    topEnd = 16.dp,
                     bottomStart = 0.dp,
                     bottomEnd = 0.dp,
                 ),
@@ -894,7 +894,7 @@ private fun ProfileSidebar(
         }
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium,
+            shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceContainerLow,
         ) {
             Column(Modifier.padding(10.dp)) {
@@ -1118,7 +1118,7 @@ private fun ProfileHeader(
             }
             Surface(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp),
-                shape = MaterialTheme.shapes.medium,
+                shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.surfaceContainerLow,
             ) {
                 Row(
@@ -1170,7 +1170,7 @@ private fun CollectionRow(
     Card(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         ),
@@ -1216,7 +1216,7 @@ private fun BadgeRow(
     val badge = grant.badge
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         ),
@@ -1401,8 +1401,9 @@ private fun ActivityRow(
 @Composable
 private fun ReplyRow(reply: Post) {
     Card(
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 5.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row {
@@ -1458,6 +1459,7 @@ private fun ContributionHeatmap(
     }
     Card(
         modifier = modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -1521,6 +1523,7 @@ private fun FeaturedEditorDialog(
     ) {
         Card(
             modifier = Modifier.fillMaxWidth().padding(20.dp),
+            shape = MaterialTheme.shapes.large,
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         ) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {

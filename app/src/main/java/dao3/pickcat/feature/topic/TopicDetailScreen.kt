@@ -683,7 +683,7 @@ private fun ReplyComposer(
             Row(
                 modifier = Modifier.widthIn(max = 860.dp).fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 PickCatTextField(
                     value = replyText,
@@ -711,7 +711,8 @@ private fun ReplyComposer(
                 FilledIconButton(
                     onClick = onSubmit,
                     enabled = replyText.isNotBlank() && !submitting,
-                    modifier = Modifier.size(48.dp),
+                    modifier = Modifier.size(56.dp),
+                    shape = MaterialTheme.shapes.medium,
                 ) {
                     if (submitting) {
                         CircularProgressIndicator(
@@ -837,10 +838,10 @@ private fun PostCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
     ) {
-        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             AuthorRow(
                 user = post.author,
                 time = post.createdAt,

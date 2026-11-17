@@ -78,12 +78,12 @@ fun TopicFeedSkeleton(
 private fun SkeletonTopicCard(alpha: Float) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.medium,
+        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 SkeletonBlock(Modifier.size(32.dp), alpha, RoundedCornerShape(50))
@@ -132,7 +132,7 @@ fun WorkGridSkeleton(
 private fun SkeletonWorkCard(alpha: Float, modifier: Modifier) {
     Surface(
         modifier = modifier,
-        shape = MaterialTheme.shapes.medium,
+        shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Column {

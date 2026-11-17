@@ -3,6 +3,16 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.22] - 2026-11-17
+
+### 变更
+
+- 设置页完全重构为数据驱动的 Material 3 分组列表，支持按行搜索。
+- 全站内容卡片统一为 Material 3 的 16dp 大圆角，内部控件使用更小的 8dp 或 12dp 圆角。
+- 共享卡片和主要列表页统一为 12dp 卡片间距、16dp 屏幕边距。
+- 评论输入框与发送按钮统一为 12dp 圆角和相同高度。
+- 新安装及未保存过偏好的用户默认使用 Kitter镜像源检查更新。
+
 ## [0.1.21] - 2026-11-17
 
 ### 变更
@@ -160,6 +170,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.22]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.22
 [0.1.21]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.21
 [0.1.20]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.20
 [0.1.19]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.19

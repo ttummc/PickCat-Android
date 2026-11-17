@@ -61,6 +61,7 @@ import dao3.pickcat.core.network.Topic
 import dao3.pickcat.core.network.UserProfile
 import dao3.pickcat.core.network.UserRef
 import dao3.pickcat.core.network.Work
+import dao3.pickcat.core.ui.theme.PickCatSpacing
 
 @Composable
 fun PickCatImage(
@@ -252,11 +253,14 @@ fun TopicCard(
         modifier = modifier.fillMaxWidth().pressScale(interactionSource),
         onClick = onClick,
         interactionSource = interactionSource,
-        shape = MaterialTheme.shapes.medium,
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(
+            Modifier.padding(PickCatSpacing.Lg),
+            verticalArrangement = Arrangement.spacedBy(PickCatSpacing.Md),
+        ) {
             Row(
                 modifier = if (onAuthorClick != null) {
                     Modifier.clickable { onAuthorClick() }
@@ -375,7 +379,7 @@ fun WorkCard(
         modifier = modifier.fillMaxWidth().pressScale(interactionSource),
         onClick = onClick,
         interactionSource = interactionSource,
-        shape = MaterialTheme.shapes.medium,
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
@@ -403,7 +407,12 @@ fun WorkCard(
                     }
                 }
             }
-            Column(Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
+            Column(
+                Modifier.padding(
+                    horizontal = PickCatSpacing.Lg,
+                    vertical = PickCatSpacing.Md,
+                ),
+            ) {
                 Text(
                     work.workName,
                     style = MaterialTheme.typography.titleSmall,
@@ -411,7 +420,7 @@ fun WorkCard(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Spacer(Modifier.height(3.dp))
+                Spacer(Modifier.height(4.dp))
                 Text(
                     work.author.username,
                     style = MaterialTheme.typography.labelSmall,
@@ -419,7 +428,7 @@ fun WorkCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Spacer(Modifier.height(7.dp))
+                Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     StatIcon(Icons.Default.Visibility, work.viewCount)
                     StatIcon(Icons.Default.FavoriteBorder, work.likeCount)
