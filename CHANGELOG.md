@@ -3,6 +3,13 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.24] - 2026-11-17
+
+### Changed
+
+- Topic tags now use the Material 3 AssistChip component.
+- The media multi-select action bar now uses a Material 3 BottomAppBar with proper navigation bar handling.
+
 ## [0.1.23] - 2026-11-17
 
 ### Fixed
@@ -177,6 +184,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.24]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.24
 [0.1.23]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.23
 [0.1.22]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.22
 [0.1.21]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.21
