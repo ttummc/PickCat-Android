@@ -3,6 +3,15 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.25] - 2026-11-17
+
+### 修复
+
+- “收到的赞”现在会继续加载后续分页，不再只显示前 20 组。
+- 通知列表即使接口返回重复 ID，也会使用唯一 key，避免列表崩溃。
+- 更新检查现在会同时比较 GitHub 和 Kitter镜像源并选择较新的版本，镜像滞后时不会误报已是最新。
+- 更新失败时分别显示两个来源的错误信息。
+
 ## [0.1.24] - 2026-11-17
 
 ### 变更
@@ -184,6 +193,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.25]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.25
 [0.1.24]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.24
 [0.1.23]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.23
 [0.1.22]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.22

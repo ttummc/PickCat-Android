@@ -3,6 +3,15 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.25] - 2026-11-17
+
+### Fixed
+
+- Received-likes now loads additional pages instead of stopping after the first 20 groups.
+- Notification list keys are unique even if the API returns duplicate IDs.
+- Update checks now compare GitHub and the Kitter mirror and choose the newer release, preventing a lagging mirror from reporting the app as up to date.
+- Update errors report the result from each source on separate lines.
+
 ## [0.1.24] - 2026-11-17
 
 ### Changed
@@ -184,6 +193,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.25]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.25
 [0.1.24]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.24
 [0.1.23]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.23
 [0.1.22]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.22

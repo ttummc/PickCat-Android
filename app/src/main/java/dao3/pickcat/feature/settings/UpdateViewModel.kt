@@ -5,6 +5,8 @@ import android.content.pm.PackageManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -196,27 +198,27 @@ private class UpdateRepository(
     private val client: OkHttpClient = OkHttpClient(),
 ) {
     suspend fun latestRelease(source: String): AvailableUpdate = withContext(Dispatchers.IO) {
-        val githubFirst = source != "mirror"
-        val primary: suspend () -> AvailableUpdate = if (githubFirst) {
-            { fetchGitHub() }
-        } else {
-            { fetchMirror() }
-        }
-        val fallback: suspend () -> AvailableUpdate = if (githubFirst) {
-            { fetchMirror() }
-        } else {
-            { fetchGitHub() }
-        }
-        try {
-            primary()
-        } catch (primaryError: Exception) {
-            try {
-                fallback()
-            } catch (fallbackError: Exception) {
-                throw IOException(
-                    "GitHub 和镜像均不可用：${primaryError.message.orEmpty()} / " +
-                        fallbackError.message.orEmpty(),
-                )
+        coroutineScope {
+            val githubDeferred = async { runCatching { fetchGitHub() } }
+            val mirrorDeferred = async { runCatching { fetchMirror() } }
+            val githubResult = githubDeferred.await()
+            val mirrorResult = mirrorDeferred.await()
+            val github = githubResult.getOrNull()
+            val mirror = mirrorResult.getOrNull()
+
+            val preferred = if (source == "mirror") mirror else github
+            val fallback = if (source == "mirror") github else mirror
+            when {
+                preferred == null && fallback == null -> {
+                    throw IOException(
+                        "GitHub：${githubResult.exceptionOrNull()?.message.orEmpty()}\n" +
+                            "Kitter镜像源：${mirrorResult.exceptionOrNull()?.message.orEmpty()}",
+                    )
+                }
+                preferred == null -> fallback!!
+                fallback == null -> preferred
+                compareVersions(preferred.versionName, fallback.versionName) >= 0 -> preferred
+                else -> fallback
             }
         }
     }

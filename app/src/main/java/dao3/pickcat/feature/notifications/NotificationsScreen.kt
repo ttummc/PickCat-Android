@@ -408,7 +408,10 @@ fun NotificationsScreen(
                         bottom = 32.dp,
                     ),
                 ) {
-                    items(filteredItems, key = { it.id }) { item ->
+                    itemsIndexed(
+                        filteredItems,
+                        key = { index, item -> "notification-${item.id}-$index" },
+                    ) { _, item ->
                         Column(Modifier.animateItem()) {
                             NotificationRow(
                                 item = item,
@@ -545,6 +548,7 @@ data class LikesUiState(
     val groups: List<LikeGroup> = emptyList(),
     val loading: Boolean = true,
     val error: String? = null,
+    val loadingMore: Boolean = false,
     val cursor: String? = null,
     val endReached: Boolean = false,
 )
@@ -578,6 +582,32 @@ class LikesViewModel : ViewModel() {
             }
         }
     }
+
+    fun loadMore() {
+        val snapshot = _state.value
+        val cursor = snapshot.cursor
+        if (snapshot.loading || snapshot.loadingMore || snapshot.endReached || cursor == null) return
+        viewModelScope.launch {
+            _state.update { it.copy(loadingMore = true) }
+            try {
+                val page = api.getLikeNotificationGroups(limit = 20, cursor = cursor)
+                _state.update {
+                    it.copy(
+                        groups = (it.groups + page.items).distinctBy { group ->
+                            group.groupKey.ifBlank {
+                                "${group.createdAt}-${group.topic?.id}-${group.work?.id}"
+                            }
+                        },
+                        cursor = page.cursor,
+                        endReached = !page.canLoadMore,
+                        loadingMore = false,
+                    )
+                }
+            } catch (_: Exception) {
+                _state.update { it.copy(loadingMore = false) }
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -587,6 +617,7 @@ fun LikesScreen(
 ) {
     val viewModel: LikesViewModel = viewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val listState = rememberLazyListState()
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
@@ -620,9 +651,10 @@ fun LikesScreen(
                     modifier = Modifier.fillMaxSize(),
                 )
                 LikesPageState.CONTENT -> LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     itemsIndexed(
                         state.groups,
@@ -677,6 +709,12 @@ fun LikesScreen(
                                 }
                             }
                         }
+                    }
+                    item {
+                        LaunchedEffect(state.cursor, state.endReached) {
+                            if (!state.endReached) viewModel.loadMore()
+                        }
+                        PagedFooter(loading = state.loadingMore, endReached = state.endReached)
                     }
                 }
             }
