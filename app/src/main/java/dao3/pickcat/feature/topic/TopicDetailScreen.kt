@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -44,8 +45,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -58,6 +58,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -66,11 +67,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -374,8 +376,8 @@ fun TopicDetailScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val threadedPosts = remember(state.posts) { buildThreadedPosts(state.posts) }
     val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
+    val composerFocusRequester = remember { FocusRequester() }
     var replyText by rememberSaveable(topicId) { mutableStateOf("") }
     var replyTo by remember { mutableStateOf<Post?>(null) }
     var reportTarget by remember { mutableStateOf<Post?>(null) }
@@ -393,9 +395,12 @@ fun TopicDetailScreen(
             listState.animateScrollToItem(headerCount + index)
         }
     }
+    LaunchedEffect(replyTo) {
+        if (replyTo != null) composerFocusRequester.requestFocus()
+    }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize().imePadding(),
+        modifier = Modifier.fillMaxSize(),
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
@@ -434,18 +439,24 @@ fun TopicDetailScreen(
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        floatingActionButton = {
+        bottomBar = {
             if (state.topic != null) {
-                FloatingActionButton(
-                    onClick = {
-                        scope.launch {
-                            val lastItem = (listState.layoutInfo.totalItemsCount - 1).coerceAtLeast(0)
-                            listState.animateScrollToItem(lastItem)
+                ReplyComposer(
+                    replyText = replyText,
+                    replyTo = replyTo,
+                    submitting = state.submitting,
+                    focusRequester = composerFocusRequester,
+                    onTextChange = { replyText = it },
+                    onCancelReply = { replyTo = null },
+                    onSubmit = {
+                        if (replyText.isNotBlank() && !state.submitting) {
+                            viewModel.submitReply(replyText, replyTo) {
+                                replyText = ""
+                                replyTo = null
+                            }
                         }
                     },
-                ) {
-                    Icon(Icons.Default.ChatBubbleOutline, contentDescription = "写回复")
-                }
+                )
             }
         },
     ) { padding ->
@@ -463,7 +474,7 @@ fun TopicDetailScreen(
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.widthIn(max = 860.dp).fillMaxWidth().fillMaxHeight(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                 item {
@@ -576,54 +587,6 @@ fun TopicDetailScreen(
                         }
                     }
                 }
-                item {
-                    Card(
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
-                    ) {
-                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    "写下你的回复",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    modifier = Modifier.weight(1f),
-                                )
-                                if (replyTo != null) {
-                                    TextButton(onClick = { replyTo = null }) {
-                                        Text("取消回复 @${replyTo?.author?.username}")
-                                    }
-                                }
-                            }
-                            PickCatTextField(
-                                value = replyText,
-                                onValueChange = { replyText = it },
-                                modifier = Modifier.fillMaxWidth(),
-                                placeholder = "写回复",
-                                minLines = 3,
-                                maxLines = 8,
-                            )
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Spacer(Modifier.weight(1f))
-                                TextButton(
-                                    enabled = replyText.isNotBlank() && !state.submitting,
-                                    onClick = {
-                                        viewModel.submitReply(replyText, replyTo) {
-                                            replyText = ""
-                                            replyTo = null
-                                        }
-                                    },
-                                ) {
-                                    if (state.submitting) {
-                                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                                    } else {
-                                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, modifier = Modifier.size(18.dp))
-                                        Spacer(Modifier.width(6.dp))
-                                        Text("发布回复")
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
             }
         }
     }
@@ -679,6 +642,85 @@ fun TopicDetailScreen(
                 TextButton(onClick = { reportTarget = null }) { Text("取消") }
             },
         )
+    }
+}
+
+@Composable
+private fun ReplyComposer(
+    replyText: String,
+    replyTo: Post?,
+    submitting: Boolean,
+    focusRequester: FocusRequester,
+    onTextChange: (String) -> Unit,
+    onCancelReply: () -> Unit,
+    onSubmit: () -> Unit,
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 3.dp,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .imePadding()
+                .navigationBarsPadding()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+        ) {
+            if (replyTo != null) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        "回复 @${replyTo.author.username}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(onClick = onCancelReply) {
+                        Text("取消")
+                    }
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Bottom,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                PickCatTextField(
+                    value = replyText,
+                    onValueChange = onTextChange,
+                    modifier = Modifier.weight(1f).focusRequester(focusRequester),
+                    placeholder = if (replyTo == null) {
+                        "写回复"
+                    } else {
+                        "回复 ${replyTo.author.username}"
+                    },
+                    minLines = 1,
+                    maxLines = 4,
+                    enabled = !submitting,
+                )
+                FilledIconButton(
+                    onClick = onSubmit,
+                    enabled = replyText.isNotBlank() && !submitting,
+                    modifier = Modifier.size(48.dp),
+                ) {
+                    if (submitting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    } else {
+                        Icon(
+                            Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "发送回复",
+                            modifier = Modifier.size(20.dp),
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
