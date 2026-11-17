@@ -36,10 +36,12 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.ChatBubbleOutline
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -58,12 +60,12 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -380,6 +382,16 @@ fun TopicDetailScreen(
     val composerFocusRequester = remember { FocusRequester() }
     var replyText by rememberSaveable(topicId) { mutableStateOf("") }
     var replyTo by remember { mutableStateOf<Post?>(null) }
+    val commentHeaderIndex = if (state.topic?.firstPost != null) 2 else 1
+    val showComposer by remember(listState, commentHeaderIndex) {
+        derivedStateOf {
+            val layout = listState.layoutInfo
+            val firstVisibleIndex = layout.visibleItemsInfo.firstOrNull()?.index ?: -1
+            replyTo != null ||
+                layout.visibleItemsInfo.any { it.index == commentHeaderIndex } ||
+                firstVisibleIndex > commentHeaderIndex
+        }
+    }
     var reportTarget by remember { mutableStateOf<Post?>(null) }
     var reportReason by remember { mutableStateOf("SPAM") }
     var reportDetail by remember { mutableStateOf("") }
@@ -440,7 +452,7 @@ fun TopicDetailScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            if (state.topic != null) {
+            if (state.topic != null && showComposer) {
                 ReplyComposer(
                     replyText = replyText,
                     replyTo = replyTo,
@@ -655,36 +667,22 @@ private fun ReplyComposer(
     onCancelReply: () -> Unit,
     onSubmit: () -> Unit,
 ) {
-    Surface(
-        color = MaterialTheme.colorScheme.surfaceContainer,
+    BottomAppBar(
+        modifier = Modifier
+            .imePadding()
+            .navigationBarsPadding(),
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         tonalElevation = 3.dp,
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        windowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .imePadding()
-                .navigationBarsPadding()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center,
         ) {
-            if (replyTo != null) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        "回复 @${replyTo.author.username}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.weight(1f),
-                    )
-                    TextButton(onClick = onCancelReply) {
-                        Text("取消")
-                    }
-                }
-            }
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Bottom,
+                modifier = Modifier.widthIn(max = 860.dp).fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 PickCatTextField(
@@ -696,9 +694,19 @@ private fun ReplyComposer(
                     } else {
                         "回复 ${replyTo.author.username}"
                     },
+                    singleLine = true,
                     minLines = 1,
-                    maxLines = 4,
+                    maxLines = 1,
                     enabled = !submitting,
+                    trailingIcon = if (replyTo != null) {
+                        {
+                            IconButton(onClick = onCancelReply) {
+                                Icon(Icons.Default.Close, contentDescription = "取消回复")
+                            }
+                        }
+                    } else {
+                        null
+                    },
                 )
                 FilledIconButton(
                     onClick = onSubmit,

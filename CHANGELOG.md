@@ -3,6 +3,13 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.21] - 2026-11-17
+
+### Changed
+
+- The reply composer now appears only after scrolling into the comments section.
+- Rebuilt the composer as a Material 3 BottomAppBar with a single-line input and aligned send action.
+
 ## [0.1.20] - 2026-11-17
 
 ### Changed
@@ -153,6 +160,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.21]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.21
 [0.1.20]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.20
 [0.1.19]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.19
 [0.1.18]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.18

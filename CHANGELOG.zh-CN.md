@@ -3,6 +3,13 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.21] - 2026-11-17
+
+### 变更
+
+- 回复输入栏改为滚动到评论区后才显示。
+- 使用 Material 3 BottomAppBar 重构输入栏，单行输入框与发送按钮居中对齐。
+
 ## [0.1.20] - 2026-11-17
 
 ### 变更
@@ -153,6 +160,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.21]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.21
 [0.1.20]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.20
 [0.1.19]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.19
 [0.1.18]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.18
