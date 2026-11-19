@@ -40,6 +40,7 @@ private val FORM_MEDIA_TYPE = "multipart/form-data".toMediaType()
 class PickCatApi(
     cookieJar: PersistentCookieJar,
     private val onUnauthorized: () -> Unit = {},
+    private val onMaintenanceChanged: (Boolean) -> Unit = {},
 ) {
     private val json = Json {
         ignoreUnknownKeys = true
@@ -519,7 +520,12 @@ class PickCatApi(
         val request = builder.method(method, body).build()
         client.newCall(request).execute().use { response ->
             val text = response.body?.string().orEmpty()
-            if (!response.isSuccessful) {
+            if (response.isSuccessful) {
+                onMaintenanceChanged(false)
+            } else {
+                if (response.code == 503) {
+                    onMaintenanceChanged(true)
+                }
                 if (response.code == 401 && !(method == "GET" && path == "/session")) {
                     onUnauthorized()
                 }

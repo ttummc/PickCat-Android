@@ -29,6 +29,7 @@ class AppViewModel : ViewModel() {
 
     val session = container.session.state
     val isOnline: StateFlow<Boolean> = container.networkMonitor.isOnline
+    val maintenance: StateFlow<Boolean> = container.maintenance
     val preferences: StateFlow<AppPreferences> = container.preferences.preferences
         .stateIn(viewModelScope, SharingStarted.Eagerly, AppPreferences())
     val searchHistory = container.preferences.searchHistory

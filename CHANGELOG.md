@@ -3,6 +3,12 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.26] - 2026-11-19
+
+### Added
+
+- Added a global maintenance screen for official service outages. A 503 response from the PickCat API switches the app into a clear "PickCat 官方正在维护" state with a reconnect action and a link to the official site. Any successful API response automatically leaves maintenance mode.
+
 ## [0.1.25] - 2026-11-17
 
 ### Fixed
@@ -193,6 +199,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.26]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.26
 [0.1.25]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.25
 [0.1.24]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.24
 [0.1.23]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.23

@@ -4,14 +4,18 @@ import android.content.Context
 import dao3.pickcat.core.network.PersistentCookieJar
 import dao3.pickcat.core.network.PickCatApi
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class AppContainer(context: Context) {
     private val appContext = context.applicationContext
     val cookieJar = PersistentCookieJar(appContext)
     val authEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-    val api = PickCatApi(cookieJar) {
+    val maintenance = MutableStateFlow(false)
+    val api = PickCatApi(cookieJar, onUnauthorized = {
         authEvents.tryEmit(Unit)
-    }
+    }, onMaintenanceChanged = { active ->
+        maintenance.value = active
+    })
     val session = SessionRepository(appContext, api, cookieJar)
     val preferences = UserPreferences(appContext)
     val drafts = DraftStore(appContext)

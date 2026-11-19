@@ -18,7 +18,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -58,11 +60,12 @@ import dao3.pickcat.feature.settings.openExternalUrl
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-private enum class RootStage { SPLASH, ERROR, LOGIN, GATE, MAIN }
+private enum class RootStage { SPLASH, ERROR, MAINTENANCE, LOGIN, GATE, MAIN }
 
 @Composable
 fun PickCatRoot(viewModel: AppViewModel) {
     val session by viewModel.session.collectAsStateWithLifecycle()
+    val maintenance by viewModel.maintenance.collectAsStateWithLifecycle()
     val preferences by viewModel.preferences.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -94,6 +97,7 @@ fun PickCatRoot(viewModel: AppViewModel) {
         val user = session.user
         val exemptUntil = user?.let { preferences.gateExemptUntil[it.id] } ?: 0L
         val stage = when {
+            maintenance -> RootStage.MAINTENANCE
             !session.ready -> RootStage.SPLASH
             user == null && session.error != null -> RootStage.ERROR
             user == null -> RootStage.LOGIN
@@ -118,6 +122,14 @@ fun PickCatRoot(viewModel: AppViewModel) {
                         scope.launch { viewModel.retrySession() }
                     },
                     modifier = Modifier.fillMaxSize(),
+                )
+                RootStage.MAINTENANCE -> MaintenanceScreen(
+                    onRetry = {
+                        scope.launch { viewModel.retrySession() }
+                    },
+                    onOpenOfficial = {
+                        openExternalUrl(context, "https://pickcat.dao3.fun")
+                    },
                 )
                 RootStage.LOGIN -> LoginScreen(viewModel)
                 RootStage.GATE -> GateScreen(
@@ -203,6 +215,74 @@ fun PickCatRoot(viewModel: AppViewModel) {
                 TextButton(onClick = updateViewModel::dismiss) { Text("稍后") }
             },
         )
+    }
+}
+
+@Composable
+private fun MaintenanceScreen(
+    onRetry: () -> Unit,
+    onOpenOfficial: () -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .padding(24.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(
+                modifier = Modifier.widthIn(max = 360.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.pickcat_logo),
+                    contentDescription = "PickCat",
+                    modifier = Modifier.size(96.dp),
+                    contentScale = ContentScale.Fit,
+                )
+                Spacer(Modifier.height(22.dp))
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                ) {
+                    Text(
+                        "服务维护中",
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    )
+                }
+                Spacer(Modifier.height(14.dp))
+                Text(
+                    "PickCat 官方正在维护",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    "官方服务暂时不可用，部分功能会受到影响。\n维护结束后可以重新连接。",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+                Spacer(Modifier.height(24.dp))
+                Button(
+                    onClick = onRetry,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("重新连接")
+                }
+                TextButton(onClick = onOpenOfficial) {
+                    Text("打开官方网站")
+                }
+            }
+        }
     }
 }
 
