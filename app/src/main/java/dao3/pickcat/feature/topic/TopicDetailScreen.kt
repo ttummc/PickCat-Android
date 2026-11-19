@@ -450,26 +450,6 @@ fun TopicDetailScreen(
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        bottomBar = {
-            if (state.topic != null && showComposer) {
-                ReplyComposer(
-                    replyText = replyText,
-                    replyTo = replyTo,
-                    submitting = state.submitting,
-                    focusRequester = composerFocusRequester,
-                    onTextChange = { replyText = it },
-                    onCancelReply = { replyTo = null },
-                    onSubmit = {
-                        if (replyText.isNotBlank() && !state.submitting) {
-                            viewModel.submitReply(replyText, replyTo) {
-                                replyText = ""
-                                replyTo = null
-                            }
-                        }
-                    },
-                )
-            }
-        },
     ) { padding ->
         when {
             state.loading && state.topic == null -> LoadingState(Modifier.padding(padding))
@@ -485,7 +465,7 @@ fun TopicDetailScreen(
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.widthIn(max = 860.dp).fillMaxWidth().fillMaxHeight(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 16.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                 item {
@@ -599,6 +579,25 @@ fun TopicDetailScreen(
                     }
                 }
             }
+            if (state.topic != null && showComposer) {
+                ReplyComposer(
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    replyText = replyText,
+                    replyTo = replyTo,
+                    submitting = state.submitting,
+                    focusRequester = composerFocusRequester,
+                    onTextChange = { replyText = it },
+                    onCancelReply = { replyTo = null },
+                    onSubmit = {
+                        if (replyText.isNotBlank() && !state.submitting) {
+                            viewModel.submitReply(replyText, replyTo) {
+                                replyText = ""
+                                replyTo = null
+                            }
+                        }
+                    },
+                )
+            }
         }
     }
 }
@@ -665,9 +664,10 @@ private fun ReplyComposer(
     onTextChange: (String) -> Unit,
     onCancelReply: () -> Unit,
     onSubmit: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     BottomAppBar(
-        modifier = Modifier.imePadding(),
+        modifier = modifier.imePadding(),
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         tonalElevation = 3.dp,
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
