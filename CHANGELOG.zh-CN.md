@@ -3,6 +3,12 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.28] - 2026-11-20
+
+### 移除
+
+- 完全移除强制体验门槛：关注、点赞、评论确认页，对应路由，额度豁免逻辑以及本地门槛记录全部删除。登录后直接进入主界面。
+
 ## [0.1.27] - 2026-11-19
 
 ### 修复
@@ -205,6 +211,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.28]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.28
 [0.1.27]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.27
 [0.1.26]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.26
 [0.1.25]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.25

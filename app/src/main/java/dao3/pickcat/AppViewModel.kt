@@ -145,19 +145,6 @@ class AppViewModel : ViewModel() {
         viewModelScope.launch { preferencesRepository.setBackgroundNotifications(enabled) }
     }
 
-    fun completeGate(userId: String) {
-        viewModelScope.launch { preferencesRepository.markGateCompleted(userId) }
-    }
-
-    fun exemptGateForThreeDays(userId: String) {
-        viewModelScope.launch {
-            preferencesRepository.grantGateExemption(
-                userId,
-                System.currentTimeMillis() + 3L * 24 * 60 * 60 * 1000,
-            )
-        }
-    }
-
     fun updateUpdateSource(source: String) {
         viewModelScope.launch { preferencesRepository.setUpdateSource(source) }
     }

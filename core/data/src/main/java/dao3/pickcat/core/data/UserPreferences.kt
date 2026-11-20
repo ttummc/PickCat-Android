@@ -6,7 +6,6 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -18,8 +17,6 @@ data class AppPreferences(
     val themeMode: String = "system",
     val dynamicColor: Boolean = true,
     val backgroundNotifications: Boolean = true,
-    val gateCompletedUserIds: Set<String> = emptySet(),
-    val gateExemptUntil: Map<String, Long> = emptyMap(),
     val updateSource: String = "mirror",
 )
 
@@ -31,8 +28,6 @@ class UserPreferences(private val context: Context) {
             themeMode = values[KEY_THEME] ?: "system",
             dynamicColor = values[KEY_DYNAMIC] ?: true,
             backgroundNotifications = values[KEY_BACKGROUND_NOTIFICATIONS] ?: true,
-            gateCompletedUserIds = values[KEY_GATE_COMPLETED] ?: emptySet(),
-            gateExemptUntil = parseGateExemptions(values[KEY_GATE_EXEMPT]),
             updateSource = values[KEY_UPDATE_SOURCE] ?: "mirror",
         )
     }
@@ -51,22 +46,6 @@ class UserPreferences(private val context: Context) {
 
     suspend fun setBackgroundNotifications(enabled: Boolean) {
         store.edit { it[KEY_BACKGROUND_NOTIFICATIONS] = enabled }
-    }
-
-    suspend fun markGateCompleted(userId: String) {
-        store.edit { values ->
-            values[KEY_GATE_COMPLETED] =
-                (values[KEY_GATE_COMPLETED] ?: emptySet()) + userId
-        }
-    }
-
-    suspend fun grantGateExemption(userId: String, untilEpochMillis: Long) {
-        store.edit { values ->
-            val current = parseGateExemptions(values[KEY_GATE_EXEMPT])
-            values[KEY_GATE_EXEMPT] = (current + (userId to untilEpochMillis))
-                .map { (id, until) -> "$id|$until" }
-                .toSet()
-        }
     }
 
     suspend fun setUpdateSource(source: String) {
@@ -93,20 +72,11 @@ class UserPreferences(private val context: Context) {
         return value.split(SEPARATOR).filter { it.isNotBlank() }
     }
 
-    private fun parseGateExemptions(value: Set<String>?): Map<String, Long> =
-        value.orEmpty().mapNotNull { entry ->
-            val id = entry.substringBefore('|')
-            val until = entry.substringAfter('|', "").toLongOrNull()
-            if (id.isBlank() || until == null) null else id to until
-        }.toMap()
-
     private companion object {
         const val SEPARATOR = "\u001F"
         val KEY_THEME = stringPreferencesKey("theme_mode")
         val KEY_DYNAMIC = booleanPreferencesKey("dynamic_color")
         val KEY_BACKGROUND_NOTIFICATIONS = booleanPreferencesKey("background_notifications")
-        val KEY_GATE_COMPLETED = stringSetPreferencesKey("gate_completed_user_ids")
-        val KEY_GATE_EXEMPT = stringSetPreferencesKey("gate_exempt_until")
         val KEY_UPDATE_SOURCE = stringPreferencesKey("update_source")
         val KEY_SEARCH_HISTORY = stringPreferencesKey("search_history")
     }
