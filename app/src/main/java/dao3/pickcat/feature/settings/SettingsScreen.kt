@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -53,6 +54,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
@@ -64,6 +66,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -640,88 +643,41 @@ fun SettingsScreen(
     }
 
     if (showThemeDialog) {
-        AlertDialog(
-            onDismissRequest = { showThemeDialog = false },
-            title = { Text("主题") },
-            text = {
-                Column {
-                    val options = listOf(
-                        ThemeMode.SYSTEM to "跟随系统",
-                        ThemeMode.LIGHT to "浅色",
-                        ThemeMode.DARK to "深色",
-                    )
-                    options.forEach { (mode, label) ->
-                        val selected = when (mode) {
-                            ThemeMode.SYSTEM -> preferences.themeMode == "system"
-                            ThemeMode.LIGHT -> preferences.themeMode == "light"
-                            ThemeMode.DARK -> preferences.themeMode == "dark"
-                        }
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    appViewModel.updateTheme(mode)
-                                    showThemeDialog = false
-                                }
-                                .padding(vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            RadioButton(
-                                selected = selected,
-                                onClick = {
-                                    appViewModel.updateTheme(mode)
-                                    showThemeDialog = false
-                                },
-                            )
-                            Spacer(Modifier.width(12.dp))
-                            Text(label)
-                        }
-                    }
-                }
+        SettingsChoiceSheet(
+            title = "主题",
+            options = listOf(
+                "system" to "跟随系统",
+                "light" to "浅色",
+                "dark" to "深色",
+            ),
+            selectedValue = preferences.themeMode,
+            onSelect = { value ->
+                appViewModel.updateTheme(
+                    when (value) {
+                        "light" -> ThemeMode.LIGHT
+                        "dark" -> ThemeMode.DARK
+                        else -> ThemeMode.SYSTEM
+                    },
+                )
+                showThemeDialog = false
             },
-            confirmButton = {
-                TextButton(onClick = { showThemeDialog = false }) { Text("关闭") }
-            },
+            onDismiss = { showThemeDialog = false },
         )
     }
 
     if (showUpdateSourceDialog) {
-        AlertDialog(
-            onDismissRequest = { showUpdateSourceDialog = false },
-            title = { Text("更新来源") },
-            text = {
-                Column {
-                    val options = listOf(
-                        "mirror" to "Kitter镜像源",
-                        "github" to "GitHub Releases",
-                    )
-                    options.forEach { (value, label) ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    appViewModel.updateUpdateSource(value)
-                                    showUpdateSourceDialog = false
-                                }
-                                .padding(vertical = 10.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            RadioButton(
-                                selected = preferences.updateSource == value,
-                                onClick = {
-                                    appViewModel.updateUpdateSource(value)
-                                    showUpdateSourceDialog = false
-                                },
-                            )
-                            Spacer(Modifier.width(12.dp))
-                            Text(label)
-                        }
-                    }
-                }
+        SettingsChoiceSheet(
+            title = "更新来源",
+            options = listOf(
+                "mirror" to "Kitter镜像源",
+                "github" to "GitHub Releases",
+            ),
+            selectedValue = preferences.updateSource,
+            onSelect = { value ->
+                appViewModel.updateUpdateSource(value)
+                showUpdateSourceDialog = false
             },
-            confirmButton = {
-                TextButton(onClick = { showUpdateSourceDialog = false }) { Text("关闭") }
-            },
+            onDismiss = { showUpdateSourceDialog = false },
         )
     }
 
@@ -823,6 +779,49 @@ fun SettingsScreen(
                 TextButton(onClick = { confirmSignOut = false }) { Text("取消") }
             },
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SettingsChoiceSheet(
+    title: String,
+    options: List<Pair<String, String>>,
+    selectedValue: String,
+    onSelect: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+    ) {
+        Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+            )
+            Spacer(Modifier.height(4.dp))
+            options.forEach { (value, label) ->
+                ListItem(
+                    headlineContent = { Text(label) },
+                    leadingContent = {
+                        RadioButton(
+                            selected = selectedValue == value,
+                            onClick = null,
+                        )
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onSelect(value) }
+                        .padding(horizontal = 8.dp),
+                )
+            }
+        }
     }
 }
 
