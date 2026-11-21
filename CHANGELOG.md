@@ -3,6 +3,14 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.35] - 2026-11-21
+
+### Added
+
+- Post and comment images now size themselves from their intrinsic aspect ratio instead of using a fixed-height crop.
+- Tapping a post or comment image opens a fullscreen preview.
+- Fullscreen previews can be saved to the device gallery, with storage permission handling for Android 9 and older.
+
 ## [0.1.34] - 2026-11-21
 
 ### Changed
@@ -246,6 +254,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.35]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.35
 [0.1.34]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.34
 [0.1.32]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.32
 [0.1.31]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.31

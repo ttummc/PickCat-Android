@@ -3,6 +3,14 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.35] - 2026-11-21
+
+### 新增
+
+- 帖子和评论图片按原始宽高比自适应显示，不再固定高度裁切。
+- 点击帖子或评论图片可进入全屏预览。
+- 全屏预览支持保存到系统相册，并处理 Android 9 及以下的存储权限。
+
 ## [0.1.34] - 2026-11-21
 
 ### 变更
@@ -246,6 +254,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.35]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.35
 [0.1.34]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.34
 [0.1.32]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.32
 [0.1.31]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.31

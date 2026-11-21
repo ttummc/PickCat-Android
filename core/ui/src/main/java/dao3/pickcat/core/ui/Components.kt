@@ -43,6 +43,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -72,9 +76,67 @@ fun PickCatImage(
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Crop,
     corner: Dp = 12.dp,
+    adaptive: Boolean = false,
 ) {
     val context = LocalContext.current
     val resolved = absoluteUrl(url)
+    if (adaptive) {
+        SubcomposeAsyncImage(
+            model = ImageRequest.Builder(context)
+                .data(resolved)
+                .crossfade(true)
+                .build(),
+            contentDescription = contentDescription,
+            modifier = modifier
+                .clip(RoundedCornerShape(corner))
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentScale = contentScale,
+            loading = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(22.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            },
+            error = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(180.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        Icons.Default.BrokenImage,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            },
+            success = {
+                val intrinsic = painter.intrinsicSize
+                val ratio = if (intrinsic.width > 0f && intrinsic.height > 0f) {
+                    intrinsic.width / intrinsic.height
+                } else {
+                    16f / 9f
+                }
+                SubcomposeAsyncImageContent(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(ratio)
+                        .clip(RoundedCornerShape(corner)),
+                )
+            },
+        )
+        return
+    }
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(corner))
@@ -620,6 +682,7 @@ fun RichContent(
     modifier: Modifier = Modifier,
 ) {
     val parts = androidx.compose.runtime.remember(html) { parseRichParts(html) }
+    var previewUrl by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         parts.forEach { part ->
             when (part) {
@@ -634,13 +697,19 @@ fun RichContent(
                     modifier = if (part.emoji) {
                         Modifier.size(32.dp)
                     } else {
-                        Modifier.fillMaxWidth().heightIn(max = 320.dp)
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { previewUrl = part.url }
                     },
                     contentScale = ContentScale.Fit,
                     corner = if (part.emoji) 0.dp else 12.dp,
+                    adaptive = !part.emoji,
                 )
             }
         }
+    }
+    previewUrl?.let { url ->
+        ImagePreviewDialog(url = url, onDismiss = { previewUrl = null })
     }
 }
 
