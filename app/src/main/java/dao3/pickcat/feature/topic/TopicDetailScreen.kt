@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
@@ -56,7 +55,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ModalBottomSheetimport androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -66,6 +65,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -610,54 +610,57 @@ fun TopicDetailScreen(
 
     val target = reportTarget
     if (target != null) {
-        AlertDialog(
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
             onDismissRequest = { reportTarget = null },
-            title = { Text("举报回复") },
-            text = {
-                Column(
-                    Modifier
-                        .heightIn(max = 360.dp)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Text(
-                        "#${target.postNumber}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        target.author.username,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        REPORT_REASONS.forEach { reason ->
-                            FilterChip(
-                                selected = reportReason == reason.code,
-                                onClick = { reportReason = reason.code },
-                                label = { Text(reason.label) },
-                            )
-                        }
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    "举报回复",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                Text(
+                    "#${target.postNumber}  ${target.author.username}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    REPORT_REASONS.forEach { reason ->
+                        FilterChip(
+                            selected = reportReason == reason.code,
+                            onClick = { reportReason = reason.code },
+                            label = { Text(reason.label) },
+                        )
                     }
-                    PickCatTextField(
-                        value = reportDetail,
-                        onValueChange = { reportDetail = it },
-                        label = "补充说明（可选）",
-                        minLines = 2,
-                    )
                 }
-            },
-            confirmButton = {
-                Button(onClick = {
-                    viewModel.report(target, reportReason, reportDetail)
-                    reportTarget = null
-                    reportDetail = ""
-                }) { Text("提交举报") }
-            },
-            dismissButton = {
-                TextButton(onClick = { reportTarget = null }) { Text("取消") }
-            },
-        )
+                PickCatTextField(
+                    value = reportDetail,
+                    onValueChange = { reportDetail = it },
+                    label = "补充说明（可选）",
+                    minLines = 2,
+                    maxLines = 4,
+                )
+                Button(
+                    onClick = {
+                        viewModel.report(target, reportReason, reportDetail)
+                        reportTarget = null
+                        reportDetail = ""
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("提交举报")
+                }
+            }
+        }
     }
 }
 
