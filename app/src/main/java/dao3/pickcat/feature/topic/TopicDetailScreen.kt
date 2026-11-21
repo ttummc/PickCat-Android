@@ -22,13 +22,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -675,25 +674,31 @@ private fun ReplyComposer(
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    BottomAppBar(
-        modifier = modifier,
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 3.dp,
-        contentPadding = PaddingValues(0.dp),
-        windowInsets = WindowInsets(0, 0, 0, 0),
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .imePadding(),
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            contentAlignment = Alignment.Center,
+        BottomAppBar(
+            modifier = Modifier.fillMaxWidth(),
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            tonalElevation = 3.dp,
+            contentPadding = PaddingValues(0.dp),
+            windowInsets = WindowInsets(0, 0, 0, 0),
         ) {
-            Row(
-                modifier = Modifier.widthIn(max = 860.dp).fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
             ) {
+                Row(
+                    modifier = Modifier
+                        .widthIn(max = 860.dp)
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
                 PickCatTextField(
                     value = replyText,
                     onValueChange = onTextChange,
@@ -740,6 +745,7 @@ private fun ReplyComposer(
             }
         }
     }
+}
 }
 
 @Composable

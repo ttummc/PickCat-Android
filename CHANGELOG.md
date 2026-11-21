@@ -3,6 +3,12 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.36] - 2026-11-21
+
+### Fixed
+
+- Reworked the reply composer insets again. The whole bar now moves above the keyboard via outer IME padding, while navigation-bar padding is applied inside the Material 3 surface. This keeps the composer visible above the IME and removes the transparent gap.
+
 ## [0.1.35] - 2026-11-21
 
 ### Added
@@ -254,6 +260,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.36]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.36
 [0.1.35]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.35
 [0.1.34]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.34
 [0.1.32]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.32
