@@ -16,16 +16,20 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -451,7 +455,8 @@ fun TopicDetailScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        when {
+        Box(Modifier.fillMaxSize()) {
+            when {
             state.loading && state.topic == null -> LoadingState(Modifier.padding(padding))
             state.topic == null -> ErrorState(
                 message = state.error ?: "无法打开这个帖子",
@@ -601,6 +606,7 @@ fun TopicDetailScreen(
         }
     }
 }
+}
 
     val target = reportTarget
     if (target != null) {
@@ -667,13 +673,17 @@ private fun ReplyComposer(
     modifier: Modifier = Modifier,
 ) {
     BottomAppBar(
-        modifier = modifier.imePadding(),
+        modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         tonalElevation = 3.dp,
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+        contentPadding = PaddingValues(0.dp),
+        windowInsets = WindowInsets(0, 0, 0, 0),
     ) {
         Box(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             contentAlignment = Alignment.Center,
         ) {
             Row(
