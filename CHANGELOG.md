@@ -3,6 +3,13 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.29] - 2026-11-21
+
+### Fixed
+
+- Added the official PickCat Origin and Referer headers to API requests so write operations pass same-origin validation.
+- Preserved specific 403 permission reasons instead of replacing every failure with the generic "没有权限执行此操作" message. Level requirements, silencing, suspension, and quota limits now show their actual cause.
+
 ## [0.1.28] - 2026-11-20
 
 ### Removed
@@ -211,6 +218,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.29]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.29
 [0.1.28]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.28
 [0.1.27]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.27
 [0.1.26]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.26

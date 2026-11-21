@@ -514,6 +514,8 @@ class PickCatApi(
         val builder = Request.Builder()
             .url(url)
             .header("Accept", "application/json")
+            .header("Origin", PICKCAT_ORIGIN)
+            .header("Referer", "$PICKCAT_ORIGIN/")
         if (method != "GET") {
             builder.header("Idempotency-Key", UUID.randomUUID().toString())
         }
@@ -559,12 +561,21 @@ class PickCatApi(
             }
         val localizedMessage = when (status) {
             401 -> "登录状态已失效，请重新登录"
-            403 -> "没有权限执行此操作"
+            403 -> permissionMessage(code = root?.stringOrNull("code"), serverMessage = message)
             404 -> "内容不存在"
             else -> message
         }
         val code = root?.stringOrNull("code")
         return ApiException(status, localizedMessage, code)
+    }
+
+    private fun permissionMessage(code: String?, serverMessage: String): String = when (code) {
+        "USER_SILENCED" -> "账号处于禁言状态，暂时无法执行此操作"
+        "USER_SUSPENDED" -> "账号已被停用，无法执行此操作"
+        "PARTICIPATION_LEVEL_REQUIRED" -> "当前社区等级不足，暂时无法执行此操作"
+        "QUOTA_EXCEEDED" -> "操作次数已达上限，请稍后再试"
+        "PERMISSION_DENIED" -> serverMessage.ifBlank { "当前操作权限不足" }
+        else -> serverMessage.ifBlank { "当前操作权限不足" }
     }
 
     private fun findUploadRecord(element: JsonElement?): JsonObject? {
