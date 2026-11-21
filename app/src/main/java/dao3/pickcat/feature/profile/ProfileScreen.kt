@@ -52,15 +52,16 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -73,6 +74,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -83,6 +85,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -431,40 +435,29 @@ fun ProfileScreen(
                         IconButton(onClick = onOpenSettings) {
                             Icon(Icons.Default.Settings, contentDescription = "设置")
                         }
-                        Box {
-                            IconButton(onClick = { menuOpen = true }) {
-                                Icon(Icons.Default.MoreVert, contentDescription = "更多")
-                            }
-                            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                                DropdownMenuItem(
-                                    text = { Text("媒体库 / 个人图盘") },
-                                    leadingIcon = { Icon(Icons.Default.PhotoLibrary, contentDescription = null) },
-                                    onClick = {
-                                        menuOpen = false
-                                        onOpenMedia()
-                                    },
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("个人作品库") },
-                                    leadingIcon = { Icon(Icons.Default.Star, contentDescription = null) },
-                                    onClick = {
-                                        menuOpen = false
-                                        onOpenLibrary()
-                                    },
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("编辑精选") },
-                                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                                    onClick = {
-                                        menuOpen = false
-                                        viewModel.openFeaturedEditor()
-                                    },
-                                )
-                            }
+                        IconButton(onClick = { menuOpen = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "更多")
                         }
                     }
                 },
             )
+            if (menuOpen) {
+                ProfileMoreSheet(
+                    onDismiss = { menuOpen = false },
+                    onOpenMedia = {
+                        menuOpen = false
+                        onOpenMedia()
+                    },
+                    onOpenLibrary = {
+                        menuOpen = false
+                        onOpenLibrary()
+                    },
+                    onEditFeatured = {
+                        menuOpen = false
+                        viewModel.openFeaturedEditor()
+                    },
+                )
+            }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
@@ -777,6 +770,64 @@ fun ProfileScreen(
             onSave = viewModel::saveFeatured,
         )
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProfileMoreSheet(
+    onDismiss: () -> Unit,
+    onOpenMedia: () -> Unit,
+    onOpenLibrary: () -> Unit,
+    onEditFeatured: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+    ) {
+        Column(Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+            Text(
+                "主页工具",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+            )
+            Spacer(Modifier.height(4.dp))
+            ProfileMoreItem(
+                icon = Icons.Default.PhotoLibrary,
+                label = "媒体库 / 个人图盘",
+                onClick = onOpenMedia,
+            )
+            ProfileMoreItem(
+                icon = Icons.Default.Star,
+                label = "个人作品库",
+                onClick = onOpenLibrary,
+            )
+            ProfileMoreItem(
+                icon = Icons.Default.Edit,
+                label = "编辑精选",
+                onClick = onEditFeatured,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProfileMoreItem(
+    icon: ImageVector,
+    label: String,
+    onClick: () -> Unit,
+) {
+    ListItem(
+        headlineContent = { Text(label) },
+        leadingContent = { Icon(icon, contentDescription = null) },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 8.dp),
+    )
 }
 
 @OptIn(ExperimentalLayoutApi::class)

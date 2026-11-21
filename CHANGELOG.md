@@ -3,6 +3,12 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.38] - 2026-11-21
+
+### Changed
+
+- The profile "more" actions now open a Material 3 ModalBottomSheet with ListItem rows for media, personal library, and featured-content editing.
+
 ## [0.1.37] - 2026-11-21
 
 ### Fixed
@@ -266,6 +272,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.38]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.38
 [0.1.37]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.37
 [0.1.36]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.36
 [0.1.35]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.35
