@@ -45,7 +45,16 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build and lint
-        run: ./gradlew :app:assembleDebug :app:lintDebug --no-daemon
+        run: |
+          for attempt in 1 2 3; do
+            echo "Build attempt ${attempt}"
+            if ./gradlew :app:assembleDebug :app:lintDebug --no-daemon; then
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "::error::Build and lint failed after retries."
+          exit 1
 
       - name: Name APK
         run: |
