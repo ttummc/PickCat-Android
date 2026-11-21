@@ -3,6 +3,12 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.31] - 2026-11-21
+
+### Fixed
+
+- Re-released the reply composer inset fix after a transient GitHub Actions dependency resolution failure prevented the v0.1.30 release build.
+
 ## [0.1.30] - 2026-11-21
 
 ### Fixed
@@ -224,6 +230,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.31]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.31
 [0.1.30]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.30
 [0.1.29]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.29
 [0.1.28]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.28
