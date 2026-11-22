@@ -228,7 +228,7 @@ fun CodeChatScreen(
                             if (inConversation) {
                                 "消息服务由 CodeChat 提供"
                             } else {
-                                "公共群聊和私聊会话"
+                                "由 CodeChat 提供的公共群聊和私聊"
                             },
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -326,17 +326,6 @@ fun CodeChatScreen(
                                 )
                             }
                         }
-                        Text(
-                            "公共群聊和私聊消息由 CodeChat 提供",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
-                        Text(
-                            "点击头像查看关联的 PickCat 主页",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
                     }
                 }
             }
