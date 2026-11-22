@@ -3,6 +3,15 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.50] - 2026-11-22
+
+### Added
+
+- CodeChat history now uses the server `fromMe`, `seq`, `scope`, `peerUid`, `before`, and `afterSeq` fields. Public and private conversations support loading older messages.
+- Outgoing messages include `clientMessageId`; `message_ack` clears the transient send error.
+- Private unread counts come from `dm-sessions`, and entering a private conversation calls `POST /api/cc/dm/{peerUid}/read`.
+- Message-level `senderPcUuid` and `senderPcLinked` are used for profile navigation and the unlinked-account notice.
+
 ## [0.1.49] - 2026-11-22
 
 ### Changed
@@ -349,6 +358,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.50]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.50
 [0.1.49]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.49
 [0.1.48]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.48
 [0.1.47]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.47

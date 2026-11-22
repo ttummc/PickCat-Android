@@ -30,14 +30,19 @@ import kotlinx.coroutines.withContext
 
 data class CodeChatMessage(
     val id: String,
+    val seq: Long = 0L,
+    val clientMessageId: String? = null,
     val senderId: String,
     val senderName: String,
     val senderAvatar: String?,
+    val senderPcUuid: String? = null,
+    val senderPcLinked: Boolean? = null,
     val text: String,
     val imageUrl: String?,
     val fromMe: Boolean,
     val time: Long,
     val peerId: String = "",
+    val read: Boolean? = null,
 )
 
 data class DmSession(
@@ -47,6 +52,9 @@ data class DmSession(
     val lastTime: Long,
     val lastText: String,
     val online: Boolean,
+    val unreadCount: Int = 0,
+    val lastMessageId: String? = null,
+    val lastReadMessageId: String? = null,
 )
 
 data class CodeChatState(
@@ -57,6 +65,9 @@ data class CodeChatState(
     val dmSessions: List<DmSession> = emptyList(),
     val unreadByPeer: Map<String, Int> = emptyMap(),
     val activePeerUid: String? = null,
+    val hasMoreByConversation: Map<String, Boolean> = emptyMap(),
+    val nextCursorByConversation: Map<String, Long> = emptyMap(),
+    val loadingHistory: Boolean = false,
     val error: String? = null,
 )
 
@@ -122,6 +133,7 @@ class CodeChatRepository(context: Context) {
             .put("text", text)
             .put("to", to)
             .put("senderProvider", "pickcat")
+            .put("clientMessageId", "android_${UUID.randomUUID()}")
             .put("pcAssertion", assertion)
         if (socket?.send(message.toString()) != true) {
             _state.update { it.copy(error = "消息发送失败，请重新连接") }
@@ -136,6 +148,7 @@ class CodeChatRepository(context: Context) {
             .put("image", imageUrl)
             .put("to", to)
             .put("senderProvider", "pickcat")
+            .put("clientMessageId", "android_${UUID.randomUUID()}")
             .put("pcAssertion", assertion)
         if (socket?.send(message.toString()) != true) {
             _state.update { it.copy(error = "图片发送失败，请重新连接") }
@@ -184,13 +197,6 @@ class CodeChatRepository(context: Context) {
             }
         }
 
-    fun refreshDmSessions() {
-        val token = prefs.getString(KEY_TOKEN, null) ?: return
-        scope.launch {
-            runCatching { loadDmSessions(token) }
-        }
-    }
-
     suspend fun resolvePickCatUserId(ccUid: String): String? {
         if (ccUid.isBlank()) return null
         val request = Request.Builder()
@@ -200,7 +206,9 @@ class CodeChatRepository(context: Context) {
         return runCatching {
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) return null
-                response.jsonBody().optString("pcUuid").takeIf { it.isNotBlank() }
+                val json = response.jsonBody()
+                if (json.has("linked") && !json.optBoolean("linked", false)) return null
+                json.optString("pcUuid").takeIf { it.isNotBlank() }
             }
         }.getOrNull()
     }
@@ -241,7 +249,7 @@ class CodeChatRepository(context: Context) {
                 assertion = credential.assertion
                 saveCredential(credential)
             }
-            loadRecentMessages(token, ccUid)
+            fetchHistory(token, ccUid, peerUid = null, before = null)
             loadDmSessions(token)
             openSocket(token, ccUid, assertion)
         } catch (error: Exception) {
@@ -295,54 +303,128 @@ class CodeChatRepository(context: Context) {
         }
     }
 
-    private fun loadRecentMessages(token: String, ccUid: String) {
-        val request = Request.Builder()
-            .url("$BASE_URL/api/codemao/messages")
-            .header("Authorization", "Bearer $token")
-            .get()
-            .build()
-        runCatching {
+    fun refreshDmSessions() {
+        val token = prefs.getString(KEY_TOKEN, null) ?: return
+        scope.launch { runCatching { loadDmSessions(token) } }
+    }
+
+    fun openConversation(peerUid: String?) {
+        val token = prefs.getString(KEY_TOKEN, null) ?: return
+        val ccUid = prefs.getString(KEY_UID, null) ?: return
+        scope.launch { fetchHistory(token, ccUid, peerUid, before = null) }
+    }
+
+    fun loadOlder(peerUid: String?) {
+        val token = prefs.getString(KEY_TOKEN, null) ?: return
+        val ccUid = prefs.getString(KEY_UID, null) ?: return
+        val key = peerUid ?: "public"
+        if (_state.value.hasMoreByConversation[key] != true) return
+        if (_state.value.loadingHistory) return
+        val before = _state.value.nextCursorByConversation[key] ?: return
+        scope.launch { fetchHistory(token, ccUid, peerUid, before = before) }
+    }
+
+    private fun fetchHistory(
+        token: String,
+        ccUid: String,
+        peerUid: String?,
+        before: Long?,
+    ) {
+        _state.update { it.copy(loadingHistory = true) }
+        try {
+            val url = buildString {
+                append("$BASE_URL/api/codemao/messages?limit=50&scope=")
+                append(if (peerUid == null) "public" else "dm")
+                if (peerUid != null) append("&peerUid=$peerUid")
+                if (before != null) append("&before=$before")
+            }
+            val request = Request.Builder()
+                .url(url)
+                .header("Authorization", "Bearer $token")
+                .get()
+                .build()
             client.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) return
-                val array = response.jsonBody().optJSONArray("messages") ?: return
+                val json = response.jsonBody()
+                val array = json.optJSONArray("messages") ?: return
                 val loaded = buildList {
                     for (index in 0 until array.length()) {
-                        val message = array.optJSONObject(index) ?: continue
-                        val to = message.optString("to")
-                        val senderId = message.optString("senderId")
-                        val peerId = when {
-                            to.isBlank() -> ""
-                            senderId == ccUid -> to
-                            else -> senderId
-                        }
-                        val text = message.optString("text")
-                            .ifBlank { message.optString("origText") }
-                        val image = message.optString("image").takeIf { it.isNotBlank() }
-                        if (text.isBlank() && image == null) continue
-                        val id = message.optString("id")
-                        if (id.isBlank()) continue
-                        add(
-                            CodeChatMessage(
-                                id = id,
-                                senderId = senderId,
-                                senderName = message.optString("senderName"),
-                                senderAvatar = message.optString("senderAvatar")
-                                    .takeIf { it.isNotBlank() },
-                                text = text,
-                                imageUrl = image,
-                                fromMe = message.optBoolean("fromMe", false) ||
-                                    senderId == ccUid ||
-                                    ownMessageIds().contains(id),
-                                time = message.optLong("time", System.currentTimeMillis()),
-                                peerId = peerId,
-                            ),
-                        )
+                        val item = array.optJSONObject(index) ?: continue
+                        parseMessage(item, ccUid)?.let(::add)
                     }
-                }.sortedBy { it.time }.takeLast(200)
-                if (loaded.isNotEmpty()) {
-                    _state.update { it.copy(messages = loaded) }
                 }
+                val hasMore = json.optBoolean("hasMore", false)
+                val cursor = json.optLong("nextCursor", 0L).takeIf { it > 0L }
+                applyHistory(peerUid, loaded, hasMore, cursor, replace = before == null)
             }
+        } catch (error: Exception) {
+            _state.update { it.copy(error = error.message ?: "消息加载失败") }
+        } finally {
+            _state.update { it.copy(loadingHistory = false) }
+        }
+    }
+
+    private fun parseMessage(message: JSONObject, ccUid: String): CodeChatMessage? {
+        val to = message.optString("to")
+        val senderId = message.optString("senderId")
+        val fromMe = message.optBoolean("fromMe", senderId == ccUid)
+        val text = message.optString("text")
+            .ifBlank { message.optString("origText") }
+        val image = message.optString("image").takeIf { it.isNotBlank() }
+        if (text.isBlank() && image == null) return null
+        val id = message.optString("id").takeIf { it.isNotBlank() } ?: return null
+        return CodeChatMessage(
+            id = id,
+            seq = message.optLong("seq", 0L),
+            clientMessageId = message.optString("clientMessageId").takeIf { it.isNotBlank() },
+            senderId = senderId,
+            senderName = message.optString("senderName"),
+            senderAvatar = message.optString("senderAvatar").takeIf { it.isNotBlank() },
+            senderPcUuid = message.optString("senderPcUuid").takeIf { it.isNotBlank() },
+            senderPcLinked = if (message.has("senderPcLinked")) {
+                message.optBoolean("senderPcLinked")
+            } else {
+                null
+            },
+            text = text,
+            imageUrl = image,
+            fromMe = fromMe,
+            time = message.optLong("time", System.currentTimeMillis()),
+            peerId = when {
+                to.isBlank() -> ""
+                fromMe -> to
+                else -> senderId
+            },
+            read = if (message.has("read")) message.optBoolean("read") else null,
+        )
+    }
+
+    private fun applyHistory(
+        peerUid: String?,
+        loaded: List<CodeChatMessage>,
+        hasMore: Boolean,
+        cursor: Long?,
+        replace: Boolean,
+    ) {
+        val key = peerUid ?: "public"
+        _state.update { current ->
+            val base = when {
+                !replace -> current.messages
+                peerUid == null -> current.messages.filterNot { it.peerId.isBlank() }
+                else -> current.messages.filterNot { it.peerId == peerUid }
+            }
+            val merged = (base + loaded)
+                .distinctBy { it.id }
+                .sortedBy { if (it.seq > 0L) it.seq else it.time }
+            current.copy(
+                messages = merged,
+                hasMoreByConversation = current.hasMoreByConversation + (key to hasMore),
+                nextCursorByConversation = if (cursor != null) {
+                    current.nextCursorByConversation + (key to cursor)
+                } else {
+                    current.nextCursorByConversation
+                },
+            )
         }
     }
 
@@ -370,11 +452,24 @@ class CodeChatRepository(context: Context) {
                                 lastText = item.optString("lastText"),
                                 online = item.optBoolean("online", false) ||
                                     item.optString("status").equals("online", ignoreCase = true),
+                                unreadCount = item.optInt("unreadCount", 0),
+                                lastMessageId = item.optString("lastMessageId")
+                                    .takeIf { it.isNotBlank() },
+                                lastReadMessageId = item.optString("lastReadMessageId")
+                                    .takeIf { it.isNotBlank() },
                             ),
                         )
                     }
                 }.sortedByDescending { it.lastTime }
-                _state.update { it.copy(dmSessions = sessions) }
+                _state.update { current ->
+                    val active = current.activePeerUid
+                    current.copy(
+                        dmSessions = sessions,
+                        unreadByPeer = sessions.associate { session ->
+                            session.peerUid to if (session.peerUid == active) 0 else session.unreadCount
+                        },
+                    )
+                }
             }
         }
     }
@@ -410,7 +505,31 @@ class CodeChatRepository(context: Context) {
                 } else {
                     current.unreadByPeer - peerUid
                 },
+                dmSessions = if (peerUid == null) {
+                    current.dmSessions
+                } else {
+                    current.dmSessions.map { session ->
+                        if (session.peerUid == peerUid) session.copy(unreadCount = 0) else session
+                    }
+                },
             )
+        }
+        if (peerUid != null) markRead(peerUid)
+    }
+
+    private fun markRead(peerUid: String) {
+        val token = prefs.getString(KEY_TOKEN, null) ?: return
+        scope.launch {
+            runCatching {
+                val request = Request.Builder()
+                    .url("$BASE_URL/api/cc/dm/$peerUid/read")
+                    .header("Authorization", "Bearer $token")
+                    .post("{}".toRequestBody(JSON))
+                    .build()
+                client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) error("标记已读失败")
+                }
+            }
         }
     }
 
@@ -491,9 +610,10 @@ class CodeChatRepository(context: Context) {
                 val id = message.optString("id").ifBlank { UUID.randomUUID().toString() }
                 val to = message.optString("to")
                 val senderId = message.optString("senderId")
-                val fromMe = event.optBoolean("fromMe", false) ||
-                    senderId == ccUid ||
-                    ownMessageIds().contains(id)
+                val fromMe = event.optBoolean(
+                    "fromMe",
+                    message.optBoolean("fromMe", senderId == ccUid),
+                )
                 val peerId = when {
                     to.isBlank() -> ""
                     fromMe -> to
@@ -505,14 +625,25 @@ class CodeChatRepository(context: Context) {
                 if (text.isBlank() && image == null) return
                 val item = CodeChatMessage(
                     id = id,
+                    seq = message.optLong("seq", 0L),
+                    clientMessageId = message.optString("clientMessageId")
+                        .takeIf { it.isNotBlank() },
                     senderId = senderId,
                     senderName = message.optString("senderName"),
                     senderAvatar = message.optString("senderAvatar").takeIf { it.isNotBlank() },
+                    senderPcUuid = message.optString("senderPcUuid")
+                        .takeIf { it.isNotBlank() },
+                    senderPcLinked = if (message.has("senderPcLinked")) {
+                        message.optBoolean("senderPcLinked")
+                    } else {
+                        null
+                    },
                     text = text,
                     imageUrl = image,
                     fromMe = fromMe,
                     time = message.optLong("time", System.currentTimeMillis()),
                     peerId = peerId,
+                    read = if (message.has("read")) message.optBoolean("read") else null,
                 )
                 if (item.fromMe) rememberOwnMessage(id)
                 if (peerId.isNotBlank()) {
@@ -556,6 +687,11 @@ class CodeChatRepository(context: Context) {
                     it.copy(
                         error = event.optString("reason").ifBlank { "CodeChat 拒绝了当前会话" },
                     )
+                }
+            }
+            "message_ack" -> {
+                if (!event.optBoolean("duplicate", false)) {
+                    _state.update { it.copy(error = null) }
                 }
             }
         }

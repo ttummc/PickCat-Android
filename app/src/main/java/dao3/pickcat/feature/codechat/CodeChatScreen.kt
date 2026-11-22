@@ -98,6 +98,10 @@ class CodeChatViewModel : ViewModel() {
 
     fun refreshDmSessions() = repository.refreshDmSessions()
 
+    fun openConversation(peerUid: String?) = repository.openConversation(peerUid)
+
+    fun loadOlder(peerUid: String?) = repository.loadOlder(peerUid)
+
     fun setActivePeer(peerUid: String?) = repository.setActivePeer(peerUid)
 
     fun ensureDmSession(peerUid: String, nickname: String, avatar: String?) =
@@ -158,6 +162,7 @@ fun CodeChatScreen(
         selectedPeer = null
         publicOpen = true
         draft = ""
+        viewModel.openConversation(null)
     }
 
     fun choosePeer(session: DmSession) {
@@ -165,6 +170,7 @@ fun CodeChatScreen(
         publicOpen = false
         selectedPeer = session
         draft = ""
+        viewModel.openConversation(session.peerUid)
     }
 
     fun startDm(message: CodeChatMessage) {
@@ -180,7 +186,7 @@ fun CodeChatScreen(
         )
     }
 
-    LaunchedEffect(visibleMessages.size, selectedPeer?.peerUid, publicOpen) {
+    LaunchedEffect(visibleMessages.lastOrNull()?.id, selectedPeer?.peerUid, publicOpen) {
         if (visibleMessages.isNotEmpty()) {
             listState.animateScrollToItem(visibleMessages.lastIndex)
         }
@@ -199,12 +205,20 @@ fun CodeChatScreen(
     }
 
     val openUserProfile: (CodeChatMessage) -> Unit = { message ->
-        scope.launch {
-            val userId = viewModel.resolvePickCatUserId(message.senderId)
-            if (userId.isNullOrBlank()) {
+        if (message.senderPcLinked == false) {
+            scope.launch {
                 snackbarHostState.showSnackbar("该用户没有关联 PickCat 账号，无法打开主页")
-            } else {
-                onOpenProfile(userId)
+            }
+        } else if (!message.senderPcUuid.isNullOrBlank()) {
+            onOpenProfile(message.senderPcUuid)
+        } else {
+            scope.launch {
+                val userId = viewModel.resolvePickCatUserId(message.senderId)
+                if (userId.isNullOrBlank()) {
+                    snackbarHostState.showSnackbar("该用户没有关联 PickCat 账号，无法打开主页")
+                } else {
+                    onOpenProfile(userId)
+                }
             }
         }
     }
@@ -379,18 +393,40 @@ fun CodeChatScreen(
                     isPrivate = selectedPeer != null,
                     isConnecting = state.connecting,
                 )
-                else -> LazyColumn(
-                    state = listState,
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    items(visibleMessages, key = { it.id }) { message ->
-                        CodeChatMessageRow(
-                            message = message,
-                            onOpenProfile = openUserProfile,
-                            onStartDm = if (message.fromMe) null else ::startDm,
-                        )
+                else -> {
+                    val conversationKey = selectedPeer?.peerUid ?: "public"
+                    val hasMore = state.hasMoreByConversation[conversationKey] == true
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        if (hasMore) {
+                            item(key = "load-older") {
+                                TextButton(
+                                    onClick = { viewModel.loadOlder(selectedPeer?.peerUid) },
+                                    enabled = !state.loadingHistory,
+                                    modifier = Modifier.fillMaxWidth(),
+                                ) {
+                                    if (state.loadingHistory) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(18.dp),
+                                            strokeWidth = 2.dp,
+                                        )
+                                    } else {
+                                        Text("加载更早消息")
+                                    }
+                                }
+                            }
+                        }
+                        items(visibleMessages, key = { it.id }) { message ->
+                            CodeChatMessageRow(
+                                message = message,
+                                onOpenProfile = openUserProfile,
+                                onStartDm = if (message.fromMe) null else ::startDm,
+                            )
+                        }
                     }
                 }
             }

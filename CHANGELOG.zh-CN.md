@@ -3,6 +3,15 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.50] - 2026-11-22
+
+### 新增
+
+- CodeChat 历史消息接入服务端 `fromMe`、`seq`、`scope`、`peerUid`、`before`、`afterSeq`；公共频道和私聊都支持加载更早消息。
+- 发送消息带 `clientMessageId`，并处理 `message_ack`。
+- 私聊未读数使用 `dm-sessions` 的服务端字段，进入会话调用 `POST /api/cc/dm/{peerUid}/read` 标记已读。
+- 使用消息内的 `senderPcUuid` / `senderPcLinked` 打开 PickCat 主页或提示未关联账号。
+
 ## [0.1.49] - 2026-11-22
 
 ### 变更
@@ -349,6 +358,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.50]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.50
 [0.1.49]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.49
 [0.1.48]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.48
 [0.1.47]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.47
