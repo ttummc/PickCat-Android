@@ -1,5 +1,6 @@
 package dao3.pickcat.feature.codechat
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +35,8 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -41,6 +44,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,6 +61,7 @@ import dao3.pickcat.core.ui.PickCatImage
 import dao3.pickcat.core.ui.UserAvatar
 import java.text.DateFormat
 import java.util.Date
+import kotlinx.coroutines.launch
 
 class CodeChatViewModel : ViewModel() {
     private val repository = AppGraph.codeChat
@@ -68,17 +74,23 @@ class CodeChatViewModel : ViewModel() {
     fun retry() = repository.retry()
 
     fun send(text: String) = repository.sendMessage(text)
+
+    suspend fun resolvePickCatUserId(ccUid: String): String? =
+        repository.resolvePickCatUserId(ccUid)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CodeChatScreen(
     modifier: Modifier = Modifier,
+    onOpenProfile: (String) -> Unit,
     viewModel: CodeChatViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var draft by rememberSaveable { mutableStateOf("") }
     val listState = rememberLazyListState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(state.messages.size) {
         if (state.messages.isNotEmpty()) {
@@ -86,9 +98,21 @@ fun CodeChatScreen(
         }
     }
 
+    val openUserProfile: (CodeChatMessage) -> Unit = { message ->
+        scope.launch {
+            val userId = viewModel.resolvePickCatUserId(message.senderId)
+            if (userId.isNullOrBlank()) {
+                snackbarHostState.showSnackbar("该用户没有关联 PickCat 账号，无法打开主页")
+            } else {
+                onOpenProfile(userId)
+            }
+        }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -161,6 +185,11 @@ fun CodeChatScreen(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 4.dp),
+                    )
+                    Text(
+                        "点击头像查看关联的 PickCat 主页",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -237,7 +266,10 @@ fun CodeChatScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     items(state.messages, key = { it.id }) { message ->
-                        CodeChatMessageRow(message)
+                        CodeChatMessageRow(
+                            message = message,
+                            onOpenProfile = openUserProfile,
+                        )
                     }
                 }
             }
@@ -246,7 +278,10 @@ fun CodeChatScreen(
 }
 
 @Composable
-private fun CodeChatMessageRow(message: CodeChatMessage) {
+private fun CodeChatMessageRow(
+    message: CodeChatMessage,
+    onOpenProfile: (CodeChatMessage) -> Unit,
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (message.fromMe) Arrangement.End else Arrangement.Start,
@@ -257,6 +292,7 @@ private fun CodeChatMessageRow(message: CodeChatMessage) {
                 name = message.senderName,
                 url = message.senderAvatar,
                 size = 32.dp,
+                modifier = Modifier.clickable { onOpenProfile(message) },
             )
             Spacer(Modifier.size(8.dp))
         }

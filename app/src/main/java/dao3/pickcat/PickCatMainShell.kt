@@ -359,7 +359,9 @@ fun PickCatMainShell(
                 )
             }
             composable(Routes.CODECHAT) {
-                CodeChatScreen()
+                CodeChatScreen(
+                    onOpenProfile = { userId -> navController.navigate(Routes.profile(userId)) },
+                )
             }
             composable(Routes.WORKS) {
                 if (widthSizeClass == WindowWidthSizeClass.Expanded) {

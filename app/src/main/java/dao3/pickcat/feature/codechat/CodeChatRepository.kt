@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit
 
 data class CodeChatMessage(
     val id: String,
+    val senderId: String,
     val senderName: String,
     val senderAvatar: String?,
     val text: String,
@@ -109,6 +110,28 @@ class CodeChatRepository(context: Context) {
         if (socket?.send(message.toString()) != true) {
             _state.update { it.copy(error = "消息发送失败，请重新连接") }
         }
+    }
+
+    suspend fun resolvePickCatUserId(ccUid: String): String? {
+        if (ccUid.isBlank()) return null
+        val request = Request.Builder()
+            .url("$BASE_URL/api/cc/resolve/$ccUid")
+            .get()
+            .build()
+        return runCatching {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return null
+                response.jsonBody().optString("pcUuid").takeIf { it.isNotBlank() }
+            }
+        }.getOrNull()
+    }
+
+    private fun ownMessageIds(): Set<String> =
+        prefs.getStringSet(KEY_OWN_MESSAGE_IDS, emptySet()).orEmpty()
+
+    private fun rememberOwnMessage(id: String) {
+        val next = (ownMessageIds().toList() + id).takeLast(200).toSet()
+        prefs.edit().putStringSet(KEY_OWN_MESSAGE_IDS, next).apply()
     }
 
     private suspend fun connectInternal() {
@@ -215,12 +238,15 @@ class CodeChatRepository(context: Context) {
                         add(
                             CodeChatMessage(
                                 id = id,
+                                senderId = message.optString("senderId"),
                                 senderName = message.optString("senderName"),
                                 senderAvatar = message.optString("senderAvatar")
                                     .takeIf { it.isNotBlank() },
                                 text = text,
                                 imageUrl = image,
-                                fromMe = message.optString("senderId") == ccUid,
+                                fromMe = message.optBoolean("fromMe", false) ||
+                                    message.optString("senderId") == ccUid ||
+                                    ownMessageIds().contains(id),
                                 time = message.optLong("time", System.currentTimeMillis()),
                             ),
                         )
@@ -250,7 +276,7 @@ class CodeChatRepository(context: Context) {
             }
 
             override fun onMessage(webSocket: WebSocket, text: String) {
-                handleEvent(text)
+                handleEvent(text, ccUid)
             }
 
             override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
@@ -302,7 +328,7 @@ class CodeChatRepository(context: Context) {
         }
     }
 
-    private fun handleEvent(raw: String) {
+    private fun handleEvent(raw: String, ccUid: String) {
         val event = runCatching { JSONObject(raw) }.getOrNull() ?: return
         when (event.optString("type")) {
             "new_message" -> {
@@ -314,13 +340,17 @@ class CodeChatRepository(context: Context) {
                 if (text.isBlank() && image == null) return
                 val item = CodeChatMessage(
                     id = id,
+                    senderId = message.optString("senderId"),
                     senderName = message.optString("senderName"),
                     senderAvatar = message.optString("senderAvatar").takeIf { it.isNotBlank() },
                     text = text,
                     imageUrl = image,
-                    fromMe = event.optBoolean("fromMe", false),
+                    fromMe = event.optBoolean("fromMe", false) ||
+                        message.optString("senderId") == ccUid ||
+                        ownMessageIds().contains(id),
                     time = message.optLong("time", System.currentTimeMillis()),
                 )
+                if (item.fromMe) rememberOwnMessage(id)
                 _state.update { current ->
                     if (current.messages.any { it.id == item.id }) {
                         current
@@ -385,6 +415,7 @@ class CodeChatRepository(context: Context) {
         private const val KEY_UID = "cc_uid"
         private const val KEY_ASSERT = "assertion"
         private const val KEY_PC_UID = "pc_uid"
+        private const val KEY_OWN_MESSAGE_IDS = "own_message_ids"
         private const val TAG = "CodeChat"
         private val JSON = "application/json; charset=utf-8".toMediaType()
     }
