@@ -3,6 +3,19 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.42] - 2026-11-22
+
+### 新增
+
+- 个人主页、个人作品库、媒体库、通知、收到的赞、合集、搜索、帖子详情和作品详情支持下拉刷新。
+- MOSS 作品会从播放器入口地址或描述中解析网页链接并内嵌显示。
+
+### 变更
+
+- 已关注用户的按钮改为描边样式，降低视觉强调。
+- 主帖不再放在 Card 内，正文获得更宽的显示区域。
+- 调整个人主页标签栏和作品网格的间距。
+
 ## [0.1.41] - 2026-11-22
 
 ### 变更
@@ -290,6 +303,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.42]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.42
 [0.1.41]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.41
 [0.1.40]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.40
 [0.1.39]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.39

@@ -41,6 +41,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -147,6 +148,11 @@ class SearchViewModel : ViewModel() {
                 )
             }
         }
+    }
+
+    fun refresh() {
+        val query = _state.value.query
+        if (query.isNotBlank()) search(query)
     }
 }
 
@@ -318,14 +324,20 @@ fun SearchScreen(
                                 )
                             }
                         }
-                        SearchResults(
-                            state = state,
-                            onOpenTopic = onOpenTopic,
-                            onOpenUser = onOpenUser,
-                            onOpenWork = onOpenWork,
-                            onOpenTag = onOpenTag,
+                        PullToRefreshBox(
                             modifier = Modifier.weight(1f),
-                        )
+                            isRefreshing = state.loading,
+                            onRefresh = viewModel::refresh,
+                        ) {
+                            SearchResults(
+                                state = state,
+                                onOpenTopic = onOpenTopic,
+                                onOpenUser = onOpenUser,
+                                onOpenWork = onOpenWork,
+                                onOpenTag = onOpenTag,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
                     }
                 }
             }

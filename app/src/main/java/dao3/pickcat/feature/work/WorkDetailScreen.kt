@@ -57,6 +57,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -373,11 +374,16 @@ fun WorkDetailScreen(
                     modifier = Modifier.fillMaxSize().padding(padding),
                     contentAlignment = Alignment.TopCenter,
                 ) {
-                    LazyColumn(
-                        modifier = Modifier.widthIn(max = 860.dp).fillMaxWidth().fillMaxHeight(),
-                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                    PullToRefreshBox(
+                        modifier = Modifier.fillMaxSize(),
+                        isRefreshing = state.loading,
+                        onRefresh = viewModel::reload,
                     ) {
+                        LazyColumn(
+                            modifier = Modifier.widthIn(max = 860.dp).fillMaxWidth().fillMaxHeight(),
+                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
                     item {
                         CodemaoPlayer(
                             work = work,
@@ -652,6 +658,7 @@ fun WorkDetailScreen(
             }
         }
     }
+}
 }
 }
 

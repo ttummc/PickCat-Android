@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -154,16 +155,21 @@ fun CollectionScreen(
                 onRetry = viewModel::reload,
                 modifier = Modifier.padding(padding),
             )
-            else -> LazyColumn(
+            else -> PullToRefreshBox(
                 modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(
-                    start = wideContentPadding(920.dp),
-                    end = wideContentPadding(920.dp),
-                    top = 8.dp,
-                    bottom = 24.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
+                isRefreshing = state.loading,
+                onRefresh = viewModel::reload,
             ) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = wideContentPadding(920.dp),
+                        end = wideContentPadding(920.dp),
+                        top = 8.dp,
+                        bottom = 24.dp,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
                 item {
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
@@ -210,6 +216,7 @@ fun CollectionScreen(
                     }
                     PagedFooter(loading = state.loadingMore, endReached = state.endReached)
                 }
+            }
             }
         }
     }

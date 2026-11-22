@@ -75,6 +75,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -441,7 +442,12 @@ fun MediaScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
+        PullToRefreshBox(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            isRefreshing = state.loading,
+            onRefresh = viewModel::refresh,
+        ) {
+            Column(Modifier.fillMaxSize()) {
             StorageSummary(
                 state = state,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
@@ -464,7 +470,7 @@ fun MediaScreen(
                 )
             }
             val pageState = when {
-                state.loading -> MediaPageState.LOADING
+                state.loading && state.files.isEmpty() -> MediaPageState.LOADING
                 state.error != null -> MediaPageState.ERROR
                 state.files.isEmpty() -> MediaPageState.EMPTY
                 else -> MediaPageState.CONTENT
@@ -538,6 +544,7 @@ fun MediaScreen(
                 }
             }
         }
+    }
     }
 
     previewFile?.let { file ->

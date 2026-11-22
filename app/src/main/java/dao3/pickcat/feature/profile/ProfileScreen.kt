@@ -63,6 +63,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -76,6 +77,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -237,6 +239,10 @@ class ProfileViewModel(private val userId: String) : ViewModel() {
         if (_state.value.tab == tab) return
         _state.update { it.copy(tab = tab, tabError = null) }
         loadTab(tab)
+    }
+
+    fun refresh() {
+        loadProfile()
     }
 
     private fun loadTab(tab: ProfileTab) {
@@ -471,12 +477,17 @@ fun ProfileScreen(
             )
             else -> {
                 val isWide = LocalConfiguration.current.screenWidthDp >= 900
-                Row(
-                    Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .padding(top = if (isWide) 12.dp else 0.dp),
+                PullToRefreshBox(
+                    isRefreshing = state.loading,
+                    onRefresh = viewModel::refresh,
+                    modifier = Modifier.fillMaxSize(),
                 ) {
+                    Row(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                            .padding(top = if (isWide) 12.dp else 0.dp),
+                    ) {
                     if (isWide) {
                         ProfileSidebar(
                             profile = state.profile!!,
@@ -513,6 +524,7 @@ fun ProfileScreen(
                             }
                         }
                 item {
+                    Spacer(Modifier.height(8.dp))
                     PrimaryScrollableTabRow(
                         selectedTabIndex = state.tab.ordinal,
                         edgePadding = 12.dp,
@@ -532,6 +544,9 @@ fun ProfileScreen(
                             )
                         }
                     }
+                }
+                item {
+                    Spacer(Modifier.height(8.dp))
                 }
                 if (state.tabLoading) {
                     item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
@@ -574,7 +589,7 @@ fun ProfileScreen(
                                 WorkGrid(
                                     works = state.featuredWorks,
                                     onOpenWork = onOpenWork,
-                                    modifier = Modifier.padding(horizontal = 16.dp).animateItem(),
+                                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp).animateItem(),
                                 )
                             }
                         }
@@ -676,7 +691,7 @@ fun ProfileScreen(
                                 WorkGrid(
                                     works = state.works,
                                     onOpenWork = onOpenWork,
-                                    modifier = Modifier.padding(horizontal = 16.dp).animateItem(),
+                                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp).animateItem(),
                                 )
                             }
                         }
@@ -758,6 +773,7 @@ fun ProfileScreen(
                 }
             }
         }
+    }
     }
     }
     }
@@ -980,15 +996,29 @@ private fun ProfileSidebar(
                 Text("编辑资料")
             }
         } else {
-            Button(
-                onClick = onFollow,
-                enabled = !followBusy,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                if (followBusy) {
-                    CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                } else {
-                    Text(if (following) "已关注" else "关注")
+            if (following) {
+                OutlinedButton(
+                    onClick = onFollow,
+                    enabled = !followBusy,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (followBusy) {
+                        CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text("已关注")
+                    }
+                }
+            } else {
+                Button(
+                    onClick = onFollow,
+                    enabled = !followBusy,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    if (followBusy) {
+                        CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text("关注")
+                    }
                 }
             }
         }
@@ -1149,14 +1179,27 @@ private fun ProfileHeader(
                         Text("编辑")
                     }
                 } else {
-                    Button(
-                        onClick = onFollow,
-                        enabled = !followBusy,
-                    ) {
-                        if (followBusy) {
-                            CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
-                        } else {
-                            Text(if (following) "已关注" else "关注")
+                    if (following) {
+                        OutlinedButton(
+                            onClick = onFollow,
+                            enabled = !followBusy,
+                        ) {
+                            if (followBusy) {
+                                CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                            } else {
+                                Text("已关注")
+                            }
+                        }
+                    } else {
+                        Button(
+                            onClick = onFollow,
+                            enabled = !followBusy,
+                        ) {
+                            if (followBusy) {
+                                CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                            } else {
+                                Text("关注")
+                            }
                         }
                     }
                 }

@@ -23,6 +23,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -100,6 +101,10 @@ class LibraryViewModel : ViewModel() {
             }
         }
     }
+
+    fun refresh() {
+        load()
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -134,7 +139,12 @@ fun LibraryScreen(
             )
         },
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
+        PullToRefreshBox(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            isRefreshing = state.loading,
+            onRefresh = viewModel::refresh,
+        ) {
+            Column(Modifier.fillMaxSize()) {
             SingleChoiceSegmentedButtonRow(
                 Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
@@ -214,4 +224,6 @@ fun LibraryScreen(
             }
         }
     }
+}
+
 }

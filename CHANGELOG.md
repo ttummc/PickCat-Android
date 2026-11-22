@@ -3,6 +3,19 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.42] - 2026-11-22
+
+### Added
+
+- Pull-to-refresh on the profile, personal library, media, notifications, likes, collections, search, topic detail, and work detail screens.
+- MOSS works now resolve a web URL from their player entry URL or description and embed it in the inline player.
+
+### Changed
+
+- An already-followed profile now uses an outlined button instead of a filled button.
+- The first post is no longer wrapped in a card, giving its content more width.
+- Added consistent spacing around profile tabs and work grids.
+
 ## [0.1.41] - 2026-11-22
 
 ### Changed
@@ -290,6 +303,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.42]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.42
 [0.1.41]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.41
 [0.1.40]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.40
 [0.1.39]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.39

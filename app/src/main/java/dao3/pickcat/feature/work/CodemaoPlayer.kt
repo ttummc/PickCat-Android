@@ -66,14 +66,42 @@ import dao3.pickcat.core.ui.PickCatImage
  * depending on the engine. Types without a player deliberately return null.
  */
 fun playerUrlFor(work: Work): String? {
-    val id = work.sourceWorkId.trim().ifBlank { return null }
+    val id = work.sourceWorkId.trim()
+    val directUrl = work.player?.entryUrl
+        ?.trim()
+        ?.takeIf { it.startsWith("http://") || it.startsWith("https://") }
     return when (work.type.uppercase()) {
         "KITTEN4" -> "https://player.codemao.cn/new/$id"
         "KITTEN3" -> "https://player.codemao.cn/old/$id?origin=kitten_qrcode"
         "KITTENN" -> "https://kn.codemao.cn/player?type=2&workId=$id"
         "COCO" -> "https://coco.codemao.cn/editor/player/$id?channel=h5"
         "NEMO" -> "https://nemo.codemao.cn/w/$id"
+        "MOSS" -> embeddedWebUrl(work)
         else -> null
+    } ?: directUrl
+}
+
+private val WEB_URL_REGEX = Regex("""https?://[^\s"'<>]+""")
+
+/**
+ * MOSS works are regular web pages rather than one of the Codemao player
+ * runtimes. The link can arrive in the player entry URL, the source id, or the
+ * description, depending on how the work was imported.
+ */
+private fun embeddedWebUrl(work: Work): String? {
+    val candidates = listOf(
+        work.player?.entryUrl,
+        work.sourceWorkId,
+        work.description,
+        work.excerpt,
+        work.preview,
+    )
+    return candidates.firstNotNullOfOrNull { candidate ->
+        val text = candidate?.trim().orEmpty()
+        when {
+            text.startsWith("http://") || text.startsWith("https://") -> text
+            else -> WEB_URL_REGEX.find(text)?.value
+        }
     }
 }
 
@@ -102,7 +130,15 @@ fun CodemaoPlayer(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val playerUrl = remember(work.id, work.type, work.sourceWorkId, work.player?.entryUrl) {
+    val playerUrl = remember(
+        work.id,
+        work.type,
+        work.sourceWorkId,
+        work.player?.entryUrl,
+        work.description,
+        work.excerpt,
+        work.preview,
+    ) {
         playerUrlFor(work)
     }
     var failed by remember { mutableStateOf(false) }

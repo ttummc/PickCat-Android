@@ -43,8 +43,6 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
@@ -65,6 +63,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -462,10 +461,15 @@ fun TopicDetailScreen(
                 onRetry = viewModel::reload,
                 modifier = Modifier.padding(padding),
             )
-            else -> Box(
+            else -> PullToRefreshBox(
                 modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.TopCenter,
+                isRefreshing = state.loading,
+                onRefresh = viewModel::reload,
             ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.TopCenter,
+                ) {
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.widthIn(max = 860.dp).fillMaxWidth().fillMaxHeight(),
@@ -604,6 +608,7 @@ fun TopicDetailScreen(
             }
         }
     }
+}
 }
 }
 
@@ -851,70 +856,67 @@ private fun PostCard(
     onReport: () -> Unit,
     onOpenUser: (UserRef) -> Unit,
 ) {
-    Card(
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            AuthorRow(
-                user = post.author,
-                time = post.createdAt,
-                modifier = Modifier.clickable { onOpenUser(post.author) },
-                trailing = {
-                    Text(
-                        "#${post.postNumber}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                },
+        AuthorRow(
+            user = post.author,
+            time = post.createdAt,
+            modifier = Modifier.clickable { onOpenUser(post.author) },
+            trailing = {
+                Text(
+                    "#${post.postNumber}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
+        )
+        if (post.deleted) {
+            Text(
+                "该楼层已删除",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            if (post.deleted) {
-                Text(
-                    "该楼层已删除",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            } else {
-                PostContent(post)
+        } else {
+            PostContent(post)
+        }
+        if (post.replyToPostNumber != null) {
+            Text(
+                "回复 #${post.replyToPostNumber}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        HorizontalDivider()
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            TextButton(onClick = onLike) {
+                AnimatedContent(
+                    targetState = liked,
+                    transitionSpec = {
+                        fadeIn(tween(160)) togetherWith fadeOut(tween(100))
+                    },
+                    label = "post-like-icon",
+                ) { active ->
+                    Icon(
+                        if (active) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(4.dp))
+                Text(compactNumber(likeCount))
             }
-            if (post.replyToPostNumber != null) {
-                Text(
-                    "回复 #${post.replyToPostNumber}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            TextButton(onClick = onReply) {
+                Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("回复")
             }
-            HorizontalDivider()
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                TextButton(onClick = onLike) {
-                    AnimatedContent(
-                        targetState = liked,
-                        transitionSpec = {
-                            fadeIn(tween(160)) togetherWith fadeOut(tween(100))
-                        },
-                        label = "post-like-icon",
-                    ) { active ->
-                        Icon(
-                            if (active) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Spacer(Modifier.width(4.dp))
-                    Text(compactNumber(likeCount))
-                }
-                TextButton(onClick = onReply) {
-                    Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("回复")
-                }
-                TextButton(onClick = onReport) {
-                    Icon(Icons.Default.Flag, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(4.dp))
-                    Text("举报")
-                }
+            TextButton(onClick = onReport) {
+                Icon(Icons.Default.Flag, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("举报")
             }
         }
     }

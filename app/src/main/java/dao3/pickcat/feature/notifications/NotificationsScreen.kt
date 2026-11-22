@@ -46,6 +46,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -384,8 +385,13 @@ fun NotificationsScreen(
             filteredItems.isEmpty() -> NotificationPageState.EMPTY
             else -> NotificationPageState.CONTENT
         }
-        Box(Modifier.fillMaxSize().padding(padding)) {
-            when (pageState) {
+        PullToRefreshBox(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            isRefreshing = state.loading,
+            onRefresh = viewModel::refresh,
+        ) {
+            Box(Modifier.fillMaxSize()) {
+                when (pageState) {
                 NotificationPageState.LOADING -> NotificationListSkeleton(
                     modifier = Modifier.padding(16.dp),
                 )
@@ -439,6 +445,7 @@ fun NotificationsScreen(
                         PagedFooter(loading = state.loadingMore, endReached = state.endReached)
                     }
                 }
+            }
             }
         }
     }
@@ -633,13 +640,18 @@ fun LikesScreen(
         },
     ) { padding ->
         val pageState = when {
-            state.loading -> LikesPageState.LOADING
+            state.loading && state.groups.isEmpty() -> LikesPageState.LOADING
             state.error != null -> LikesPageState.ERROR
             state.groups.isEmpty() -> LikesPageState.EMPTY
             else -> LikesPageState.CONTENT
         }
-        Box(Modifier.fillMaxSize().padding(padding)) {
-            when (pageState) {
+        PullToRefreshBox(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            isRefreshing = state.loading,
+            onRefresh = viewModel::refresh,
+        ) {
+            Box(Modifier.fillMaxSize()) {
+                when (pageState) {
                 LikesPageState.LOADING -> LoadingState()
                 LikesPageState.ERROR -> ErrorState(
                     message = state.error.orEmpty(),
@@ -717,6 +729,7 @@ fun LikesScreen(
                         PagedFooter(loading = state.loadingMore, endReached = state.endReached)
                     }
                 }
+            }
             }
         }
     }
