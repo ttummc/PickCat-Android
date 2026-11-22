@@ -32,6 +32,8 @@ import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -98,6 +100,8 @@ class CodeChatViewModel : ViewModel() {
 
     fun refreshDmSessions() = repository.refreshDmSessions()
 
+    fun setActivePeer(peerUid: String?) = repository.setActivePeer(peerUid)
+
     fun ensureDmSession(peerUid: String, nickname: String, avatar: String?) =
         repository.ensureDmSession(peerUid, nickname, avatar)
 
@@ -152,6 +156,12 @@ fun CodeChatScreen(
     LaunchedEffect(tab, selectedPeer) {
         if (tab == 1 && selectedPeer == null) viewModel.refreshDmSessions()
     }
+
+    LaunchedEffect(selectedPeer?.peerUid) {
+        viewModel.setActivePeer(selectedPeer?.peerUid)
+    }
+
+    val totalUnread = state.unreadByPeer.values.sum()
 
     val openUserProfile: (CodeChatMessage) -> Unit = { message ->
         scope.launch {
@@ -231,7 +241,19 @@ fun CodeChatScreen(
                         Tab(
                             selected = tab == 1,
                             onClick = { tab = 1 },
-                            text = { Text("私聊") },
+                            text = {
+                                BadgedBox(
+                                    badge = {
+                                        if (totalUnread > 0) {
+                                            Badge {
+                                                Text(if (totalUnread > 99) "99+" else totalUnread.toString())
+                                            }
+                                        }
+                                    },
+                                ) {
+                                    Text("私聊")
+                                }
+                            },
                         )
                     }
                 }
@@ -375,6 +397,7 @@ fun CodeChatScreen(
             when {
                 selectedPeer == null && tab == 1 -> DmSessionList(
                     sessions = state.dmSessions,
+                    unreadByPeer = state.unreadByPeer,
                     onOpenSession = ::choosePeer,
                 )
                 visibleMessages.isEmpty() -> EmptyConversation(
@@ -403,6 +426,7 @@ fun CodeChatScreen(
 @Composable
 private fun DmSessionList(
     sessions: List<DmSession>,
+    unreadByPeer: Map<String, Int>,
     onOpenSession: (DmSession) -> Unit,
 ) {
     if (sessions.isEmpty()) {
@@ -464,6 +488,12 @@ private fun DmSessionList(
                     },
                     trailingContent = {
                         Column(horizontalAlignment = Alignment.End) {
+                            val unread = unreadByPeer[session.peerUid] ?: 0
+                            if (unread > 0) {
+                                Badge {
+                                    Text(if (unread > 99) "99+" else unread.toString())
+                                }
+                            }
                             if (session.lastTime > 0L) {
                                 Text(
                                     DateFormat.getTimeInstance(DateFormat.SHORT)

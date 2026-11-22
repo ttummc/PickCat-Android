@@ -55,6 +55,8 @@ data class CodeChatState(
     val canChat: Boolean = true,
     val messages: List<CodeChatMessage> = emptyList(),
     val dmSessions: List<DmSession> = emptyList(),
+    val unreadByPeer: Map<String, Int> = emptyMap(),
+    val activePeerUid: String? = null,
     val error: String? = null,
 )
 
@@ -399,6 +401,19 @@ class CodeChatRepository(context: Context) {
         }
     }
 
+    fun setActivePeer(peerUid: String?) {
+        _state.update { current ->
+            current.copy(
+                activePeerUid = peerUid,
+                unreadByPeer = if (peerUid == null) {
+                    current.unreadByPeer
+                } else {
+                    current.unreadByPeer - peerUid
+                },
+            )
+        }
+    }
+
     private fun openSocket(token: String, ccUid: String, assertion: String) {
         val request = Request.Builder()
             .url(WS_URL)
@@ -500,7 +515,7 @@ class CodeChatRepository(context: Context) {
                     peerId = peerId,
                 )
                 if (item.fromMe) rememberOwnMessage(id)
-                if (peerId.isNotBlank() && !item.fromMe) {
+                if (peerId.isNotBlank()) {
                     _state.update { current ->
                         val existing = current.dmSessions.firstOrNull {
                             it.peerUid == peerId
@@ -513,10 +528,18 @@ class CodeChatRepository(context: Context) {
                             lastText = item.text,
                             online = existing?.online ?: false,
                         )
+                        val unread = if (!item.fromMe && current.activePeerUid != peerId) {
+                            current.unreadByPeer + (
+                                peerId to ((current.unreadByPeer[peerId] ?: 0) + 1)
+                            )
+                        } else {
+                            current.unreadByPeer
+                        }
                         current.copy(
                             dmSessions = (listOf(updated) + current.dmSessions.filterNot {
                                 it.peerUid == peerId
                             }).sortedByDescending { it.lastTime },
+                            unreadByPeer = unread,
                         )
                     }
                 }
