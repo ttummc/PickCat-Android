@@ -100,6 +100,16 @@ class SessionRepository(
 
     suspend fun refreshAfterWebLogin(): SessionUser? = pollWebViewLogin()
 
+    suspend fun pickcatSessionCookie(): String? = withContext(Dispatchers.Main) {
+        val webCookie = CookieManager.getInstance()
+            .getCookie(PICKCAT_ORIGIN)
+            .orEmpty()
+            .split(';')
+            .map { it.trim() }
+            .firstOrNull { it.startsWith("pickcat_session=") }
+        webCookie ?: cookieJar.peekSessionCookie()?.let { "${it.name}=${it.value}" }
+    }
+
     fun forceSignedOut() {
         _state.value = SessionUiState(ready = true, loading = false)
     }

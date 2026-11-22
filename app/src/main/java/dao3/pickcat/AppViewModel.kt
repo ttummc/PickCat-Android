@@ -145,6 +145,10 @@ class AppViewModel : ViewModel() {
         viewModelScope.launch { preferencesRepository.setBackgroundNotifications(enabled) }
     }
 
+    fun updateCodeChatEnabled(enabled: Boolean) {
+        viewModelScope.launch { preferencesRepository.setCodeChatEnabled(enabled) }
+    }
+
     fun updateUpdateSource(source: String) {
         viewModelScope.launch { preferencesRepository.setUpdateSource(source) }
     }

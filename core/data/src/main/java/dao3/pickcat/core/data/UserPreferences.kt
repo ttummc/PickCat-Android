@@ -18,6 +18,7 @@ data class AppPreferences(
     val dynamicColor: Boolean = true,
     val backgroundNotifications: Boolean = true,
     val updateSource: String = "mirror",
+    val codeChatEnabled: Boolean = true,
 )
 
 class UserPreferences(private val context: Context) {
@@ -29,6 +30,7 @@ class UserPreferences(private val context: Context) {
             dynamicColor = values[KEY_DYNAMIC] ?: true,
             backgroundNotifications = values[KEY_BACKGROUND_NOTIFICATIONS] ?: true,
             updateSource = values[KEY_UPDATE_SOURCE] ?: "mirror",
+            codeChatEnabled = values[KEY_CODECHAT_ENABLED] ?: true,
         )
     }
 
@@ -50,6 +52,10 @@ class UserPreferences(private val context: Context) {
 
     suspend fun setUpdateSource(source: String) {
         store.edit { it[KEY_UPDATE_SOURCE] = source }
+    }
+
+    suspend fun setCodeChatEnabled(enabled: Boolean) {
+        store.edit { it[KEY_CODECHAT_ENABLED] = enabled }
     }
 
     suspend fun recordSearch(query: String) {
@@ -79,6 +85,7 @@ class UserPreferences(private val context: Context) {
         val KEY_BACKGROUND_NOTIFICATIONS = booleanPreferencesKey("background_notifications")
         val KEY_UPDATE_SOURCE = stringPreferencesKey("update_source")
         val KEY_SEARCH_HISTORY = stringPreferencesKey("search_history")
+        val KEY_CODECHAT_ENABLED = booleanPreferencesKey("codechat_enabled")
     }
 }
 

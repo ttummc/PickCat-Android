@@ -29,6 +29,7 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
@@ -356,6 +357,26 @@ fun SettingsScreen(
                     keywords = listOf("编程猫", "绑定", "同步"),
                     onClick = { openExternalUrl(context, OFFICIAL_SETTINGS_URL) },
                     showChevron = true,
+                ),
+            ),
+        ),
+        SettingsSectionSpec(
+            id = "codechat",
+            title = "CodeChat",
+            keywords = listOf("CodeChat", "聊天", "消息", "社区"),
+            items = listOf(
+                SettingsItemSpec(
+                    key = "codechat-enabled",
+                    icon = Icons.Default.Chat,
+                    title = "CodeChat 聊天",
+                    summary = "由 CodeChat 提供的社区聊天，开启后显示在底部导航",
+                    keywords = listOf("CodeChat", "聊天", "消息", "导航"),
+                    trailing = {
+                        Switch(
+                            checked = preferences.codeChatEnabled,
+                            onCheckedChange = appViewModel::updateCodeChatEnabled,
+                        )
+                    },
                 ),
             ),
         ),

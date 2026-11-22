@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Home
@@ -95,6 +96,7 @@ import dao3.pickcat.feature.work.WorkDetailScreen
 import dao3.pickcat.feature.work.WorksScreen
 import dao3.pickcat.core.ui.EmptyState
 import dao3.pickcat.core.ui.OfflineBanner
+import dao3.pickcat.feature.codechat.CodeChatScreen
 
 private object Routes {
     const val HOME = "home"
@@ -115,6 +117,7 @@ private object Routes {
     const val MEDIA = "media"
     const val GALLERY = "gallery"
     const val LIBRARY = "library"
+    const val CODECHAT = "codechat"
 
     fun category(slug: String) = "category/$slug"
     fun topic(id: String, postNumber: Int? = null) =
@@ -139,6 +142,7 @@ fun PickCatMainShell(
 ) {
     val navController = rememberNavController()
     val session by appViewModel.session.collectAsStateWithLifecycle()
+    val preferences by appViewModel.preferences.collectAsStateWithLifecycle()
     val isOnline by appViewModel.isOnline.collectAsStateWithLifecycle()
     var offlineBannerDismissed by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(isOnline) {
@@ -160,37 +164,56 @@ fun PickCatMainShell(
     val reselectEvents = remember { MutableSharedFlow<Unit>(extraBufferCapacity = 1) }
     val scope = rememberCoroutineScope()
 
-    val destinations = listOf(
-        MainDestination(
-            label = "首页",
-            selectedIcon = Icons.Filled.Home,
-            unselectedIcon = Icons.Outlined.Home,
-            route = Routes.HOME,
-        ),
-        MainDestination(
-            label = "论坛",
-            selectedIcon = Icons.Filled.Forum,
-            unselectedIcon = Icons.Outlined.Forum,
-            route = Routes.FORUM,
-        ),
-        MainDestination(
-            label = "作品",
-            selectedIcon = Icons.Filled.VideoLibrary,
-            unselectedIcon = Icons.Outlined.VideoLibrary,
-            route = Routes.WORKS,
-        ),
-        MainDestination(
-            label = "我的",
-            selectedIcon = Icons.Filled.Person,
-            unselectedIcon = Icons.Outlined.Person,
-            route = Routes.ME,
-        ),
-    )
+    val destinations = buildList {
+        add(
+            MainDestination(
+                label = "首页",
+                selectedIcon = Icons.Filled.Home,
+                unselectedIcon = Icons.Outlined.Home,
+                route = Routes.HOME,
+            ),
+        )
+        add(
+            MainDestination(
+                label = "论坛",
+                selectedIcon = Icons.Filled.Forum,
+                unselectedIcon = Icons.Outlined.Forum,
+                route = Routes.FORUM,
+            ),
+        )
+        if (preferences.codeChatEnabled) {
+            add(
+                MainDestination(
+                    label = "CodeChat",
+                    selectedIcon = Icons.Filled.Chat,
+                    unselectedIcon = Icons.Filled.ChatBubbleOutline,
+                    route = Routes.CODECHAT,
+                ),
+            )
+        }
+        add(
+            MainDestination(
+                label = "作品",
+                selectedIcon = Icons.Filled.VideoLibrary,
+                unselectedIcon = Icons.Outlined.VideoLibrary,
+                route = Routes.WORKS,
+            ),
+        )
+        add(
+            MainDestination(
+                label = "我的",
+                selectedIcon = Icons.Filled.Person,
+                unselectedIcon = Icons.Outlined.Person,
+                route = Routes.ME,
+            ),
+        )
+    }
 
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val isTopLevel = currentRoute == Routes.HOME ||
         currentRoute == Routes.FORUM ||
+        currentRoute == Routes.CODECHAT ||
         currentRoute == Routes.WORKS ||
         currentRoute == Routes.ME
     val selectedRoute = currentRoute
@@ -204,6 +227,19 @@ fun PickCatMainShell(
             launchSingleTop = true
             restoreState = true
         }
+    }
+
+    LaunchedEffect(preferences.codeChatEnabled) {
+        if (!preferences.codeChatEnabled) {
+            AppGraph.codeChat.disconnect()
+            if (navController.currentDestination?.route == Routes.CODECHAT) {
+                navigateTopLevel(Routes.HOME)
+            }
+        }
+    }
+
+    LaunchedEffect(currentUser?.id) {
+        if (currentUser == null) AppGraph.codeChat.disconnect()
     }
 
     var lastHomeBackAt by remember { mutableLongStateOf(0L) }
@@ -266,8 +302,7 @@ fun PickCatMainShell(
                     onNotifications = { navigateTopLevel(Routes.NOTIFICATIONS) },
                 )
             }
-            composable(Routes.FORUM) {
-                if (widthSizeClass == WindowWidthSizeClass.Expanded) {
+            composable(Routes.FORUM) {                if (widthSizeClass == WindowWidthSizeClass.Expanded) {
                     ForumTwoPane(
                         onOpenCategory = { tag -> navController.navigate(Routes.category(tag.slug)) },
                         onCompose = { navController.navigate(Routes.COMPOSER) },
@@ -322,6 +357,9 @@ fun PickCatMainShell(
                         navController.popBackStack()
                     },
                 )
+            }
+            composable(Routes.CODECHAT) {
+                CodeChatScreen()
             }
             composable(Routes.WORKS) {
                 if (widthSizeClass == WindowWidthSizeClass.Expanded) {

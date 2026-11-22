@@ -7,15 +7,21 @@ import coil3.SingletonImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.crossfade
 import dao3.pickcat.core.data.AppContainer
+import dao3.pickcat.feature.codechat.CodeChatRepository
 import okhttp3.OkHttpClient
 
 object AppGraph {
     lateinit var container: AppContainer
         private set
+    lateinit var codeChat: CodeChatRepository
+        private set
 
     fun install(context: Application) {
         if (!::container.isInitialized) {
             container = AppContainer(context)
+        }
+        if (!::codeChat.isInitialized) {
+            codeChat = CodeChatRepository(context)
         }
     }
 }
