@@ -3,6 +3,12 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.48] - 2026-11-22
+
+### Changed
+
+- CodeChat now opens to a single conversation list. The official public group is the first row and private conversations follow it. Opening a row enters the conversation; the public group and private chats share the same chat layout.
+
 ## [0.1.47] - 2026-11-22
 
 ### Added
@@ -337,6 +343,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.48]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.48
 [0.1.47]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.47
 [0.1.46]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.46
 [0.1.45]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.45

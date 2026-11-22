@@ -2,6 +2,7 @@ package dao3.pickcat.feature.codechat
 
 import android.content.Context
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -31,9 +33,8 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material3.Button
 import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -47,19 +48,16 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -118,13 +116,22 @@ fun CodeChatScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var draft by rememberSaveable { mutableStateOf("") }
-    var tab by rememberSaveable { mutableIntStateOf(0) }
+    var publicOpen by remember { mutableStateOf(false) }
     var selectedPeer by remember { mutableStateOf<DmSession?>(null) }
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var uploading by remember { mutableStateOf(false) }
+
+    val inConversation = publicOpen || selectedPeer != null
+    val visibleMessages = when {
+        selectedPeer != null -> state.messages.filter { it.peerId == selectedPeer?.peerUid }
+        publicOpen -> state.messages.filter { it.peerId.isBlank() }
+        else -> emptyList()
+    }
+    val publicMessages = state.messages.filter { it.peerId.isBlank() }
+
     val imagePicker = rememberLauncherForActivityResult(
         ActivityResultContracts.PickVisualMedia(),
     ) { uri ->
@@ -141,41 +148,21 @@ fun CodeChatScreen(
         }
     }
 
-    val visibleMessages = when {
-        selectedPeer != null -> state.messages.filter { it.peerId == selectedPeer?.peerUid }
-        tab == 0 -> state.messages.filter { it.peerId.isBlank() }
-        else -> emptyList()
+    fun closeConversation() {
+        publicOpen = false
+        selectedPeer = null
+        draft = ""
     }
 
-    LaunchedEffect(visibleMessages.size, selectedPeer?.peerUid) {
-        if (visibleMessages.isNotEmpty()) {
-            listState.animateScrollToItem(visibleMessages.lastIndex)
-        }
-    }
-
-    LaunchedEffect(tab, selectedPeer) {
-        if (tab == 1 && selectedPeer == null) viewModel.refreshDmSessions()
-    }
-
-    LaunchedEffect(selectedPeer?.peerUid) {
-        viewModel.setActivePeer(selectedPeer?.peerUid)
-    }
-
-    val totalUnread = state.unreadByPeer.values.sum()
-
-    val openUserProfile: (CodeChatMessage) -> Unit = { message ->
-        scope.launch {
-            val userId = viewModel.resolvePickCatUserId(message.senderId)
-            if (userId.isNullOrBlank()) {
-                snackbarHostState.showSnackbar("该用户没有关联 PickCat 账号，无法打开主页")
-            } else {
-                onOpenProfile(userId)
-            }
-        }
+    fun openPublic() {
+        selectedPeer = null
+        publicOpen = true
+        draft = ""
     }
 
     fun choosePeer(session: DmSession) {
         viewModel.ensureDmSession(session.peerUid, session.nickname, session.avatar)
+        publicOpen = false
         selectedPeer = session
         draft = ""
     }
@@ -191,76 +178,77 @@ fun CodeChatScreen(
                 online = false,
             ),
         )
-        tab = 1
     }
 
-    val hasComposer = selectedPeer != null || tab == 0
+    LaunchedEffect(visibleMessages.size, selectedPeer?.peerUid, publicOpen) {
+        if (visibleMessages.isNotEmpty()) {
+            listState.animateScrollToItem(visibleMessages.lastIndex)
+        }
+    }
+
+    LaunchedEffect(selectedPeer?.peerUid, publicOpen) {
+        viewModel.setActivePeer(if (publicOpen) null else selectedPeer?.peerUid)
+    }
+
+    LaunchedEffect(inConversation) {
+        if (!inConversation) viewModel.refreshDmSessions()
+    }
+
+    BackHandler(enabled = inConversation) {
+        closeConversation()
+    }
+
+    val openUserProfile: (CodeChatMessage) -> Unit = { message ->
+        scope.launch {
+            val userId = viewModel.resolvePickCatUserId(message.senderId)
+            if (userId.isNullOrBlank()) {
+                snackbarHostState.showSnackbar("该用户没有关联 PickCat 账号，无法打开主页")
+            } else {
+                onOpenProfile(userId)
+            }
+        }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Column {
-                            Text(selectedPeer?.nickname ?: "CodeChat")
-                            Text(
-                                if (selectedPeer != null) {
-                                    "CodeChat 私聊"
-                                } else {
-                                    "消息服务由 CodeChat 提供"
-                                },
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    },
-                    navigationIcon = {
-                        if (selectedPeer != null) {
-                            IconButton(onClick = { selectedPeer = null }) {
-                                Icon(
-                                    Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = "返回私聊列表",
-                                )
-                            }
-                        }
-                    },
-                )
-                if (selectedPeer == null) {
-                    PrimaryTabRow(
-                        selectedTabIndex = tab,
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                    ) {
-                        Tab(
-                            selected = tab == 0,
-                            onClick = { tab = 0 },
-                            text = { Text("公共频道") },
-                        )
-                        Tab(
-                            selected = tab == 1,
-                            onClick = { tab = 1 },
-                            text = {
-                                BadgedBox(
-                                    badge = {
-                                        if (totalUnread > 0) {
-                                            Badge {
-                                                Text(if (totalUnread > 99) "99+" else totalUnread.toString())
-                                            }
-                                        }
-                                    },
-                                ) {
-                                    Text("私聊")
-                                }
+            TopAppBar(
+                title = {
+                    Column {
+                        Text(
+                            when {
+                                selectedPeer != null -> selectedPeer?.nickname.orEmpty()
+                                publicOpen -> "CodeChat 官方聊群"
+                                else -> "CodeChat"
                             },
                         )
+                        Text(
+                            if (inConversation) {
+                                "消息服务由 CodeChat 提供"
+                            } else {
+                                "公共群聊和私聊会话"
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
-                }
-            }
+                },
+                navigationIcon = {
+                    if (inConversation) {
+                        IconButton(onClick = ::closeConversation) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "返回会话列表",
+                            )
+                        }
+                    }
+                },
+            )
         },
         bottomBar = {
-            if (hasComposer) {
+            if (inConversation) {
                 Surface(
                     modifier = Modifier.fillMaxWidth().imePadding(),
                     color = MaterialTheme.colorScheme.surfaceContainer,
@@ -288,7 +276,7 @@ fun CodeChatScreen(
                                             selectedPeer != null -> {
                                                 "发消息给 ${selectedPeer?.nickname.orEmpty()}"
                                             }
-                                            else -> "发消息到 CodeChat 公共频道"
+                                            else -> "发消息到公共群聊"
                                         },
                                     )
                                 },
@@ -339,11 +327,7 @@ fun CodeChatScreen(
                             }
                         }
                         Text(
-                            if (selectedPeer != null) {
-                                "私聊消息由 CodeChat 提供"
-                            } else {
-                                "公共频道消息由 CodeChat 提供"
-                            },
+                            "公共群聊和私聊消息由 CodeChat 提供",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(top = 4.dp),
@@ -395,9 +379,11 @@ fun CodeChatScreen(
             }
 
             when {
-                selectedPeer == null && tab == 1 -> DmSessionList(
+                !inConversation -> ConversationList(
+                    publicMessages = publicMessages,
                     sessions = state.dmSessions,
                     unreadByPeer = state.unreadByPeer,
+                    onOpenPublic = ::openPublic,
                     onOpenSession = ::choosePeer,
                 )
                 visibleMessages.isEmpty() -> EmptyConversation(
@@ -424,105 +410,163 @@ fun CodeChatScreen(
 }
 
 @Composable
-private fun DmSessionList(
+private fun ConversationList(
+    publicMessages: List<CodeChatMessage>,
     sessions: List<DmSession>,
     unreadByPeer: Map<String, Int>,
+    onOpenPublic: () -> Unit,
     onOpenSession: (DmSession) -> Unit,
 ) {
-    if (sessions.isEmpty()) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(32.dp),
-            ) {
-                Icon(
-                    Icons.Default.Forum,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(40.dp),
-                )
-                Text(
-                    "还没有私聊",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(top = 12.dp),
-                )
-                Text(
-                    "在公共频道点击其他用户的私聊按钮开始会话",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 6.dp),
-                )
-            }
-        }
-    } else {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(vertical = 8.dp),
-        ) {
-            items(sessions, key = { it.peerUid }) { session ->
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            session.nickname.ifBlank { session.peerUid },
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    },
-                    supportingContent = if (session.lastText.isNotBlank()) {
-                        {
-                            Text(
-                                session.lastText,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
+    val lastPublic = publicMessages.lastOrNull()
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(vertical = 8.dp),
+    ) {
+        item(key = "public") {
+            ListItem(
+                headlineContent = {
+                    Text(
+                        "CodeChat 官方聊群",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                supportingContent = {
+                    Text(
+                        lastPublic?.text?.ifBlank { "图片" } ?: "公共频道",
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                leadingContent = {
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    ) {
+                        Box(Modifier.size(44.dp), contentAlignment = Alignment.Center) {
+                            Icon(
+                                Icons.Default.Forum,
+                                contentDescription = null,
+                                modifier = Modifier.size(22.dp),
                             )
                         }
-                    } else {
-                        null
-                    },
-                    leadingContent = {
-                        UserAvatar(
-                            name = session.nickname,
-                            url = session.avatar,
-                            size = 44.dp,
+                    }
+                },
+                trailingContent = {
+                    if (lastPublic != null) {
+                        Text(
+                            DateFormat.getTimeInstance(DateFormat.SHORT)
+                                .format(Date(lastPublic.time)),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                    },
-                    trailingContent = {
-                        Column(horizontalAlignment = Alignment.End) {
-                            val unread = unreadByPeer[session.peerUid] ?: 0
-                            if (unread > 0) {
-                                Badge {
-                                    Text(if (unread > 99) "99+" else unread.toString())
-                                }
-                            }
-                            if (session.lastTime > 0L) {
-                                Text(
-                                    DateFormat.getTimeInstance(DateFormat.SHORT)
-                                        .format(Date(session.lastTime)),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            if (session.online) {
-                                Text(
-                                    "在线",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            }
-                        }
-                    },
-                    colors = ListItemDefaults.colors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                    ),
-                    modifier = Modifier.clickable { onOpenSession(session) },
+                    }
+                },
+                colors = ListItemDefaults.colors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+                modifier = Modifier.clickable(onClick = onOpenPublic),
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(start = 72.dp),
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+            )
+        }
+        item(key = "dm-title") {
+            Text(
+                "私聊",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 4.dp),
+            )
+        }
+        if (sessions.isEmpty()) {
+            item(key = "dm-empty") {
+                Text(
+                    "还没有私聊会话。从公共群聊点击其他用户的私聊开始。",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                 )
-                HorizontalDivider(
-                    modifier = Modifier.padding(start = 72.dp),
-                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+            }
+        } else {
+            items(sessions, key = { it.peerUid }) { session ->
+                DmSessionRow(
+                    session = session,
+                    unread = unreadByPeer[session.peerUid] ?: 0,
+                    onClick = { onOpenSession(session) },
                 )
             }
         }
     }
+}
+
+@Composable
+private fun DmSessionRow(
+    session: DmSession,
+    unread: Int,
+    onClick: () -> Unit,
+) {
+    ListItem(
+        headlineContent = {
+            Text(
+                session.nickname.ifBlank { session.peerUid },
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        supportingContent = if (session.lastText.isNotBlank()) {
+            {
+                Text(
+                    session.lastText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        } else {
+            null
+        },
+        leadingContent = {
+            UserAvatar(
+                name = session.nickname,
+                url = session.avatar,
+                size = 44.dp,
+            )
+        },
+        trailingContent = {
+            Column(horizontalAlignment = Alignment.End) {
+                if (unread > 0) {
+                    Badge {
+                        Text(if (unread > 99) "99+" else unread.toString())
+                    }
+                }
+                if (session.lastTime > 0L) {
+                    Text(
+                        DateFormat.getTimeInstance(DateFormat.SHORT)
+                            .format(Date(session.lastTime)),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (session.online) {
+                    Text(
+                        "在线",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+        },
+        colors = ListItemDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        ),
+        modifier = Modifier.clickable(onClick = onClick),
+    )
+    HorizontalDivider(
+        modifier = Modifier.padding(start = 72.dp),
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+    )
 }
 
 @Composable
@@ -542,7 +586,7 @@ private fun EmptyConversation(
                 modifier = Modifier.size(40.dp),
             )
             Text(
-                if (isPrivate) "还没有私聊消息" else "CodeChat 公共频道",
+                if (isPrivate) "还没有私聊消息" else "CodeChat 官方聊群",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(top = 12.dp),
             )
