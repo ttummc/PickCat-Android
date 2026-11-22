@@ -6,6 +6,17 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -89,6 +100,8 @@ class CodeChatViewModel : ViewModel() {
 
     fun retry() = repository.retry()
 
+    fun grantConsent() = repository.grantConsent()
+
     fun send(text: String, to: String = "") = repository.sendMessage(text, to)
 
     fun sendImage(imageUrl: String, to: String = "") = repository.sendImage(imageUrl, to)
@@ -115,10 +128,21 @@ class CodeChatViewModel : ViewModel() {
 @Composable
 fun CodeChatScreen(
     modifier: Modifier = Modifier,
+    initialPeerUid: String? = null,
     onOpenProfile: (String) -> Unit,
+    onLeave: () -> Unit = {},
     viewModel: CodeChatViewModel = viewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+
+    if (!state.consentGranted) {
+        CodeChatConsentScreen(
+            onAccept = viewModel::grantConsent,
+            onDecline = onLeave,
+        )
+        return
+    }
+
     var draft by rememberSaveable { mutableStateOf("") }
     var publicOpen by remember { mutableStateOf(false) }
     var selectedPeer by remember { mutableStateOf<DmSession?>(null) }
@@ -184,6 +208,26 @@ fun CodeChatScreen(
                 online = false,
             ),
         )
+    }
+
+    LaunchedEffect(initialPeerUid, state.dmSessions) {
+        val peerUid = initialPeerUid
+        if (peerUid.isNullOrBlank()) return@LaunchedEffect
+        val session = state.dmSessions.firstOrNull { it.peerUid == peerUid }
+        if (selectedPeer == null && !publicOpen) {
+            choosePeer(
+                session ?: DmSession(
+                    peerUid = peerUid,
+                    nickname = "",
+                    avatar = null,
+                    lastTime = 0L,
+                    lastText = "",
+                    online = false,
+                ),
+            )
+        } else if (selectedPeer?.peerUid == peerUid && session != null) {
+            selectedPeer = session
+        }
     }
 
     LaunchedEffect(visibleMessages.lastOrNull()?.id, selectedPeer?.peerUid, publicOpen) {
@@ -262,7 +306,17 @@ fun CodeChatScreen(
             )
         },
         bottomBar = {
-            if (inConversation) {
+            AnimatedVisibility(
+                visible = inConversation,
+                enter = fadeIn(tween(180)) + expandVertically(
+                    animationSpec = tween(220, easing = FastOutSlowInEasing),
+                    expandFrom = Alignment.Bottom,
+                ),
+                exit = fadeOut(tween(120)) + shrinkVertically(
+                    animationSpec = tween(180, easing = FastOutSlowInEasing),
+                    shrinkTowards = Alignment.Bottom,
+                ),
+            ) {
                 Surface(
                     modifier = Modifier.fillMaxWidth().imePadding(),
                     color = MaterialTheme.colorScheme.surfaceContainer,
@@ -381,54 +435,160 @@ fun CodeChatScreen(
                 }
             }
 
-            when {
-                !inConversation -> ConversationList(
-                    publicMessages = publicMessages,
-                    sessions = state.dmSessions,
-                    unreadByPeer = state.unreadByPeer,
-                    onOpenPublic = ::openPublic,
-                    onOpenSession = ::choosePeer,
-                )
-                visibleMessages.isEmpty() -> EmptyConversation(
-                    isPrivate = selectedPeer != null,
-                    isConnecting = state.connecting,
-                )
-                else -> {
-                    val conversationKey = selectedPeer?.peerUid ?: "public"
-                    val hasMore = state.hasMoreByConversation[conversationKey] == true
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        if (hasMore) {
-                            item(key = "load-older") {
-                                TextButton(
-                                    onClick = { viewModel.loadOlder(selectedPeer?.peerUid) },
-                                    enabled = !state.loadingHistory,
-                                    modifier = Modifier.fillMaxWidth(),
-                                ) {
-                                    if (state.loadingHistory) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(18.dp),
-                                            strokeWidth = 2.dp,
-                                        )
-                                    } else {
-                                        Text("加载更早消息")
+            AnimatedContent(
+                targetState = inConversation,
+                modifier = Modifier.fillMaxSize(),
+                transitionSpec = {
+                    if (targetState) {
+                        (fadeIn(tween(220, easing = FastOutSlowInEasing)) +
+                            slideInHorizontally(
+                                animationSpec = tween(260, easing = FastOutSlowInEasing),
+                            ) { it / 8 }) togetherWith
+                            (fadeOut(tween(140)) +
+                                slideOutHorizontally(tween(180)) { -it / 12 })
+                    } else {
+                        (fadeIn(tween(220, easing = FastOutSlowInEasing)) +
+                            slideInHorizontally(
+                                animationSpec = tween(260, easing = FastOutSlowInEasing),
+                            ) { -it / 8 }) togetherWith
+                            (fadeOut(tween(140)) +
+                                slideOutHorizontally(tween(180)) { it / 12 })
+                    }
+                },
+                label = "codechat-content",
+            ) { chatVisible ->
+                when {
+                    !chatVisible -> ConversationList(
+                        publicMessages = publicMessages,
+                        sessions = state.dmSessions,
+                        unreadByPeer = state.unreadByPeer,
+                        onOpenPublic = ::openPublic,
+                        onOpenSession = ::choosePeer,
+                    )
+                    visibleMessages.isEmpty() -> EmptyConversation(
+                        isPrivate = selectedPeer != null,
+                        isConnecting = state.connecting,
+                    )
+                    else -> {
+                        val conversationKey = selectedPeer?.peerUid ?: "public"
+                        val hasMore = state.hasMoreByConversation[conversationKey] == true
+                        LazyColumn(
+                            state = listState,
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            if (hasMore) {
+                                item(key = "load-older") {
+                                    TextButton(
+                                        onClick = { viewModel.loadOlder(selectedPeer?.peerUid) },
+                                        enabled = !state.loadingHistory,
+                                        modifier = Modifier.fillMaxWidth(),
+                                    ) {
+                                        if (state.loadingHistory) {
+                                            CircularProgressIndicator(
+                                                modifier = Modifier.size(18.dp),
+                                                strokeWidth = 2.dp,
+                                            )
+                                        } else {
+                                            Text("加载更早消息")
+                                        }
                                     }
                                 }
                             }
-                        }
-                        items(visibleMessages, key = { it.id }) { message ->
-                            CodeChatMessageRow(
-                                message = message,
-                                onOpenProfile = openUserProfile,
-                                onStartDm = if (message.fromMe) null else ::startDm,
-                            )
+                            items(visibleMessages, key = { it.id }) { message ->
+                                Box(Modifier.animateItem()) {
+                                    CodeChatMessageRow(
+                                        message = message,
+                                        onOpenProfile = openUserProfile,
+                                        onStartDm = if (message.fromMe) null else ::startDm,
+                                    )
+                                }
+                            }
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CodeChatConsentScreen(
+    onAccept: () -> Unit,
+    onDecline: () -> Unit,
+) {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
+            TopAppBar(
+                title = {
+                    Column {
+                        Text("CodeChat")
+                        Text(
+                            "消息服务由 CodeChat 提供",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                },
+            )
+        },
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(horizontal = 24.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            ) {
+                Box(Modifier.size(56.dp), contentAlignment = Alignment.Center) {
+                    Icon(
+                        Icons.Default.Forum,
+                        contentDescription = null,
+                        modifier = Modifier.size(28.dp),
+                    )
+                }
+            }
+            Text(
+                "使用 CodeChat",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+            )
+            Text(
+                "CodeChat 是独立的第三方聊天服务，消息由 CodeChat 提供和存储。",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                "首次使用会使用你的 PickCat 身份注册或关联一个 CodeChat 账号，并向 CodeChat 提供昵称、头像和等级。",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                "点击同意后才会建立连接并创建账号；不同意不会向 CodeChat 发送身份信息。",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.size(8.dp))
+            Button(
+                onClick = onAccept,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("同意并继续")
+            }
+            TextButton(
+                onClick = onDecline,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("暂不使用")
             }
         }
     }
@@ -491,7 +651,7 @@ private fun ConversationList(
                 colors = ListItemDefaults.colors(
                     containerColor = MaterialTheme.colorScheme.surface,
                 ),
-                modifier = Modifier.clickable(onClick = onOpenPublic),
+                modifier = Modifier.clickable(onClick = onOpenPublic).animateItem(),
             )
             HorizontalDivider(
                 modifier = Modifier.padding(start = 72.dp),
@@ -517,11 +677,13 @@ private fun ConversationList(
             }
         } else {
             items(sessions, key = { it.peerUid }) { session ->
-                DmSessionRow(
-                    session = session,
-                    unread = unreadByPeer[session.peerUid] ?: 0,
-                    onClick = { onOpenSession(session) },
-                )
+                Box(Modifier.animateItem()) {
+                    DmSessionRow(
+                        session = session,
+                        unread = unreadByPeer[session.peerUid] ?: 0,
+                        onClick = { onOpenSession(session) },
+                    )
+                }
             }
         }
     }

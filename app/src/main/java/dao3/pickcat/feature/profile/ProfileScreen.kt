@@ -1,6 +1,12 @@
 package dao3.pickcat.feature.profile
 
 import androidx.compose.foundation.clickable
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -34,6 +40,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -404,6 +411,7 @@ fun ProfileScreen(
     onOpenMedia: () -> Unit,
     onOpenLibrary: () -> Unit,
     onOpenCollection: (TopicCollection) -> Unit,
+    onOpenCodeChat: (ccUid: String, name: String, avatar: String?) -> Unit,
 ) {
     val viewModel: ProfileViewModel = viewModel(
         key = "profile-$userId",
@@ -412,6 +420,7 @@ fun ProfileScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var menuOpen by remember { mutableStateOf(false) }
+    var codeChatUid by remember(userId) { mutableStateOf<String?>(null) }
     val listState = rememberLazyListState()
     val tabReselect = LocalTabReselect.current
     var relationMode by remember { mutableStateOf(0) }
@@ -422,6 +431,14 @@ fun ProfileScreen(
 
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { snackbarHostState.showSnackbar(it) }
+    }
+
+    LaunchedEffect(userId, isSelf) {
+        if (!isSelf) {
+            codeChatUid = runCatching {
+                AppGraph.codeChat.resolveCodeChatUid(userId)
+            }.getOrNull()
+        }
     }
 
     Scaffold(
@@ -497,6 +514,14 @@ fun ProfileScreen(
                             onFollow = viewModel::toggleFollow,
                             onSettings = onOpenSettings,
                             badges = state.badges,
+                            codeChatUid = codeChatUid,
+                            onOpenCodeChat = {
+                                state.profile?.let { profile ->
+                                    codeChatUid?.let { ccUid ->
+                                        onOpenCodeChat(ccUid, profile.username, avatarUrl(profile))
+                                    }
+                                }
+                            },
                             modifier = Modifier.width(300.dp).fillMaxHeight(),
                         )
                         VerticalDivider()
@@ -520,6 +545,14 @@ fun ProfileScreen(
                                     onFollow = viewModel::toggleFollow,
                                     onSettings = onOpenSettings,
                                     onOpenMedia = onOpenMedia,
+                                    codeChatUid = codeChatUid,
+                                    onOpenCodeChat = {
+                                        state.profile?.let { profile ->
+                                            codeChatUid?.let { ccUid ->
+                                                onOpenCodeChat(ccUid, profile.username, avatarUrl(profile))
+                                            }
+                                        }
+                                    },
                                 )
                             }
                         }
@@ -857,6 +890,8 @@ private fun ProfileSidebar(
     onFollow: () -> Unit,
     onSettings: () -> Unit,
     badges: List<BadgeGrant>,
+    codeChatUid: String?,
+    onOpenCodeChat: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -1021,6 +1056,24 @@ private fun ProfileSidebar(
                     }
                 }
             }
+            AnimatedVisibility(
+                visible = codeChatUid != null,
+                enter = fadeIn(tween(180)) + expandVertically(tween(220)),
+                exit = fadeOut(tween(120)) + shrinkVertically(tween(180)),
+            ) {
+                FilledTonalButton(
+                    onClick = onOpenCodeChat,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(
+                        Icons.Default.Chat,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text("CodeChat 私聊")
+                }
+            }
         }
         if (badges.isNotEmpty()) {
             HorizontalDivider(
@@ -1074,6 +1127,8 @@ private fun ProfileHeader(
     onFollow: () -> Unit,
     onSettings: () -> Unit,
     onOpenMedia: () -> Unit,
+    codeChatUid: String?,
+    onOpenCodeChat: () -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -1202,6 +1257,24 @@ private fun ProfileHeader(
                             }
                         }
                     }
+                }
+            }
+            AnimatedVisibility(
+                visible = !isSelf && codeChatUid != null,
+                enter = fadeIn(tween(180)) + expandVertically(tween(220)),
+                exit = fadeOut(tween(120)) + shrinkVertically(tween(180)),
+            ) {
+                FilledTonalButton(
+                    onClick = onOpenCodeChat,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(
+                        Icons.Default.Chat,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text("CodeChat 私聊")
                 }
             }
             if (!profile.bio.isNullOrBlank()) {

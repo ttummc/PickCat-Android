@@ -118,6 +118,7 @@ private object Routes {
     const val GALLERY = "gallery"
     const val LIBRARY = "library"
     const val CODECHAT = "codechat"
+    const val CODECHAT_PEER = "codechat?peerUid={peerUid}"
 
     fun category(slug: String) = "category/$slug"
     fun topic(id: String, postNumber: Int? = null) =
@@ -125,6 +126,7 @@ private object Routes {
     fun work(id: String) = "work/$id"
     fun profile(id: String) = "profile/$id"
     fun collection(id: String) = "collection/$id"
+    fun codeChat(peerUid: String) = "codechat?peerUid=$peerUid"
 }
 
 private data class MainDestination(
@@ -211,9 +213,9 @@ fun PickCatMainShell(
 
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
-    val isTopLevel = currentRoute == Routes.HOME ||
+    val isTopLevel = currentRoute?.startsWith(Routes.CODECHAT) == true ||
+        currentRoute == Routes.HOME ||
         currentRoute == Routes.FORUM ||
-        currentRoute == Routes.CODECHAT ||
         currentRoute == Routes.WORKS ||
         currentRoute == Routes.ME
     val selectedRoute = currentRoute
@@ -232,7 +234,7 @@ fun PickCatMainShell(
     LaunchedEffect(preferences.codeChatEnabled) {
         if (!preferences.codeChatEnabled) {
             AppGraph.codeChat.disconnect()
-            if (navController.currentDestination?.route == Routes.CODECHAT) {
+            if (navController.currentDestination?.route?.startsWith(Routes.CODECHAT) == true) {
                 navigateTopLevel(Routes.HOME)
             }
         }
@@ -361,6 +363,23 @@ fun PickCatMainShell(
             composable(Routes.CODECHAT) {
                 CodeChatScreen(
                     onOpenProfile = { userId -> navController.navigate(Routes.profile(userId)) },
+                    onLeave = { navigateTopLevel(Routes.HOME) },
+                )
+            }
+            composable(
+                route = Routes.CODECHAT_PEER,
+                arguments = listOf(
+                    navArgument("peerUid") {
+                        type = NavType.StringType
+                        nullable = true
+                        defaultValue = null
+                    },
+                ),
+            ) { entry ->
+                CodeChatScreen(
+                    initialPeerUid = entry.arguments?.getString("peerUid"),
+                    onOpenProfile = { userId -> navController.navigate(Routes.profile(userId)) },
+                    onLeave = { navigateTopLevel(Routes.HOME) },
                 )
             }
             composable(Routes.WORKS) {
@@ -412,6 +431,10 @@ fun PickCatMainShell(
                     onOpenCollection = { collection ->
                         navController.navigate(Routes.collection(collection.id))
                     },
+                    onOpenCodeChat = { ccUid, name, avatar ->
+                        AppGraph.codeChat.ensureDmSession(ccUid, name, avatar)
+                        navController.navigate(Routes.codeChat(ccUid))
+                    },
                 )
             }
             composable(
@@ -443,6 +466,7 @@ fun PickCatMainShell(
                     onOpenCollection = { collection ->
                         navController.navigate(Routes.collection(collection.id))
                     },
+                    onOpenCodeChat = { _, _, _ -> },
                 )
             }
             composable(Routes.NOTIFICATIONS) {
@@ -520,7 +544,11 @@ fun PickCatMainShell(
                 ) {
                     Spacer(Modifier.weight(1f))
                     destinations.forEach { destination ->
-                        val selected = selectedRoute == destination.route
+                        val selected = if (destination.route == Routes.CODECHAT) {
+                            selectedRoute?.startsWith(Routes.CODECHAT) == true
+                        } else {
+                            selectedRoute == destination.route
+                        }
                         NavigationRailItem(
                             selected = selected,
                             onClick = {
@@ -569,7 +597,11 @@ fun PickCatMainShell(
                         containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     ) {
                         destinations.forEach { destination ->
-                            val selected = selectedRoute == destination.route
+                            val selected = if (destination.route == Routes.CODECHAT) {
+                                selectedRoute?.startsWith(Routes.CODECHAT) == true
+                            } else {
+                                selectedRoute == destination.route
+                            }
                             NavigationBarItem(
                                 selected = selected,
                                 onClick = {

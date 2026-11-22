@@ -3,6 +3,18 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.52] - 2026-11-22
+
+### Added
+
+- First-use CodeChat consent screen. It states that CodeChat is a third-party service and that the current PickCat identity will be used to register or link a CodeChat account. No connection is made until the user agrees.
+- A CodeChat private-chat action on other users' PickCat profiles when the user resolves to a CodeChat identity.
+- Material 3 transitions between the conversation list and chat, animated private-chat action, animated composer, and animated message and session rows.
+
+### Fixed
+
+- Private conversation rows resolve nickname and avatar from CodeChat user profiles when the session payload omits them.
+
 ## [0.1.51] - 2026-11-22
 
 ### Fixed
@@ -364,6 +376,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.52]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.52
 [0.1.51]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.51
 [0.1.50]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.50
 [0.1.49]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.49

@@ -3,6 +3,18 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.52] - 2026-11-22
+
+### 新增
+
+- CodeChat 首次使用确认页：说明 CodeChat 是第三方服务，首次使用会用当前 PickCat 身份注册或关联 CodeChat 账号；用户同意后才建立连接。
+- 其他 PickCat 用户主页在解析到 CodeChat 身份时显示私聊入口，可直接打开对应私聊。
+- 会话列表与聊天之间、私聊按钮、输入区、消息和会话行都加入 Material 3 过渡动画。
+
+### 修复
+
+- 私聊会话缺少昵称和头像时，从 CodeChat 用户资料补全。
+
 ## [0.1.51] - 2026-11-22
 
 ### 修复
@@ -364,6 +376,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.52]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.52
 [0.1.51]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.51
 [0.1.50]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.50
 [0.1.49]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.49

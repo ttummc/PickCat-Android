@@ -58,6 +58,7 @@ data class DmSession(
 )
 
 data class CodeChatState(
+    val consentGranted: Boolean = false,
     val connecting: Boolean = false,
     val connected: Boolean = false,
     val canChat: Boolean = true,
@@ -83,7 +84,9 @@ class CodeChatRepository(context: Context) {
         .readTimeout(0, TimeUnit.MILLISECONDS)
         .build()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val _state = MutableStateFlow(CodeChatState())
+    private val _state = MutableStateFlow(
+        CodeChatState(consentGranted = prefs.getBoolean(KEY_CONSENT, false)),
+    )
     val state: StateFlow<CodeChatState> = _state.asStateFlow()
 
     private var socket: WebSocket? = null
@@ -94,10 +97,17 @@ class CodeChatRepository(context: Context) {
     @Volatile private var manualClose = false
 
     fun connect() {
+        if (!prefs.getBoolean(KEY_CONSENT, false)) return
         if (_state.value.connecting || _state.value.connected) return
         manualClose = false
         connectJob?.cancel()
         connectJob = scope.launch { connectInternal() }
+    }
+
+    fun grantConsent() {
+        prefs.edit().putBoolean(KEY_CONSENT, true).apply()
+        _state.update { it.copy(consentGranted = true) }
+        connect()
     }
 
     fun retry() {
@@ -120,7 +130,9 @@ class CodeChatRepository(context: Context) {
         heartbeatJob?.cancel()
         socket?.close(1000, "disabled")
         socket = null
-        _state.value = CodeChatState()
+        _state.value = CodeChatState(
+            consentGranted = prefs.getBoolean(KEY_CONSENT, false),
+        )
     }
 
     fun sendMessage(raw: String, to: String = "") {
@@ -209,6 +221,22 @@ class CodeChatRepository(context: Context) {
                 val json = response.jsonBody()
                 if (json.has("linked") && !json.optBoolean("linked", false)) return null
                 json.optString("pcUuid").takeIf { it.isNotBlank() }
+            }
+        }.getOrNull()
+    }
+
+    suspend fun resolveCodeChatUid(pcUuid: String): String? {
+        if (pcUuid.isBlank()) return null
+        val request = Request.Builder()
+            .url("$BASE_URL/api/cc/resolve/$pcUuid")
+            .get()
+            .build()
+        return runCatching {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return null
+                val json = response.jsonBody()
+                val ccUid = json.optString("ccUid").takeIf { it.isNotBlank() }
+                if (json.has("linked") && !json.optBoolean("linked", false)) null else ccUid
             }
         }.getOrNull()
     }
@@ -561,8 +589,20 @@ class CodeChatRepository(context: Context) {
     fun ensureDmSession(peerUid: String, nickname: String, avatar: String?) {
         if (peerUid.isBlank()) return
         _state.update { current ->
-            if (current.dmSessions.any { it.peerUid == peerUid }) {
-                current
+            val existing = current.dmSessions.firstOrNull { it.peerUid == peerUid }
+            if (existing != null) {
+                current.copy(
+                    dmSessions = current.dmSessions.map { session ->
+                        if (session.peerUid != peerUid) {
+                            session
+                        } else {
+                            session.copy(
+                                nickname = session.nickname.ifBlank { nickname },
+                                avatar = session.avatar ?: avatar,
+                            )
+                        }
+                    },
+                )
             } else {
                 current.copy(
                     dmSessions = listOf(
@@ -827,6 +867,7 @@ class CodeChatRepository(context: Context) {
         private const val KEY_UID = "cc_uid"
         private const val KEY_ASSERT = "assertion"
         private const val KEY_PC_UID = "pc_uid"
+        private const val KEY_CONSENT = "consent"
         private const val KEY_OWN_MESSAGE_IDS = "own_message_ids"
         private const val TAG = "CodeChat"
         private val JSON = "application/json; charset=utf-8".toMediaType()
