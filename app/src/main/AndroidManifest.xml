@@ -21,6 +21,13 @@
         android:hardwareAccelerated="true">
 
         <activity
+            android:name=".LoginWebViewActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode"
+            android:exported="false"
+            android:theme="@style/Theme.PickCat"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name=".PlayerActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode"
             android:exported="false"

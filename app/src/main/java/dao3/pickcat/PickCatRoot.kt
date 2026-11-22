@@ -1,5 +1,6 @@
 package dao3.pickcat
 
+import android.content.Intent
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -51,7 +52,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dao3.pickcat.core.ui.ErrorState
-import dao3.pickcat.feature.login.LoginScreen
 import dao3.pickcat.feature.settings.UpdateViewModel
 import dao3.pickcat.feature.settings.launchUpdateInstaller
 import dao3.pickcat.feature.settings.openExternalUrl
@@ -125,7 +125,7 @@ fun PickCatRoot(viewModel: AppViewModel) {
                         openExternalUrl(context, "https://pickcat.dao3.fun")
                     },
                 )
-                RootStage.LOGIN -> LoginScreen(viewModel)
+                RootStage.LOGIN -> LoginLauncher()
                 RootStage.MAIN -> PickCatMainShell(
                     appViewModel = viewModel,
                     snackbarHostState = snackbarHostState,
@@ -265,6 +265,50 @@ private fun MaintenanceScreen(
                 }
                 TextButton(onClick = onOpenOfficial) {
                     Text("打开官方网站")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun LoginLauncher() {
+    val context = LocalContext.current
+    var launched by remember { mutableStateOf(false) }
+
+    fun openLogin() {
+        launched = true
+        context.startActivity(Intent(context, LoginWebViewActivity::class.java))
+    }
+
+    LaunchedEffect(Unit) {
+        if (!launched) openLogin()
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+    ) {
+        Box(
+            modifier = Modifier.fillMaxSize().padding(32.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    "PickCat",
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                )
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "正在打开官方登录页",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(24.dp))
+                Button(onClick = ::openLogin) {
+                    Text("重新打开登录页")
                 }
             }
         }

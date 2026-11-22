@@ -3,6 +3,12 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.40] - 2026-11-22
+
+### 修复
+
+- 修复登录页空白。WebView 改为在独立传统 Activity 中运行，不再放进 Compose AndroidView；登录成功后自动轮询会话并回到已登录状态。
+
 ## [0.1.39] - 2026-11-22
 
 ### 修复
@@ -278,6 +284,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.40]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.40
 [0.1.39]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.39
 [0.1.38]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.38
 [0.1.37]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.37
