@@ -3,6 +3,12 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.39] - 2026-11-22
+
+### 修复
+
+- 登录页加载失败时不再只显示空白 WebView。现在会检测加载失败和根布局高度为 0，并显示当前 WebView 版本、重新加载、清除缓存和更新 Android System WebView 操作。
+
 ## [0.1.38] - 2026-11-21
 
 ### 变更
@@ -272,6 +278,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.39]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.39
 [0.1.38]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.38
 [0.1.37]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.37
 [0.1.36]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.36

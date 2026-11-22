@@ -1,13 +1,19 @@
 package dao3.pickcat.feature.login
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.graphics.Bitmap
+import android.net.Uri
 import android.webkit.CookieManager
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,9 +21,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -81,6 +89,80 @@ fun LoginScreen(
     var progress by remember { mutableFloatStateOf(0f) }
     var loading by remember { mutableStateOf(true) }
     var checking by remember { mutableStateOf(false) }
+    var loadError by remember { mutableStateOf<String?>(null) }
+    val webViewVersion = remember {
+        runCatching {
+            WebView.getCurrentWebViewPackage()?.versionName
+        }.getOrNull()
+    }
+
+    fun reload(clearCache: Boolean = false) {
+        loadError = null
+        if (clearCache) {
+            webView.clearCache(true)
+            webView.clearHistory()
+        }
+        webView.reload()
+    }
+
+    fun openWebViewUpdate() {
+        val market = Intent(
+            Intent.ACTION_VIEW,
+            Uri.parse("market://details?id=com.google.android.webview"),
+        )
+        val playStore = Intent(
+            Intent.ACTION_VIEW,
+            Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.webview"),
+        )
+        runCatching { context.startActivity(market) }
+            .recoverCatching { context.startActivity(playStore) }
+    }
+
+    fun checkRenderedContent(view: WebView?, attempt: Int) {
+        if (view == null) return
+        view.postDelayed({
+            view.evaluateJavascript(
+                "(function(){" +
+                    "var b=document.body;" +
+                    "var n=document.getElementById('__nuxt');" +
+                    "return JSON.stringify({" +
+                    "text:((b&&b.innerText)||'').trim().length," +
+                    "bodyH:b?b.getBoundingClientRect().height:0," +
+                    "nuxtH:n?n.getBoundingClientRect().height:0});" +
+                    "})()",
+            ) { result ->
+                val textLength = Regex("\"text\"\\s*:\\s*(\\d+)")
+                    .find(result)
+                    ?.groupValues
+                    ?.getOrNull(1)
+                    ?.toIntOrNull()
+                    ?: 0
+                val bodyHeight = Regex("\"bodyH\"\\s*:\\s*([0-9.]+)")
+                    .find(result)
+                    ?.groupValues
+                    ?.getOrNull(1)
+                    ?.toFloatOrNull()
+                    ?: 0f
+                val nuxtHeight = Regex("\"nuxtH\"\\s*:\\s*([0-9.]+)")
+                    .find(result)
+                    ?.groupValues
+                    ?.getOrNull(1)
+                    ?.toFloatOrNull()
+                    ?: 0f
+                if (textLength > 0 && bodyHeight > 0f && nuxtHeight > 0f) {
+                    loadError = null
+                } else if (attempt < 2) {
+                    checkRenderedContent(view, attempt + 1)
+                } else if (loadError == null) {
+                    loadError = if (textLength > 0) {
+                        "登录页布局未正确渲染"
+                    } else {
+                        "登录页没有返回可显示内容"
+                    }
+                }
+            }
+        }, 1_200L)
+    }
 
     fun checkLogin(manual: Boolean) {
         if (manual && checking) return
@@ -98,12 +180,37 @@ fun LoginScreen(
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 loading = true
+                loadError = null
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 loading = false
                 CookieManager.getInstance().flush()
                 checkLogin(manual = false)
+                checkRenderedContent(view, attempt = 0)
+            }
+
+            override fun onReceivedError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                error: WebResourceError?,
+            ) {
+                if (request?.isForMainFrame == true) {
+                    loading = false
+                    loadError = error?.description?.toString()?.takeIf { it.isNotBlank() }
+                        ?: "登录页加载失败"
+                }
+            }
+
+            override fun onReceivedHttpError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                errorResponse: WebResourceResponse?,
+            ) {
+                if (request?.isForMainFrame == true) {
+                    loading = false
+                    loadError = "登录页返回 HTTP ${errorResponse?.statusCode ?: "错误"}"
+                }
             }
 
             override fun shouldOverrideUrlLoading(
@@ -161,7 +268,7 @@ fun LoginScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { webView.reload() }) {
+                    IconButton(onClick = { reload() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "重新加载")
                     }
                 },
@@ -221,10 +328,69 @@ fun LoginScreen(
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
-            AndroidView(
-                factory = { webView },
-                modifier = Modifier.fillMaxSize().weight(1f),
-            )
+            Box(Modifier.fillMaxSize().weight(1f)) {
+                AndroidView(
+                    factory = { webView },
+                    modifier = Modifier.fillMaxSize(),
+                )
+                if (loadError != null) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                    Column(
+                        modifier = Modifier.widthIn(max = 360.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Icon(
+                            Icons.Default.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(40.dp),
+                        )
+                        Text(
+                            "登录页加载失败",
+                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier.padding(top = 12.dp),
+                        )
+                        Text(
+                            loadError.orEmpty(),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 8.dp),
+                        )
+                        if (!webViewVersion.isNullOrBlank()) {
+                            Text(
+                                "当前 WebView：$webViewVersion",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 6.dp),
+                            )
+                        }
+                        Button(
+                            onClick = { reload() },
+                            modifier = Modifier.fillMaxWidth().padding(top = 20.dp),
+                        ) {
+                            Text("重新加载")
+                        }
+                        TextButton(onClick = { reload(clearCache = true) }) {
+                            Text("清除缓存后重试")
+                        }
+                        TextButton(onClick = ::openWebViewUpdate) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.OpenInNew,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                            )
+                            Text("更新 Android System WebView", modifier = Modifier.padding(start = 8.dp))
+                        }
+                    }
+                }
+            }
         }
     }
+}
 }
