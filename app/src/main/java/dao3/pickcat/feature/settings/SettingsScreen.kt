@@ -83,6 +83,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -114,6 +115,7 @@ data class SettingsUiState(
 
 private const val OFFICIAL_SETTINGS_URL = "https://pickcat.dao3.fun/settings"
 private const val OFFICIAL_ACCOUNT_DELETION_URL = "https://pickcat.dao3.fun/settings/account-deletion"
+private const val CODECHAT_ACCESS_CODE = "67"
 
 private fun themeLabel(mode: String): String = when (mode) {
     "light" -> "浅色"
@@ -194,6 +196,9 @@ fun SettingsScreen(
     var query by rememberSaveable { mutableStateOf("") }
     var email by remember { mutableStateOf<String?>(null) }
     var officialAccount by remember { mutableStateOf<OfficialAccount?>(null) }
+    var showCodeChatPassword by remember { mutableStateOf(false) }
+    var codeChatPassword by remember { mutableStateOf("") }
+    var codeChatPasswordError by remember { mutableStateOf(false) }
 
     val user = session.user
     val versionName = remember {
@@ -369,12 +374,20 @@ fun SettingsScreen(
                     key = "codechat-enabled",
                     icon = Icons.Default.Chat,
                     title = "CodeChat 聊天",
-                    summary = "由 CodeChat 提供的社区聊天，开启后显示在底部导航",
+                    summary = "由 CodeChat 提供的社区聊天，开启后显示在底部导航；测试阶段需要访问密码",
                     keywords = listOf("CodeChat", "聊天", "消息", "导航"),
                     trailing = {
                         Switch(
                             checked = preferences.codeChatEnabled,
-                            onCheckedChange = appViewModel::updateCodeChatEnabled,
+                            onCheckedChange = { enabled ->
+                                if (!enabled) {
+                                    appViewModel.updateCodeChatEnabled(false)
+                                } else {
+                                    codeChatPassword = ""
+                                    codeChatPasswordError = false
+                                    showCodeChatPassword = true
+                                }
+                            },
                         )
                     },
                 ),
@@ -798,6 +811,63 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { confirmSignOut = false }) { Text("取消") }
+            },
+        )
+    }
+
+    if (showCodeChatPassword) {
+        AlertDialog(
+            onDismissRequest = {
+                showCodeChatPassword = false
+                codeChatPassword = ""
+                codeChatPasswordError = false
+            },
+            title = { Text("开启 CodeChat") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("CodeChat 目前处于测试阶段，请输入访问密码。")
+                    OutlinedTextField(
+                        value = codeChatPassword,
+                        onValueChange = {
+                            codeChatPassword = it
+                            codeChatPasswordError = false
+                        },
+                        label = { Text("访问密码") },
+                        singleLine = true,
+                        isError = codeChatPasswordError,
+                        supportingText = if (codeChatPasswordError) {
+                            { Text("密码错误") }
+                        } else {
+                            null
+                        },
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    enabled = codeChatPassword.isNotBlank(),
+                    onClick = {
+                        if (codeChatPassword == CODECHAT_ACCESS_CODE) {
+                            appViewModel.updateCodeChatEnabled(true)
+                            showCodeChatPassword = false
+                            codeChatPassword = ""
+                            codeChatPasswordError = false
+                        } else {
+                            codeChatPasswordError = true
+                        }
+                    },
+                ) { Text("开启") }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        showCodeChatPassword = false
+                        codeChatPassword = ""
+                        codeChatPasswordError = false
+                    },
+                ) { Text("取消") }
             },
         )
     }

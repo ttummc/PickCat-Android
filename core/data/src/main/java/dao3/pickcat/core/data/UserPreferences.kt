@@ -18,7 +18,7 @@ data class AppPreferences(
     val dynamicColor: Boolean = true,
     val backgroundNotifications: Boolean = true,
     val updateSource: String = "mirror",
-    val codeChatEnabled: Boolean = true,
+    val codeChatEnabled: Boolean = false,
 )
 
 class UserPreferences(private val context: Context) {
@@ -30,7 +30,7 @@ class UserPreferences(private val context: Context) {
             dynamicColor = values[KEY_DYNAMIC] ?: true,
             backgroundNotifications = values[KEY_BACKGROUND_NOTIFICATIONS] ?: true,
             updateSource = values[KEY_UPDATE_SOURCE] ?: "mirror",
-            codeChatEnabled = values[KEY_CODECHAT_ENABLED] ?: true,
+            codeChatEnabled = values[KEY_CODECHAT_ENABLED] ?: false,
         )
     }
 
