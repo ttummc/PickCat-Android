@@ -416,8 +416,22 @@ class CodeChatRepository(context: Context) {
             val merged = (base + loaded)
                 .distinctBy { it.id }
                 .sortedBy { if (it.seq > 0L) it.seq else it.time }
+            val enrichedSessions = current.dmSessions.map { session ->
+                val latest = loaded.lastOrNull {
+                    it.peerId == session.peerUid && !it.fromMe
+                }
+                if (latest == null) {
+                    session
+                } else {
+                    session.copy(
+                        nickname = session.nickname.ifBlank { latest.senderName },
+                        avatar = session.avatar ?: latest.senderAvatar,
+                    )
+                }
+            }
             current.copy(
                 messages = merged,
+                dmSessions = enrichedSessions,
                 hasMoreByConversation = current.hasMoreByConversation + (key to hasMore),
                 nextCursorByConversation = if (cursor != null) {
                     current.nextCursorByConversation + (key to cursor)
@@ -428,7 +442,7 @@ class CodeChatRepository(context: Context) {
         }
     }
 
-    private fun loadDmSessions(token: String) {
+    private suspend fun loadDmSessions(token: String) {
         val request = Request.Builder()
             .url("$BASE_URL/api/cc/dm-sessions")
             .header("Authorization", "Bearer $token")
@@ -443,11 +457,21 @@ class CodeChatRepository(context: Context) {
                         val item = array.optJSONObject(index) ?: continue
                         val peerUid = item.optString("peerUid")
                         if (peerUid.isBlank()) continue
+                        val peer = item.optJSONObject("peer")
                         add(
                             DmSession(
                                 peerUid = peerUid,
-                                nickname = item.optString("nickname"),
-                                avatar = item.optString("avatar").takeIf { it.isNotBlank() },
+                                nickname = firstNonBlank(
+                                    item.optString("nickname"),
+                                    item.optString("peerName"),
+                                    peer?.optString("nickname"),
+                                    peer?.optString("name"),
+                                ),
+                                avatar = firstNonBlank(
+                                    item.optString("avatar"),
+                                    item.optString("peerAvatar"),
+                                    peer?.avatarString(),
+                                ),
                                 lastTime = item.optLong("lastTime", 0L),
                                 lastText = item.optString("lastText"),
                                 online = item.optBoolean("online", false) ||
@@ -461,11 +485,24 @@ class CodeChatRepository(context: Context) {
                         )
                     }
                 }.sortedByDescending { it.lastTime }
+                val enriched = sessions.map { session ->
+                    if (session.nickname.isNotBlank() && !session.avatar.isNullOrBlank()) {
+                        session
+                    } else {
+                        val profile = fetchUserProfile(token, session.peerUid)
+                        session.copy(
+                            nickname = session.nickname.ifBlank {
+                                profile?.first.orEmpty()
+                            },
+                            avatar = session.avatar ?: profile?.second,
+                        )
+                    }
+                }
                 _state.update { current ->
                     val active = current.activePeerUid
                     current.copy(
-                        dmSessions = sessions,
-                        unreadByPeer = sessions.associate { session ->
+                        dmSessions = enriched,
+                        unreadByPeer = enriched.associate { session ->
                             session.peerUid to if (session.peerUid == active) 0 else session.unreadCount
                         },
                     )
@@ -473,6 +510,53 @@ class CodeChatRepository(context: Context) {
             }
         }
     }
+
+    private fun fetchUserProfile(token: String, ccUid: String): Pair<String, String?>? {
+        return runCatching {
+            val request = Request.Builder()
+                .url("$BASE_URL/api/codemao/user/$ccUid")
+                .header("Authorization", "Bearer $token")
+                .get()
+                .build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return null
+                val root = response.jsonBody()
+                val candidates = listOfNotNull(
+                    root.optJSONObject("user"),
+                    root.optJSONObject("data"),
+                    root.optJSONObject("profile"),
+                    root,
+                )
+                for (item in candidates) {
+                    val name = firstNonBlank(
+                        item.optString("nickname"),
+                        item.optString("name"),
+                        item.optString("username"),
+                        item.optString("displayName"),
+                    )
+                    val avatar = item.avatarString()
+                    if (name.isNotEmpty() || avatar != null) return name to avatar
+                }
+                null
+            }
+        }.getOrNull()
+    }
+
+    private fun JSONObject.avatarString(): String? {
+        val raw = opt("avatar") ?: return null
+        return when (raw) {
+            is String -> raw.takeIf { it.isNotBlank() }
+            is JSONObject -> firstNonBlank(
+                raw.optString("url"),
+                raw.optString("src"),
+                raw.optString("path"),
+            ).takeIf { it.isNotBlank() }
+            else -> null
+        }
+    }
+
+    private fun firstNonBlank(vararg values: String?): String =
+        values.firstOrNull { !it.isNullOrBlank() }.orEmpty()
 
     fun ensureDmSession(peerUid: String, nickname: String, avatar: String?) {
         if (peerUid.isBlank()) return
