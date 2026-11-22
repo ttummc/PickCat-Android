@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.VideoLibrary
@@ -1044,8 +1045,16 @@ private fun ProfileHeader(
     onSettings: () -> Unit,
     onOpenMedia: () -> Unit,
 ) {
-    Column {
-        Box(Modifier.fillMaxWidth().height(156.dp)) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+    ) {
+        Box(Modifier.fillMaxWidth().height(132.dp)) {
             if (!profile.backgroundFileId.isNullOrBlank()) {
                 PickCatImage(
                     url = "https://pickcat.dao3.fun/api/v1/files/${profile.backgroundFileId}",
@@ -1061,35 +1070,88 @@ private fun ProfileHeader(
                 )
             }
         }
-        Column(Modifier.padding(horizontal = 18.dp)) {
-            Row(verticalAlignment = Alignment.Bottom) {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.Top) {
                 UserAvatar(
                     name = profile.username,
                     url = avatarUrl(profile),
-                    size = 88.dp,
-                    modifier = Modifier
-                        .offset(y = (-42).dp)
-                        .border(4.dp, MaterialTheme.colorScheme.surface, CircleShape),
+                    size = 72.dp,
+                    modifier = Modifier.then(
+                        if (isSelf) {
+                            Modifier.clickable(onClick = onOpenMedia)
+                        } else {
+                            Modifier
+                        },
+                    ),
                 )
-                Spacer(Modifier.weight(1f))
-                if (isSelf) {
-                    FilledTonalButton(
-                        onClick = onSettings,
-                        modifier = Modifier.offset(y = (-10).dp),
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        profile.username,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                        ) {
+                            Text(
+                                "Lv.${profile.level.current}",
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            )
+                        }
+                        profile.displayedBadge?.name?.let { badge ->
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.secondaryContainer,
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    Icon(
+                                        Icons.Default.Badge,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(13.dp),
+                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    )
+                                    Text(
+                                        badge,
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                Spacer(Modifier.width(8.dp))
+                if (isSelf) {
+                    FilledTonalButton(onClick = onSettings) {
                         Icon(
                             Icons.Default.Edit,
                             contentDescription = null,
                             modifier = Modifier.size(16.dp),
                         )
                         Spacer(Modifier.width(6.dp))
-                        Text("编辑资料")
+                        Text("编辑")
                     }
                 } else {
                     Button(
                         onClick = onFollow,
                         enabled = !followBusy,
-                        modifier = Modifier.offset(y = (-10).dp),
                     ) {
                         if (followBusy) {
                             CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
@@ -1099,60 +1161,20 @@ private fun ProfileHeader(
                     }
                 }
             }
-            Text(
-                profile.username,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Spacer(Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Surface(
-                    shape = CircleShape,
-                    color = MaterialTheme.colorScheme.primaryContainer,
-                ) {
-                    Text(
-                        "Lv.${profile.level.current}",
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    )
-                }
-                profile.displayedBadge?.name?.let { badge ->
-                    Surface(
-                        shape = CircleShape,
-                        color = MaterialTheme.colorScheme.secondaryContainer,
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Icon(
-                                Icons.Default.Badge,
-                                contentDescription = null,
-                                modifier = Modifier.size(13.dp),
-                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                            )
-                            Text(
-                                badge,
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                            )
-                        }
-                    }
-                }
-            }
             if (!profile.bio.isNullOrBlank()) {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
                 Text(
                     profile.bio.orEmpty(),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 4,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
+            Spacer(Modifier.height(10.dp))
             Row(
-                modifier = Modifier.padding(top = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 Text(
                     "${relativeTime(profile.createdAt)}加入",
@@ -1160,30 +1182,36 @@ private fun ProfileHeader(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 if (!profile.region.isNullOrBlank()) {
-                    Text(
-                        profile.region.orEmpty(),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Icon(
+                            Icons.Default.Place,
+                            contentDescription = null,
+                            modifier = Modifier.size(14.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        Text(
+                            profile.region.orEmpty(),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
-            Surface(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp),
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surfaceContainerLow,
+            HorizontalDivider(
+                modifier = Modifier.padding(top = 14.dp),
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f),
+            )
+            Row(
+                modifier = Modifier.padding(top = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    modifier = Modifier.padding(vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    ProfileStat(compactNumber(profile.stats.followers), "粉丝", Modifier.weight(1f))
-                    StatDivider()
-                    ProfileStat(compactNumber(profile.stats.following), "关注", Modifier.weight(1f))
-                    StatDivider()
-                    ProfileStat(compactNumber(profile.stats.topics), "帖子", Modifier.weight(1f))
-                    StatDivider()
-                    ProfileStat(compactNumber(profile.stats.replies), "回复", Modifier.weight(1f))
-                }
+                ProfileStat(compactNumber(profile.stats.followers), "粉丝", Modifier.weight(1f))
+                ProfileStat(compactNumber(profile.stats.following), "关注", Modifier.weight(1f))
+                ProfileStat(compactNumber(profile.stats.topics), "帖子", Modifier.weight(1f))
+                ProfileStat(compactNumber(profile.stats.replies), "回复", Modifier.weight(1f))
             }
         }
     }
@@ -1203,7 +1231,7 @@ private fun ProfileStat(value: String, label: String, modifier: Modifier = Modif
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+        Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         Text(
             label,
             style = MaterialTheme.typography.labelMedium,

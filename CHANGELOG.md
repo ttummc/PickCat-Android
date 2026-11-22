@@ -3,6 +3,12 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.41] - 2026-11-22
+
+### Changed
+
+- Reworked the mobile profile header into a Material 3 profile Card. The cover, avatar, username, follow or edit action, level, badge, bio, metadata, and stats now share one card instead of a custom offset header with a separate stats surface. The stats row uses compact title-medium values and no vertical separators.
+
 ## [0.1.40] - 2026-11-22
 
 ### Fixed
@@ -284,6 +290,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.41]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.41
 [0.1.40]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.40
 [0.1.39]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.39
 [0.1.38]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.38
