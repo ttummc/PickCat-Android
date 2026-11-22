@@ -1,5 +1,10 @@
 package dao3.pickcat.feature.codechat
 
+import android.content.Context
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,8 +26,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Forum
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -30,19 +37,27 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -51,6 +66,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -73,7 +89,17 @@ class CodeChatViewModel : ViewModel() {
 
     fun retry() = repository.retry()
 
-    fun send(text: String) = repository.sendMessage(text)
+    fun send(text: String, to: String = "") = repository.sendMessage(text, to)
+
+    fun sendImage(imageUrl: String, to: String = "") = repository.sendImage(imageUrl, to)
+
+    suspend fun uploadImage(context: Context, uri: Uri): Result<String> =
+        repository.uploadImage(context, uri)
+
+    fun refreshDmSessions() = repository.refreshDmSessions()
+
+    fun ensureDmSession(peerUid: String, nickname: String, avatar: String?) =
+        repository.ensureDmSession(peerUid, nickname, avatar)
 
     suspend fun resolvePickCatUserId(ccUid: String): String? =
         repository.resolvePickCatUserId(ccUid)
@@ -88,14 +114,43 @@ fun CodeChatScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var draft by rememberSaveable { mutableStateOf("") }
+    var tab by rememberSaveable { mutableIntStateOf(0) }
+    var selectedPeer by remember { mutableStateOf<DmSession?>(null) }
     val listState = rememberLazyListState()
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
-
-    LaunchedEffect(state.messages.size) {
-        if (state.messages.isNotEmpty()) {
-            listState.animateScrollToItem(state.messages.lastIndex)
+    val context = LocalContext.current
+    var uploading by remember { mutableStateOf(false) }
+    val imagePicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickVisualMedia(),
+    ) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            uploading = true
+            val result = viewModel.uploadImage(context, uri)
+            uploading = false
+            result.onSuccess { url ->
+                viewModel.sendImage(url, selectedPeer?.peerUid.orEmpty())
+            }.onFailure { error ->
+                snackbarHostState.showSnackbar(error.message ?: "图片上传失败")
+            }
         }
+    }
+
+    val visibleMessages = when {
+        selectedPeer != null -> state.messages.filter { it.peerId == selectedPeer?.peerUid }
+        tab == 0 -> state.messages.filter { it.peerId.isBlank() }
+        else -> emptyList()
+    }
+
+    LaunchedEffect(visibleMessages.size, selectedPeer?.peerUid) {
+        if (visibleMessages.isNotEmpty()) {
+            listState.animateScrollToItem(visibleMessages.lastIndex)
+        }
+    }
+
+    LaunchedEffect(tab, selectedPeer) {
+        if (tab == 1 && selectedPeer == null) viewModel.refreshDmSessions()
     }
 
     val openUserProfile: (CodeChatMessage) -> Unit = { message ->
@@ -109,88 +164,174 @@ fun CodeChatScreen(
         }
     }
 
+    fun choosePeer(session: DmSession) {
+        viewModel.ensureDmSession(session.peerUid, session.nickname, session.avatar)
+        selectedPeer = session
+        draft = ""
+    }
+
+    fun startDm(message: CodeChatMessage) {
+        choosePeer(
+            DmSession(
+                peerUid = message.senderId,
+                nickname = message.senderName,
+                avatar = message.senderAvatar,
+                lastTime = message.time,
+                lastText = "",
+                online = false,
+            ),
+        )
+        tab = 1
+    }
+
+    val hasComposer = selectedPeer != null || tab == 0
     Scaffold(
         modifier = modifier.fillMaxSize(),
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("CodeChat")
+            Column {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text(selectedPeer?.nickname ?: "CodeChat")
+                            Text(
+                                if (selectedPeer != null) {
+                                    "CodeChat 私聊"
+                                } else {
+                                    "消息服务由 CodeChat 提供"
+                                },
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    },
+                    navigationIcon = {
+                        if (selectedPeer != null) {
+                            IconButton(onClick = { selectedPeer = null }) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBack,
+                                    contentDescription = "返回私聊列表",
+                                )
+                            }
+                        }
+                    },
+                )
+                if (selectedPeer == null) {
+                    PrimaryTabRow(
+                        selectedTabIndex = tab,
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.onSurface,
+                    ) {
+                        Tab(
+                            selected = tab == 0,
+                            onClick = { tab = 0 },
+                            text = { Text("公共频道") },
+                        )
+                        Tab(
+                            selected = tab == 1,
+                            onClick = { tab = 1 },
+                            text = { Text("私聊") },
+                        )
+                    }
+                }
+            }
+        },
+        bottomBar = {
+            if (hasComposer) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth().imePadding(),
+                    color = MaterialTheme.colorScheme.surfaceContainer,
+                    tonalElevation = 3.dp,
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .navigationBarsPadding()
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        ) {
+                            OutlinedTextField(
+                                value = draft,
+                                onValueChange = { draft = it.take(2_000) },
+                                modifier = Modifier.weight(1f),
+                                placeholder = {
+                                    Text(
+                                        when {
+                                            !state.connected -> "正在连接 CodeChat"
+                                            selectedPeer != null -> {
+                                                "发消息给 ${selectedPeer?.nickname.orEmpty()}"
+                                            }
+                                            else -> "发消息到 CodeChat 公共频道"
+                                        },
+                                    )
+                                },
+                                enabled = state.connected,
+                                minLines = 1,
+                                maxLines = 4,
+                                shape = MaterialTheme.shapes.medium,
+                            )
+                            IconButton(
+                                onClick = {
+                                    imagePicker.launch(
+                                        PickVisualMediaRequest(
+                                            ActivityResultContracts.PickVisualMedia.ImageOnly,
+                                        ),
+                                    )
+                                },
+                                enabled = state.connected && !uploading,
+                                modifier = Modifier.size(48.dp),
+                            ) {
+                                if (uploading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp,
+                                    )
+                                } else {
+                                    Icon(
+                                        Icons.Default.Image,
+                                        contentDescription = "发送图片",
+                                    )
+                                }
+                            }
+                            FilledIconButton(
+                                onClick = {
+                                    val text = draft.trim()
+                                    if (text.isNotEmpty()) {
+                                        viewModel.send(text, selectedPeer?.peerUid.orEmpty())
+                                        draft = ""
+                                    }
+                                },
+                                enabled = state.connected && draft.isNotBlank(),
+                                modifier = Modifier.size(52.dp),
+                                shape = MaterialTheme.shapes.medium,
+                            ) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.Send,
+                                    contentDescription = "发送消息",
+                                )
+                            }
+                        }
                         Text(
-                            "消息服务由 CodeChat 提供",
+                            if (selectedPeer != null) {
+                                "私聊消息由 CodeChat 提供"
+                            } else {
+                                "公共频道消息由 CodeChat 提供"
+                            },
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                        Text(
+                            "点击头像查看关联的 PickCat 主页",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                },
-            )
-        },
-        bottomBar = {
-            Surface(
-                modifier = Modifier.fillMaxWidth().imePadding(),
-                color = MaterialTheme.colorScheme.surfaceContainer,
-                tonalElevation = 3.dp,
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        OutlinedTextField(
-                            value = draft,
-                            onValueChange = { draft = it.take(2_000) },
-                            modifier = Modifier.weight(1f),
-                            placeholder = {
-                                Text(
-                                    if (state.connected) {
-                                        "发消息到 CodeChat 公共频道"
-                                    } else {
-                                        "正在连接 CodeChat"
-                                    },
-                                )
-                            },
-                            enabled = state.connected,
-                            minLines = 1,
-                            maxLines = 4,
-                            shape = MaterialTheme.shapes.medium,
-                        )
-                        FilledIconButton(
-                            onClick = {
-                                val text = draft.trim()
-                                if (text.isNotEmpty()) {
-                                    viewModel.send(text)
-                                    draft = ""
-                                }
-                            },
-                            enabled = state.connected && draft.isNotBlank(),
-                            modifier = Modifier.size(52.dp),
-                            shape = MaterialTheme.shapes.medium,
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.Send,
-                                contentDescription = "发送消息",
-                            )
-                        }
-                    }
-                    Text(
-                        "公共频道消息由 CodeChat 提供",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp),
-                    )
-                    Text(
-                        "点击头像查看关联的 PickCat 主页",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
                 }
             }
         },
@@ -230,45 +371,27 @@ fun CodeChatScreen(
                     }
                 }
             }
-            if (state.messages.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier.padding(32.dp),
-                    ) {
-                        Icon(
-                            Icons.Default.Forum,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(40.dp),
-                        )
-                        Text(
-                            "CodeChat 公共频道",
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(top = 12.dp),
-                        )
-                        Text(
-                            if (state.connecting) "正在连接 CodeChat" else "还没有消息，发一条试试",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 6.dp),
-                        )
-                    }
-                }
-            } else {
-                LazyColumn(
+
+            when {
+                selectedPeer == null && tab == 1 -> DmSessionList(
+                    sessions = state.dmSessions,
+                    onOpenSession = ::choosePeer,
+                )
+                visibleMessages.isEmpty() -> EmptyConversation(
+                    isPrivate = selectedPeer != null,
+                    isConnecting = state.connecting,
+                )
+                else -> LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
-                    items(state.messages, key = { it.id }) { message ->
+                    items(visibleMessages, key = { it.id }) { message ->
                         CodeChatMessageRow(
                             message = message,
                             onOpenProfile = openUserProfile,
+                            onStartDm = if (message.fromMe) null else ::startDm,
                         )
                     }
                 }
@@ -278,9 +401,140 @@ fun CodeChatScreen(
 }
 
 @Composable
+private fun DmSessionList(
+    sessions: List<DmSession>,
+    onOpenSession: (DmSession) -> Unit,
+) {
+    if (sessions.isEmpty()) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(32.dp),
+            ) {
+                Icon(
+                    Icons.Default.Forum,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(40.dp),
+                )
+                Text(
+                    "还没有私聊",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 12.dp),
+                )
+                Text(
+                    "在公共频道点击其他用户的私聊按钮开始会话",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+        }
+    } else {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(vertical = 8.dp),
+        ) {
+            items(sessions, key = { it.peerUid }) { session ->
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            session.nickname.ifBlank { session.peerUid },
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    },
+                    supportingContent = if (session.lastText.isNotBlank()) {
+                        {
+                            Text(
+                                session.lastText,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    } else {
+                        null
+                    },
+                    leadingContent = {
+                        UserAvatar(
+                            name = session.nickname,
+                            url = session.avatar,
+                            size = 44.dp,
+                        )
+                    },
+                    trailingContent = {
+                        Column(horizontalAlignment = Alignment.End) {
+                            if (session.lastTime > 0L) {
+                                Text(
+                                    DateFormat.getTimeInstance(DateFormat.SHORT)
+                                        .format(Date(session.lastTime)),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            if (session.online) {
+                                Text(
+                                    "在线",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                        }
+                    },
+                    colors = ListItemDefaults.colors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
+                    modifier = Modifier.clickable { onOpenSession(session) },
+                )
+                HorizontalDivider(
+                    modifier = Modifier.padding(start = 72.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyConversation(
+    isPrivate: Boolean,
+    isConnecting: Boolean,
+) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(32.dp),
+        ) {
+            Icon(
+                Icons.Default.Forum,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(40.dp),
+            )
+            Text(
+                if (isPrivate) "还没有私聊消息" else "CodeChat 公共频道",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(top = 12.dp),
+            )
+            Text(
+                when {
+                    isConnecting -> "正在连接 CodeChat"
+                    isPrivate -> "发一条消息开始会话"
+                    else -> "还没有消息，发一条试试"
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+        }
+    }
+}
+
+@Composable
 private fun CodeChatMessageRow(
     message: CodeChatMessage,
     onOpenProfile: (CodeChatMessage) -> Unit,
+    onStartDm: ((CodeChatMessage) -> Unit)?,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -301,13 +555,23 @@ private fun CodeChatMessageRow(
             horizontalAlignment = if (message.fromMe) Alignment.End else Alignment.Start,
         ) {
             if (!message.fromMe) {
-                Text(
-                    message.senderName.ifBlank { "CodeChat 用户" },
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        message.senderName.ifBlank { "CodeChat 用户" },
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (onStartDm != null && message.senderId.isNotBlank()) {
+                        TextButton(
+                            onClick = { onStartDm(message) },
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
+                        ) {
+                            Text("私聊")
+                        }
+                    }
+                }
                 Spacer(Modifier.size(3.dp))
             }
             Surface(
@@ -333,9 +597,7 @@ private fun CodeChatMessageRow(
                         PickCatImage(
                             url = message.imageUrl,
                             contentDescription = "聊天图片",
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(max = 220.dp),
+                            modifier = Modifier.fillMaxWidth().heightIn(max = 220.dp),
                             contentScale = ContentScale.Fit,
                             corner = 10.dp,
                         )

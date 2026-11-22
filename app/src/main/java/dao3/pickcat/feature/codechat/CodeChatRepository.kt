@@ -1,6 +1,7 @@
 package dao3.pickcat.feature.codechat
 
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import dao3.pickcat.AppGraph
 import kotlinx.coroutines.CoroutineScope
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -24,6 +26,7 @@ import okhttp3.WebSocketListener
 import org.json.JSONObject
 import java.util.UUID
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.withContext
 
 data class CodeChatMessage(
     val id: String,
@@ -34,6 +37,16 @@ data class CodeChatMessage(
     val imageUrl: String?,
     val fromMe: Boolean,
     val time: Long,
+    val peerId: String = "",
+)
+
+data class DmSession(
+    val peerUid: String,
+    val nickname: String,
+    val avatar: String?,
+    val lastTime: Long,
+    val lastText: String,
+    val online: Boolean,
 )
 
 data class CodeChatState(
@@ -41,6 +54,7 @@ data class CodeChatState(
     val connected: Boolean = false,
     val canChat: Boolean = true,
     val messages: List<CodeChatMessage> = emptyList(),
+    val dmSessions: List<DmSession> = emptyList(),
     val error: String? = null,
 )
 
@@ -96,7 +110,7 @@ class CodeChatRepository(context: Context) {
         _state.value = CodeChatState()
     }
 
-    fun sendMessage(raw: String) {
+    fun sendMessage(raw: String, to: String = "") {
         val text = raw.trim()
         if (text.isEmpty()) return
         val token = prefs.getString(KEY_TOKEN, null) ?: return
@@ -104,11 +118,74 @@ class CodeChatRepository(context: Context) {
         val message = JSONObject()
             .put("type", "chat_message")
             .put("text", text)
-            .put("to", "")
+            .put("to", to)
             .put("senderProvider", "pickcat")
             .put("pcAssertion", assertion)
         if (socket?.send(message.toString()) != true) {
             _state.update { it.copy(error = "消息发送失败，请重新连接") }
+        }
+    }
+
+    fun sendImage(imageUrl: String, to: String = "") {
+        if (imageUrl.isBlank()) return
+        val assertion = prefs.getString(KEY_ASSERT, null) ?: return
+        val message = JSONObject()
+            .put("type", "chat_message")
+            .put("image", imageUrl)
+            .put("to", to)
+            .put("senderProvider", "pickcat")
+            .put("pcAssertion", assertion)
+        if (socket?.send(message.toString()) != true) {
+            _state.update { it.copy(error = "图片发送失败，请重新连接") }
+        }
+    }
+
+    suspend fun uploadImage(context: Context, uri: Uri): Result<String> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val token = prefs.getString(KEY_TOKEN, null)
+                    ?: error("CodeChat 尚未连接")
+                val resolver = context.contentResolver
+                val mime = resolver.getType(uri)
+                    ?.takeIf { it.startsWith("image/") }
+                    ?: "image/jpeg"
+                val bytes = resolver.openInputStream(uri)?.use { it.readBytes() }
+                    ?: error("无法读取图片")
+                if (bytes.size > 8 * 1024 * 1024) error("图片不能超过 8MB")
+                val extension = when (mime) {
+                    "image/png" -> "png"
+                    "image/webp" -> "webp"
+                    "image/gif" -> "gif"
+                    else -> "jpg"
+                }
+                val body = MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart(
+                        "file",
+                        "chat.$extension",
+                        bytes.toRequestBody(mime.toMediaType()),
+                    )
+                    .build()
+                val request = Request.Builder()
+                    .url("$BASE_URL/api/codemao/chat/upload")
+                    .header("Authorization", "Bearer $token")
+                    .post(body)
+                    .build()
+                client.newCall(request).execute().use { response ->
+                    val json = response.jsonBody()
+                    if (!response.isSuccessful || !json.optBoolean("success", false)) {
+                        error(json.optString("msg").ifBlank { "图片上传失败" })
+                    }
+                    json.optString("url").takeIf { it.isNotBlank() }
+                        ?: error("图片上传响应缺少链接")
+                }
+            }
+        }
+
+    fun refreshDmSessions() {
+        val token = prefs.getString(KEY_TOKEN, null) ?: return
+        scope.launch {
+            runCatching { loadDmSessions(token) }
         }
     }
 
@@ -163,6 +240,7 @@ class CodeChatRepository(context: Context) {
                 saveCredential(credential)
             }
             loadRecentMessages(token, ccUid)
+            loadDmSessions(token)
             openSocket(token, ccUid, assertion)
         } catch (error: Exception) {
             Log.w(TAG, "CodeChat connect failed", error)
@@ -228,7 +306,13 @@ class CodeChatRepository(context: Context) {
                 val loaded = buildList {
                     for (index in 0 until array.length()) {
                         val message = array.optJSONObject(index) ?: continue
-                        if (message.optString("to").isNotBlank()) continue
+                        val to = message.optString("to")
+                        val senderId = message.optString("senderId")
+                        val peerId = when {
+                            to.isBlank() -> ""
+                            senderId == ccUid -> to
+                            else -> senderId
+                        }
                         val text = message.optString("text")
                             .ifBlank { message.optString("origText") }
                         val image = message.optString("image").takeIf { it.isNotBlank() }
@@ -238,16 +322,17 @@ class CodeChatRepository(context: Context) {
                         add(
                             CodeChatMessage(
                                 id = id,
-                                senderId = message.optString("senderId"),
+                                senderId = senderId,
                                 senderName = message.optString("senderName"),
                                 senderAvatar = message.optString("senderAvatar")
                                     .takeIf { it.isNotBlank() },
                                 text = text,
                                 imageUrl = image,
                                 fromMe = message.optBoolean("fromMe", false) ||
-                                    message.optString("senderId") == ccUid ||
+                                    senderId == ccUid ||
                                     ownMessageIds().contains(id),
                                 time = message.optLong("time", System.currentTimeMillis()),
+                                peerId = peerId,
                             ),
                         )
                     }
@@ -255,6 +340,61 @@ class CodeChatRepository(context: Context) {
                 if (loaded.isNotEmpty()) {
                     _state.update { it.copy(messages = loaded) }
                 }
+            }
+        }
+    }
+
+    private fun loadDmSessions(token: String) {
+        val request = Request.Builder()
+            .url("$BASE_URL/api/cc/dm-sessions")
+            .header("Authorization", "Bearer $token")
+            .get()
+            .build()
+        runCatching {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) return
+                val array = response.jsonBody().optJSONArray("sessions") ?: return
+                val sessions = buildList {
+                    for (index in 0 until array.length()) {
+                        val item = array.optJSONObject(index) ?: continue
+                        val peerUid = item.optString("peerUid")
+                        if (peerUid.isBlank()) continue
+                        add(
+                            DmSession(
+                                peerUid = peerUid,
+                                nickname = item.optString("nickname"),
+                                avatar = item.optString("avatar").takeIf { it.isNotBlank() },
+                                lastTime = item.optLong("lastTime", 0L),
+                                lastText = item.optString("lastText"),
+                                online = item.optBoolean("online", false) ||
+                                    item.optString("status").equals("online", ignoreCase = true),
+                            ),
+                        )
+                    }
+                }.sortedByDescending { it.lastTime }
+                _state.update { it.copy(dmSessions = sessions) }
+            }
+        }
+    }
+
+    fun ensureDmSession(peerUid: String, nickname: String, avatar: String?) {
+        if (peerUid.isBlank()) return
+        _state.update { current ->
+            if (current.dmSessions.any { it.peerUid == peerUid }) {
+                current
+            } else {
+                current.copy(
+                    dmSessions = listOf(
+                        DmSession(
+                            peerUid = peerUid,
+                            nickname = nickname,
+                            avatar = avatar,
+                            lastTime = System.currentTimeMillis(),
+                            lastText = "",
+                            online = false,
+                        ),
+                    ) + current.dmSessions,
+                )
             }
         }
     }
@@ -334,23 +474,52 @@ class CodeChatRepository(context: Context) {
             "new_message" -> {
                 val message = event.optJSONObject("message") ?: return
                 val id = message.optString("id").ifBlank { UUID.randomUUID().toString() }
+                val to = message.optString("to")
+                val senderId = message.optString("senderId")
+                val fromMe = event.optBoolean("fromMe", false) ||
+                    senderId == ccUid ||
+                    ownMessageIds().contains(id)
+                val peerId = when {
+                    to.isBlank() -> ""
+                    fromMe -> to
+                    else -> senderId
+                }
                 val text = message.optString("text")
                     .ifBlank { message.optString("origText") }
                 val image = message.optString("image").takeIf { it.isNotBlank() }
                 if (text.isBlank() && image == null) return
                 val item = CodeChatMessage(
                     id = id,
-                    senderId = message.optString("senderId"),
+                    senderId = senderId,
                     senderName = message.optString("senderName"),
                     senderAvatar = message.optString("senderAvatar").takeIf { it.isNotBlank() },
                     text = text,
                     imageUrl = image,
-                    fromMe = event.optBoolean("fromMe", false) ||
-                        message.optString("senderId") == ccUid ||
-                        ownMessageIds().contains(id),
+                    fromMe = fromMe,
                     time = message.optLong("time", System.currentTimeMillis()),
+                    peerId = peerId,
                 )
                 if (item.fromMe) rememberOwnMessage(id)
+                if (peerId.isNotBlank() && !item.fromMe) {
+                    _state.update { current ->
+                        val existing = current.dmSessions.firstOrNull {
+                            it.peerUid == peerId
+                        }
+                        val updated = DmSession(
+                            peerUid = peerId,
+                            nickname = item.senderName.ifBlank { existing?.nickname.orEmpty() },
+                            avatar = item.senderAvatar ?: existing?.avatar,
+                            lastTime = item.time,
+                            lastText = item.text,
+                            online = existing?.online ?: false,
+                        )
+                        current.copy(
+                            dmSessions = (listOf(updated) + current.dmSessions.filterNot {
+                                it.peerUid == peerId
+                            }).sortedByDescending { it.lastTime },
+                        )
+                    }
+                }
                 _state.update { current ->
                     if (current.messages.any { it.id == item.id }) {
                         current
