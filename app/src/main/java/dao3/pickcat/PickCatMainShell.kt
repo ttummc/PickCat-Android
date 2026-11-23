@@ -35,6 +35,8 @@ import androidx.compose.material.icons.outlined.Forum
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.VideoLibrary
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -136,6 +138,7 @@ private data class MainDestination(
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
     val route: String,
+    val badgeCount: Int = 0,
 )
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
@@ -148,6 +151,7 @@ fun PickCatMainShell(
     val session by appViewModel.session.collectAsStateWithLifecycle()
     val preferences by appViewModel.preferences.collectAsStateWithLifecycle()
     val isOnline by appViewModel.isOnline.collectAsStateWithLifecycle()
+    val codeChatState by AppGraph.codeChat.state.collectAsStateWithLifecycle()
     var offlineBannerDismissed by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(isOnline) {
         if (isOnline) offlineBannerDismissed = false
@@ -192,6 +196,7 @@ fun PickCatMainShell(
                     selectedIcon = Icons.Filled.Chat,
                     unselectedIcon = Icons.Filled.ChatBubbleOutline,
                     route = Routes.CODECHAT,
+                    badgeCount = codeChatState.unreadByPeer.values.sum(),
                 ),
             )
         }
@@ -737,16 +742,28 @@ private fun WorksTwoPane(
 
 @Composable
 private fun DestinationIcon(destination: MainDestination, selected: Boolean) {
-    AnimatedContent(
-        targetState = selected,
-        transitionSpec = {
-            fadeIn(tween(180)) togetherWith fadeOut(tween(120))
+    BadgedBox(
+        badge = {
+            if (destination.badgeCount > 0) {
+                Badge {
+                    Text(
+                        if (destination.badgeCount > 99) "99+" else destination.badgeCount.toString(),
+                    )
+                }
+            }
         },
-        label = "bottom-navigation-icon",
-    ) { active ->
-        Icon(
-            imageVector = if (active) destination.selectedIcon else destination.unselectedIcon,
-            contentDescription = destination.label,
-        )
+    ) {
+        AnimatedContent(
+            targetState = selected,
+            transitionSpec = {
+                fadeIn(tween(180)) togetherWith fadeOut(tween(120))
+            },
+            label = "bottom-navigation-icon",
+        ) { active ->
+            Icon(
+                imageVector = if (active) destination.selectedIcon else destination.unselectedIcon,
+                contentDescription = destination.label,
+            )
+        }
     }
 }

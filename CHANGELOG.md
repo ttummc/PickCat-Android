@@ -3,6 +3,12 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.56] - 2026-11-23
+
+### Added
+
+- CodeChat total unread messages now appear as a badge on the CodeChat bottom-navigation item and navigation rail item.
+
 ## [0.1.55] - 2026-11-23
 
 ### Fixed
@@ -404,6 +410,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.56]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.56
 [0.1.55]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.55
 [0.1.54]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.54
 [0.1.53]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.53
