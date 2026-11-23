@@ -3,6 +3,16 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.53] - 2026-11-23
+
+### 新增
+
+- 设置页新增账号安全页面，接入官网 `/users/{id}/security` 和 `/users/{id}/sessions`：展示二次验证状态、已识别的验证方式、剩余恢复码和登录设备，并提供前往官网管理的入口。
+
+### 修复
+
+- 登录 WebView 显式应用状态栏和输入法安全区，不再依赖 `fitsSystemWindows`；登录页不会再顶到状态栏下面。
+
 ## [0.1.52] - 2026-11-22
 
 ### 新增
@@ -376,6 +386,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.53]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.53
 [0.1.52]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.52
 [0.1.51]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.51
 [0.1.50]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.50

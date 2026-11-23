@@ -9,11 +9,14 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.math.max
 
 class LoginWebViewActivity : ComponentActivity() {
     private lateinit var webView: WebView
@@ -21,9 +24,9 @@ class LoginWebViewActivity : ComponentActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, true)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         webView = WebView(this).apply {
-            fitsSystemWindows = true
+            fitsSystemWindows = false
             setBackgroundColor(Color.WHITE)
             settings.apply {
                 javaScriptEnabled = true
@@ -45,7 +48,22 @@ class LoginWebViewActivity : ComponentActivity() {
             webViewClient = WebViewClient()
             loadUrl(LOGIN_URL)
         }
+        ViewCompat.setOnApplyWindowInsetsListener(webView) { view, insets ->
+            val safe = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or
+                    WindowInsetsCompat.Type.displayCutout(),
+            )
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            view.setPadding(
+                safe.left,
+                safe.top,
+                safe.right,
+                max(safe.bottom, ime.bottom),
+            )
+            insets
+        }
         setContentView(webView)
+        ViewCompat.requestApplyInsets(webView)
 
         lifecycleScope.launch {
             while (isActive) {

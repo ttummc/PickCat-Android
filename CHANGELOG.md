@@ -3,6 +3,16 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.53] - 2026-11-23
+
+### Added
+
+- Settings now includes an Account Security screen backed by the official `/users/{id}/security` and `/users/{id}/sessions` endpoints. It shows second-factor status, recognized verification methods, remaining recovery codes, and active login sessions, with a direct link to manage security on the official site.
+
+### Fixed
+
+- The login WebView now applies explicit system-bar and IME insets instead of relying on `fitsSystemWindows` under enforced edge-to-edge, so the official login page no longer starts underneath the status bar.
+
 ## [0.1.52] - 2026-11-22
 
 ### Added
@@ -376,6 +386,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.53]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.53
 [0.1.52]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.52
 [0.1.51]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.51
 [0.1.50]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.50

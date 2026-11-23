@@ -179,6 +179,7 @@ fun SettingsScreen(
     onOpenMedia: () -> Unit,
     onOpenLibrary: () -> Unit,
     onOpenGallery: () -> Unit = onOpenMedia,
+    onOpenAccountSecurity: () -> Unit = {},
 ) {
     val viewModel: SettingsViewModel = viewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -308,6 +309,15 @@ fun SettingsScreen(
             title = "登录与安全",
             keywords = listOf("登录", "安全", "邮箱", "手机", "密码", "实名", "授权", "注销"),
             items = listOf(
+                SettingsItemSpec(
+                    key = "account-security",
+                    icon = Icons.Default.Security,
+                    title = "账号安全",
+                    summary = "两步验证、通行密钥、恢复码和登录设备",
+                    keywords = listOf("账号安全", "两步验证", "通行密钥", "恢复码", "设备", "登录"),
+                    onClick = onOpenAccountSecurity,
+                    showChevron = true,
+                ),
                 SettingsItemSpec(
                     key = "security-center",
                     icon = Icons.Default.Security,

@@ -90,6 +90,7 @@ import dao3.pickcat.feature.profile.CollectionScreen
 import dao3.pickcat.feature.profile.ProfileScreen
 import dao3.pickcat.feature.search.SearchScreen
 import dao3.pickcat.feature.settings.EditProfileScreen
+import dao3.pickcat.feature.settings.AccountSecurityScreen
 import dao3.pickcat.feature.settings.SettingsScreen
 import dao3.pickcat.feature.topic.TopicDetailScreen
 import dao3.pickcat.feature.work.WorkDetailScreen
@@ -117,6 +118,7 @@ private object Routes {
     const val MEDIA = "media"
     const val GALLERY = "gallery"
     const val LIBRARY = "library"
+    const val ACCOUNT_SECURITY = "account-security"
     const val CODECHAT = "codechat"
     const val CODECHAT_PEER = "codechat?peerUid={peerUid}"
 
@@ -501,6 +503,12 @@ fun PickCatMainShell(
                     onOpenMedia = { navController.navigate(Routes.MEDIA) },
                     onOpenLibrary = { navController.navigate(Routes.LIBRARY) },
                     onOpenGallery = { navController.navigate(Routes.GALLERY) },
+                    onOpenAccountSecurity = { navController.navigate(Routes.ACCOUNT_SECURITY) },
+                )
+            }
+            composable(Routes.ACCOUNT_SECURITY) {
+                AccountSecurityScreen(
+                    onBack = { navController.popBackStack() },
                 )
             }
             composable(Routes.EDIT_PROFILE) {

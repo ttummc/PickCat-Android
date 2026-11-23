@@ -256,6 +256,10 @@ class PickCatApi(
 
     suspend fun getUserEmail(id: String): UserEmail = getJson("/users/$id/email")
 
+    suspend fun getAccountSecurity(id: String): JsonObject = getJson("/users/$id/security")
+
+    suspend fun getAccountSessions(id: String): JsonObject = getJson("/users/$id/sessions")
+
     suspend fun getOfficialAccount(): OfficialAccount = getJson("/official-account")
 
     suspend fun updateBadgeDisplay(id: String, mode: String, badgeId: String? = null) {
