@@ -3,6 +3,13 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.55] - 2026-11-23
+
+### 修复
+
+- 帖子回复和 CodeChat 输入栏改为只应用导航栏或 IME 中较大的一个 inset，不再叠加两层，消除输入框与键盘之间的空隙。
+- 输入提示缩短为“写回复”和“发消息”，避免被尾部操作按钮挤断。
+
 ## [0.1.54] - 2026-11-23
 
 ### 变更
@@ -397,6 +404,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.55]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.55
 [0.1.54]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.54
 [0.1.53]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.53
 [0.1.52]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.52

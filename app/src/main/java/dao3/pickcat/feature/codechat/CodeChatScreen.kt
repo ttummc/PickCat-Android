@@ -28,11 +28,15 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -318,14 +322,17 @@ fun CodeChatScreen(
                 ),
             ) {
                 Surface(
-                    modifier = Modifier.fillMaxWidth().imePadding(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .windowInsetsPadding(
+                            WindowInsets.navigationBars.union(WindowInsets.ime),
+                        ),
                     color = MaterialTheme.colorScheme.surfaceContainer,
                     tonalElevation = 3.dp,
                 ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .navigationBarsPadding()
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                     ) {
                         Row(
@@ -339,13 +346,7 @@ fun CodeChatScreen(
                                 modifier = Modifier.weight(1f),
                                 placeholder = {
                                     Text(
-                                        when {
-                                            !state.connected -> "正在连接 CodeChat"
-                                            selectedPeer != null -> {
-                                                "发消息给 ${selectedPeer?.nickname.orEmpty()}"
-                                            }
-                                            else -> "发消息到公共群聊"
-                                        },
+                                        if (state.connected) "发消息" else "正在连接",
                                     )
                                 },
                                 enabled = state.connected,

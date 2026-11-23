@@ -22,12 +22,16 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -682,7 +686,9 @@ private fun ReplyComposer(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .imePadding(),
+            .windowInsetsPadding(
+                WindowInsets.navigationBars.union(WindowInsets.ime),
+            ),
     ) {
         BottomAppBar(
             modifier = Modifier.fillMaxWidth(),
@@ -699,7 +705,6 @@ private fun ReplyComposer(
                     modifier = Modifier
                         .widthIn(max = 860.dp)
                         .fillMaxWidth()
-                        .navigationBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -711,7 +716,7 @@ private fun ReplyComposer(
                     placeholder = if (replyTo == null) {
                         "写回复"
                     } else {
-                        "回复 ${replyTo.author.username}"
+                        "回复"
                     },
                     singleLine = true,
                     minLines = 1,

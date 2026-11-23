@@ -3,6 +3,13 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.55] - 2026-11-23
+
+### Fixed
+
+- Topic and CodeChat composers now use a single navigation-bar or IME inset instead of stacking both, removing the gap above the keyboard.
+- Composer placeholders are shortened to "写回复" and "发消息" so they are not clipped by trailing controls.
+
 ## [0.1.54] - 2026-11-23
 
 ### Changed
@@ -397,6 +404,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.55]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.55
 [0.1.54]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.54
 [0.1.53]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.53
 [0.1.52]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.52
