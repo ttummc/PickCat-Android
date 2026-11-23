@@ -15,6 +15,8 @@ object AppGraph {
         private set
     lateinit var codeChat: CodeChatRepository
         private set
+    lateinit var accountStore: AccountStore
+        private set
 
     fun install(context: Application) {
         if (!::container.isInitialized) {
@@ -22,6 +24,9 @@ object AppGraph {
         }
         if (!::codeChat.isInitialized) {
             codeChat = CodeChatRepository(context)
+        }
+        if (!::accountStore.isInitialized) {
+            accountStore = AccountStore(context)
         }
     }
 }

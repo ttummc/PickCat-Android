@@ -3,6 +3,15 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.57] - 2026-11-23
+
+### Added
+
+- Settings now has a "切换账号" entry that opens a Material 3 bottom sheet.
+- The sheet lists saved accounts with avatars and marks the current account.
+- "添加账号" clears the current cookies, opens the official login page, and saves the new account after login; cancelling restores the previous session.
+- Switching accounts restores that account's cookies and session locally, with rollback if restoration fails.
+
 ## [0.1.56] - 2026-11-23
 
 ### Added
@@ -410,6 +419,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.57]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.57
 [0.1.56]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.56
 [0.1.55]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.55
 [0.1.54]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.54

@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 data class SessionUiState(
     val ready: Boolean = false,
@@ -108,6 +109,39 @@ class SessionRepository(
             .map { it.trim() }
             .firstOrNull { it.startsWith("pickcat_session=") }
         webCookie ?: cookieJar.peekSessionCookie()?.let { "${it.name}=${it.value}" }
+    }
+
+    suspend fun currentCookieHeader(): String? = withContext(Dispatchers.Main) {
+        CookieManager.getInstance().getCookie(PICKCAT_ORIGIN)
+            ?.takeIf { it.isNotBlank() }
+            ?: cookieJar.loadForRequest(PICKCAT_ORIGIN.toHttpUrlOrNull() ?: return@withContext null)
+                .joinToString("; ") { "${it.name}=${it.value}" }
+                .takeIf { it.isNotBlank() }
+    }
+
+    suspend fun replaceCookies(cookieHeader: String) {
+        withContext(Dispatchers.Main) {
+            val manager = CookieManager.getInstance()
+            manager.removeAllCookies(null)
+            manager.flush()
+            cookieHeader.split(';')
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .forEach { pair ->
+                    manager.setCookie(PICKCAT_ORIGIN, "$pair; Path=/; Secure")
+                }
+            manager.flush()
+        }
+        cookieJar.clear()
+        cookieJar.syncFromWebView(cookieHeader)
+    }
+
+    suspend fun clearCookies() {
+        withContext(Dispatchers.Main) {
+            CookieManager.getInstance().removeAllCookies(null)
+            CookieManager.getInstance().flush()
+        }
+        cookieJar.clear()
     }
 
     fun forceSignedOut() {

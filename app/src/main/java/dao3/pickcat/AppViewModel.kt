@@ -28,6 +28,8 @@ class AppViewModel : ViewModel() {
     val preferencesRepository = container.preferences
 
     val session = container.session.state
+    val accounts = AppGraph.accountStore.accounts
+    private var previousAccount: SavedAccount? = null
     val isOnline: StateFlow<Boolean> = container.networkMonitor.isOnline
     val maintenance: StateFlow<Boolean> = container.maintenance
     val preferences: StateFlow<AppPreferences> = container.preferences.preferences
@@ -123,6 +125,49 @@ class AppViewModel : ViewModel() {
             val confirmed = sessionRepository.signOut()
             _messages.tryEmit(if (confirmed) "已退出登录" else "已退出登录（服务器未确认）")
         }
+    }
+
+    suspend fun saveCurrentAccount() {
+        val user = session.value.user ?: return
+        val cookie = sessionRepository.currentCookieHeader() ?: return
+        AppGraph.accountStore.save(user, cookie)
+    }
+
+    suspend fun switchAccount(account: SavedAccount): Boolean {
+        val previousCookie = sessionRepository.currentCookieHeader()
+        saveCurrentAccount()
+        sessionRepository.replaceCookies(account.cookie)
+        sessionRepository.retryRestore()
+        if (session.value.user?.id != account.id) {
+            previousCookie?.let { sessionRepository.replaceCookies(it) }
+            sessionRepository.retryRestore()
+            return false
+        }
+        return true
+    }
+
+    suspend fun prepareAddAccount() {
+        val user = session.value.user ?: return
+        val cookie = sessionRepository.currentCookieHeader() ?: return
+        previousAccount = SavedAccount(
+            id = user.id,
+            username = user.username,
+            avatarUrl = user.avatar?.url,
+            cookie = cookie,
+        )
+        AppGraph.accountStore.save(user, cookie)
+        sessionRepository.clearCookies()
+    }
+
+    suspend fun cancelAddAccount() {
+        val previous = previousAccount ?: return
+        previousAccount = null
+        sessionRepository.replaceCookies(previous.cookie)
+        sessionRepository.retryRestore()
+    }
+
+    fun finishAddAccount() {
+        previousAccount = null
     }
 
     fun updateTheme(mode: ThemeMode) {

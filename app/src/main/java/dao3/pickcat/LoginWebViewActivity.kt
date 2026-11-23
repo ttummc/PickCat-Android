@@ -71,6 +71,10 @@ class LoginWebViewActivity : ComponentActivity() {
                 CookieManager.getInstance().flush()
                 val user = AppGraph.container.session.pollWebViewLogin()
                 if (user != null) {
+                    AppGraph.accountStore.save(
+                        user = user,
+                        cookie = AppGraph.container.session.currentCookieHeader(),
+                    )
                     Toast.makeText(this@LoginWebViewActivity, "登录成功", Toast.LENGTH_SHORT).show()
                     setResult(RESULT_OK)
                     finish()

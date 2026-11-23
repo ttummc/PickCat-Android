@@ -2,7 +2,10 @@ package dao3.pickcat.feature.settings
 
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.Intent
 import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -28,7 +32,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.DarkMode
@@ -43,6 +49,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.SwitchAccount
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -91,10 +98,13 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dao3.pickcat.AppGraph
 import dao3.pickcat.AppViewModel
+import dao3.pickcat.LoginWebViewActivity
+import dao3.pickcat.SavedAccount
 import dao3.pickcat.core.network.LevelProgress
 import dao3.pickcat.core.network.OfficialAccount
 import dao3.pickcat.core.network.SessionUser
 import dao3.pickcat.core.ui.EmptyState
+import dao3.pickcat.core.ui.UserAvatar
 import dao3.pickcat.core.ui.UserAvatar
 import dao3.pickcat.core.ui.avatarUrl
 import dao3.pickcat.core.ui.compactNumber
@@ -184,6 +194,7 @@ fun SettingsScreen(
     val viewModel: SettingsViewModel = viewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val session by appViewModel.session.collectAsStateWithLifecycle()
+    val accounts by appViewModel.accounts.collectAsStateWithLifecycle()
     val preferences by appViewModel.preferences.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -194,6 +205,7 @@ fun SettingsScreen(
     var confirmSignOut by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showUpdateSourceDialog by remember { mutableStateOf(false) }
+    var showAccountSheet by remember { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
     var email by remember { mutableStateOf<String?>(null) }
     var officialAccount by remember { mutableStateOf<OfficialAccount?>(null) }
@@ -202,6 +214,18 @@ fun SettingsScreen(
     var codeChatPasswordError by remember { mutableStateOf(false) }
 
     val user = session.user
+    val addAccountLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        scope.launch {
+            if (result.resultCode == android.app.Activity.RESULT_OK) {
+                appViewModel.finishAddAccount()
+            } else {
+                appViewModel.cancelAddAccount()
+                snackbarHostState.showSnackbar("已取消添加账号")
+            }
+        }
+    }
     val versionName = remember {
         runCatching {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName
@@ -230,6 +254,7 @@ fun SettingsScreen(
         }
         email = runCatching { AppGraph.container.api.getUserEmail(id).email }.getOrNull()
         officialAccount = runCatching { AppGraph.container.api.getOfficialAccount() }.getOrNull()
+        appViewModel.saveCurrentAccount()
     }
 
     val copyAccountId: () -> Unit = {
@@ -309,6 +334,15 @@ fun SettingsScreen(
             title = "登录与安全",
             keywords = listOf("登录", "安全", "邮箱", "手机", "密码", "实名", "授权", "注销"),
             items = listOf(
+                SettingsItemSpec(
+                    key = "switch-account",
+                    icon = Icons.Default.SwitchAccount,
+                    title = "切换账号",
+                    summary = user?.username ?: "选择或添加 PickCat 账号",
+                    keywords = listOf("切换", "账号", "添加", "登录"),
+                    onClick = { showAccountSheet = true },
+                    showChevron = true,
+                ),
                 SettingsItemSpec(
                     key = "account-security",
                     icon = Icons.Default.Security,
@@ -825,6 +859,30 @@ fun SettingsScreen(
         )
     }
 
+    if (showAccountSheet) {
+        AccountSwitcherSheet(
+            currentUserId = user?.id,
+            accounts = accounts,
+            onSelect = { account ->
+                showAccountSheet = false
+                scope.launch {
+                    val switched = appViewModel.switchAccount(account)
+                    snackbarHostState.showSnackbar(
+                        if (switched) "已切换到 ${account.username}" else "切换账号失败，请重新登录",
+                    )
+                }
+            },
+            onAdd = {
+                showAccountSheet = false
+                scope.launch {
+                    appViewModel.prepareAddAccount()
+                    addAccountLauncher.launch(Intent(context, LoginWebViewActivity::class.java))
+                }
+            },
+            onDismiss = { showAccountSheet = false },
+        )
+    }
+
     if (showCodeChatPassword) {
         AlertDialog(
             onDismissRequest = {
@@ -880,6 +938,91 @@ fun SettingsScreen(
                 ) { Text("取消") }
             },
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AccountSwitcherSheet(
+    currentUserId: String?,
+    accounts: List<SavedAccount>,
+    onSelect: (SavedAccount) -> Unit,
+    onAdd: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(bottom = 12.dp),
+        ) {
+            Text(
+                "切换账号",
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+            )
+            Text(
+                "已保存的账号可直接切换，会话保存在本机。",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
+            )
+            Spacer(Modifier.height(8.dp))
+            accounts.forEach { account ->
+                val current = account.id == currentUserId
+                ListItem(
+                    headlineContent = { Text(account.username) },
+                    supportingContent = if (current) {
+                        { Text("当前账号") }
+                    } else {
+                        null
+                    },
+                    leadingContent = {
+                        UserAvatar(
+                            name = account.username,
+                            url = account.avatarUrl,
+                            size = 40.dp,
+                        )
+                    },
+                    trailingContent = if (current) {
+                        {
+                            Icon(
+                                Icons.Default.Check,
+                                contentDescription = "当前账号",
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    } else {
+                        null
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = !current) { onSelect(account) }
+                        .padding(horizontal = 8.dp),
+                )
+            }
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+            ListItem(
+                headlineContent = { Text("添加账号") },
+                supportingContent = { Text("登录另一个 PickCat 账号") },
+                leadingContent = {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onAdd)
+                    .padding(horizontal = 8.dp),
+            )
+        }
     }
 }
 
