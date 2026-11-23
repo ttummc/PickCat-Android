@@ -3,6 +3,17 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.54] - 2026-11-23
+
+### 变更
+
+- 手机端个人主页资料区不再使用 Card，封面保持全宽，资料内容直接排在页面背景上。
+- 账号安全页改为可展开的设备卡片，展示网段、最近活动、设备编号、登录时间、会话到期和当前设备状态；有管理授权时支持退出单个设备或全部设备，需要验证时明确提供官网入口。
+
+### 修复
+
+- Release 版本号解析去除 CRLF，避免 Windows 生成文件导致标签校验失败。
+
 ## [0.1.53] - 2026-11-23
 
 ### 新增
@@ -386,6 +397,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.54]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.54
 [0.1.53]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.53
 [0.1.52]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.52
 [0.1.51]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.51

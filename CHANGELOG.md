@@ -3,6 +3,17 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.54] - 2026-11-23
+
+### Changed
+
+- The mobile profile summary is no longer wrapped in a card. The cover stays full width and the profile content sits directly on the page background.
+- Account Security now shows expandable device cards with network, last activity, device id, login time, expiry time, and current-device status. It supports revoking one session or all sessions when a management authorization is available, with a clear official-site fallback when verification is required.
+
+### Fixed
+
+- Release version parsing now strips CRLF, preventing tag verification failures on Windows-generated files.
+
 ## [0.1.53] - 2026-11-23
 
 ### Added
@@ -386,6 +397,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.54]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.54
 [0.1.53]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.53
 [0.1.52]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.52
 [0.1.51]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.51

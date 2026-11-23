@@ -1130,15 +1130,7 @@ private fun ProfileHeader(
     codeChatUid: String?,
     onOpenCodeChat: () -> Unit,
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-        ),
-    ) {
+    Column(Modifier.fillMaxWidth()) {
         Box(Modifier.fillMaxWidth().height(132.dp)) {
             if (!profile.backgroundFileId.isNullOrBlank()) {
                 PickCatImage(
@@ -1155,7 +1147,7 @@ private fun ProfileHeader(
                 )
             }
         }
-        Column(Modifier.padding(16.dp)) {
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
             Row(verticalAlignment = Alignment.Top) {
                 UserAvatar(
                     name = profile.username,

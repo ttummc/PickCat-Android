@@ -260,6 +260,40 @@ class PickCatApi(
 
     suspend fun getAccountSessions(id: String): JsonObject = getJson("/users/$id/sessions")
 
+    suspend fun getManagementAuthorization(): JsonObject =
+        getJson("/session/management-write-authorization")
+
+    suspend fun getManagementAuthorizationHeader(): String? = withContext(Dispatchers.IO) {
+        val request = Request.Builder()
+            .url(buildUrl("/session/management-write-authorization", emptyMap()))
+            .header("Accept", "application/json")
+            .header("Origin", PICKCAT_ORIGIN)
+            .header("Referer", "$PICKCAT_ORIGIN/")
+            .get()
+            .build()
+        runCatching {
+            client.newCall(request).execute().use { response ->
+                response.header("Management-Write-Authorization")
+            }
+        }.getOrNull()
+    }
+
+    suspend fun revokeAccountSession(userId: String, sessionId: String, grant: String) {
+        execute(
+            "DELETE",
+            "/users/$userId/sessions/$sessionId",
+            headers = mapOf("Security-Operation-Grant" to grant),
+        )
+    }
+
+    suspend fun revokeAllAccountSessions(userId: String, grant: String) {
+        execute(
+            "DELETE",
+            "/users/$userId/sessions",
+            headers = mapOf("Security-Operation-Grant" to grant),
+        )
+    }
+
     suspend fun getOfficialAccount(): OfficialAccount = getJson("/official-account")
 
     suspend fun updateBadgeDisplay(id: String, mode: String, badgeId: String? = null) {
@@ -471,11 +505,12 @@ class PickCatApi(
         query: Map<String, String?> = emptyMap(),
         jsonBody: JsonElement? = null,
         requestBody: RequestBody? = null,
+        headers: Map<String, String> = emptyMap(),
     ): String = withContext(Dispatchers.IO) {
         var attempt = 0
         while (true) {
             try {
-                return@withContext executeOnce(method, path, query, jsonBody, requestBody)
+                return@withContext executeOnce(method, path, query, jsonBody, requestBody, headers)
             } catch (error: ApiException) {
                 if (method == "GET" && attempt == 0 && error.status >= 500) {
                     attempt++
@@ -506,6 +541,7 @@ class PickCatApi(
         query: Map<String, String?>,
         jsonBody: JsonElement?,
         requestBody: RequestBody?,
+        headers: Map<String, String>,
     ): String {
         val url = buildUrl(path, query)
         val body: RequestBody? = when {
@@ -520,6 +556,7 @@ class PickCatApi(
             .header("Accept", "application/json")
             .header("Origin", PICKCAT_ORIGIN)
             .header("Referer", "$PICKCAT_ORIGIN/")
+        headers.forEach { (name, value) -> builder.header(name, value) }
         if (method != "GET") {
             builder.header("Idempotency-Key", UUID.randomUUID().toString())
         }
