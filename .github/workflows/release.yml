@@ -31,9 +31,9 @@ jobs:
 
       - name: Verify tag matches version.properties
         run: |
-          MAJOR=$(awk -F= '$1=="version.major"{print $2}' version.properties)
-          MINOR=$(awk -F= '$1=="version.minor"{print $2}' version.properties)
-          PATCH=$(awk -F= '$1=="version.patch"{print $2}' version.properties)
+          MAJOR=$(awk -F= '$1=="version.major"{print $2}' version.properties | tr -d '\r')
+          MINOR=$(awk -F= '$1=="version.minor"{print $2}' version.properties | tr -d '\r')
+          PATCH=$(awk -F= '$1=="version.patch"{print $2}' version.properties | tr -d '\r')
           EXPECTED="v${MAJOR}.${MINOR}.${PATCH}"
           if [ "${GITHUB_REF_NAME}" != "${EXPECTED}" ]; then
             echo "Tag ${GITHUB_REF_NAME} does not match version.properties (${EXPECTED})" >&2
