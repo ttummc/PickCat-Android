@@ -916,7 +916,6 @@ private fun PostCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        HorizontalDivider()
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             TextButton(onClick = onLike) {
                 AnimatedContent(
