@@ -306,6 +306,7 @@ fun PickCatMainShell(
                     onOpenTopic = { topic -> navController.navigate(Routes.topic(topic.id)) },
                     onOpenCategory = { tag -> navController.navigate(Routes.category(tag.slug)) },
                     onOpenUser = { user -> navController.navigate(Routes.profile(user.id)) },
+                    onOpenWork = { work -> navController.navigate(Routes.work(work.id)) },
                     onCompose = { navController.navigate(Routes.COMPOSER) },
                     onSearch = { navController.navigate(Routes.SEARCH) },
                     onNotifications = { navigateTopLevel(Routes.NOTIFICATIONS) },

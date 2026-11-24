@@ -19,6 +19,7 @@ data class AppPreferences(
     val backgroundNotifications: Boolean = true,
     val updateSource: String = "mirror",
     val codeChatEnabled: Boolean = false,
+    val homeWorksEnabled: Boolean = true,
 )
 
 class UserPreferences(private val context: Context) {
@@ -31,6 +32,7 @@ class UserPreferences(private val context: Context) {
             backgroundNotifications = values[KEY_BACKGROUND_NOTIFICATIONS] ?: true,
             updateSource = values[KEY_UPDATE_SOURCE] ?: "mirror",
             codeChatEnabled = values[KEY_CODECHAT_ENABLED] ?: false,
+            homeWorksEnabled = values[KEY_HOME_WORKS_ENABLED] ?: true,
         )
     }
 
@@ -56,6 +58,10 @@ class UserPreferences(private val context: Context) {
 
     suspend fun setCodeChatEnabled(enabled: Boolean) {
         store.edit { it[KEY_CODECHAT_ENABLED] = enabled }
+    }
+
+    suspend fun setHomeWorksEnabled(enabled: Boolean) {
+        store.edit { it[KEY_HOME_WORKS_ENABLED] = enabled }
     }
 
     suspend fun recordSearch(query: String) {
@@ -86,6 +92,7 @@ class UserPreferences(private val context: Context) {
         val KEY_UPDATE_SOURCE = stringPreferencesKey("update_source")
         val KEY_SEARCH_HISTORY = stringPreferencesKey("search_history")
         val KEY_CODECHAT_ENABLED = booleanPreferencesKey("codechat_enabled")
+        val KEY_HOME_WORKS_ENABLED = booleanPreferencesKey("home_works_enabled")
     }
 }
 

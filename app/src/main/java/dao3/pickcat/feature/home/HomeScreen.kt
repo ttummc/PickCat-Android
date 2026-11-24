@@ -91,12 +91,14 @@ import dao3.pickcat.SavedAccount
 import dao3.pickcat.core.network.Tag
 import dao3.pickcat.core.network.Topic
 import dao3.pickcat.core.network.UserRef
+import dao3.pickcat.core.network.Work
 import dao3.pickcat.core.ui.EmptyState
 import dao3.pickcat.core.ui.ErrorState
 import dao3.pickcat.core.ui.LoadingState
 import dao3.pickcat.core.ui.PagedFooter
 import dao3.pickcat.core.ui.TopicCard
 import dao3.pickcat.core.ui.TopicFeedSkeleton
+import dao3.pickcat.core.ui.WorkCard
 import dao3.pickcat.core.ui.greeting
 import dao3.pickcat.core.ui.rememberFabVisibleOnScroll
 import dao3.pickcat.feature.settings.AccountSwitcherSheet
@@ -123,6 +125,10 @@ data class HomeUiState(
     val endReached: Boolean = false,
     val error: String? = null,
     val username: String? = null,
+    val featuredWorks: List<Work> = emptyList(),
+    val followingWorks: List<Work> = emptyList(),
+    val worksLoading: Boolean = false,
+    val worksEnabled: Boolean = true,
 )
 
 class HomeViewModel : ViewModel() {
@@ -130,15 +136,59 @@ class HomeViewModel : ViewModel() {
     private val _state = MutableStateFlow(HomeUiState())
     val state: StateFlow<HomeUiState> = _state.asStateFlow()
     private var job: Job? = null
+    private var worksJob: Job? = null
     private var profileLoaded = false
+    private var sessionUserId: String? = null
 
     init {
         viewModelScope.launch {
             AppGraph.container.session.state.collect { sessionState ->
+                val userId = sessionState.user?.id
                 _state.update { it.copy(username = sessionState.user?.username) }
+                if (userId != sessionUserId) {
+                    sessionUserId = userId
+                    if (userId != null) loadWorks()
+                }
             }
         }
         refresh()
+    }
+
+    fun setWorksEnabled(enabled: Boolean) {
+        if (_state.value.worksEnabled == enabled) return
+        _state.update {
+            it.copy(
+                worksEnabled = enabled,
+                featuredWorks = if (enabled) it.featuredWorks else emptyList(),
+                followingWorks = if (enabled) it.followingWorks else emptyList(),
+            )
+        }
+        if (enabled) loadWorks()
+    }
+
+    private fun loadWorks() {
+        if (!_state.value.worksEnabled) return
+        worksJob?.cancel()
+        worksJob = viewModelScope.launch {
+            _state.update { it.copy(worksLoading = true) }
+            val featured = runCatching {
+                api.getFeaturedWorks(limit = 7).items
+            }.getOrDefault(emptyList())
+            val following = runCatching {
+                api.getWorkRecommendations(
+                    sort = "recommended",
+                    scope = "following",
+                    limit = 12,
+                ).items
+            }.getOrDefault(emptyList())
+            _state.update {
+                it.copy(
+                    featuredWorks = featured,
+                    followingWorks = following,
+                    worksLoading = false,
+                )
+            }
+        }
     }
 
     fun selectKind(kind: HomeFeedKind) {
@@ -195,6 +245,7 @@ class HomeViewModel : ViewModel() {
                 }
             }
         }
+        loadWorks()
     }
 
     fun loadMore() {
@@ -231,6 +282,7 @@ fun HomeScreen(
     onOpenTopic: (Topic) -> Unit,
     onOpenCategory: (Tag) -> Unit,
     onOpenUser: (UserRef) -> Unit,
+    onOpenWork: (Work) -> Unit,
     onCompose: () -> Unit,
     onSearch: () -> Unit,
     onNotifications: () -> Unit,
@@ -249,6 +301,7 @@ fun HomeScreen(
     val unread by appViewModel.unreadCount.collectAsStateWithLifecycle()
     val session by appViewModel.session.collectAsStateWithLifecycle()
     val accounts by appViewModel.accounts.collectAsStateWithLifecycle()
+    val preferences by appViewModel.preferences.collectAsStateWithLifecycle()
     val currentUser = session.user
     var showAccountSheet by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -265,6 +318,10 @@ fun HomeScreen(
                 snackbarHostState.showSnackbar("已取消添加账号")
             }
         }
+    }
+
+    LaunchedEffect(preferences.homeWorksEnabled) {
+        viewModel.setWorksEnabled(preferences.homeWorksEnabled)
     }
     val listState = rememberLazyListState()
     val fabVisible = rememberFabVisibleOnScroll(listState)
@@ -382,6 +439,26 @@ fun HomeScreen(
                         kind = state.kind,
                         onKind = viewModel::selectKind,
                     )
+                }
+                if (preferences.homeWorksEnabled) {
+                    if (state.featuredWorks.isNotEmpty()) {
+                        item(key = "home-featured-works") {
+                            HomeWorksRow(
+                                title = "精选作品",
+                                works = state.featuredWorks,
+                                onOpenWork = onOpenWork,
+                            )
+                        }
+                    }
+                    if (state.followingWorks.isNotEmpty()) {
+                        item(key = "home-following-works") {
+                            HomeWorksRow(
+                                title = "关注的作品",
+                                works = state.followingWorks,
+                                onOpenWork = onOpenWork,
+                            )
+                        }
+                    }
                 }
                 when {
                     state.loading && state.items.isEmpty() -> item {
@@ -501,6 +578,32 @@ private fun HomeGreeting(
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(22.dp),
             )
+        }
+    }
+}
+
+@Composable
+private fun HomeWorksRow(
+    title: String,
+    works: List<Work>,
+    onOpenWork: (Work) -> Unit,
+) {
+    Column(Modifier.fillMaxWidth()) {
+        Text(
+            title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Spacer(Modifier.height(8.dp))
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            items(works, key = { it.id }) { work ->
+                Box(Modifier.width(232.dp)) {
+                    WorkCard(
+                        work = work,
+                        onClick = { onOpenWork(work) },
+                    )
+                }
+            }
         }
     }
 }

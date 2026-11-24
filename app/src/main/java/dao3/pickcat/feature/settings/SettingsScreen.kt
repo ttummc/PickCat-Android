@@ -50,6 +50,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SwitchAccount
+import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material.icons.filled.WorkspacePremium
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -467,6 +468,19 @@ fun SettingsScreen(
                                 Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
                             enabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S,
                             onCheckedChange = appViewModel::updateDynamicColor,
+                        )
+                    },
+                ),
+                SettingsItemSpec(
+                    key = "home-works",
+                    icon = Icons.Default.VideoLibrary,
+                    title = "首页作品推荐",
+                    summary = "显示精选作品和关注作品两行",
+                    keywords = listOf("首页", "作品", "精选", "关注", "推荐"),
+                    trailing = {
+                        Switch(
+                            checked = preferences.homeWorksEnabled,
+                            onCheckedChange = appViewModel::updateHomeWorksEnabled,
                         )
                     },
                 ),

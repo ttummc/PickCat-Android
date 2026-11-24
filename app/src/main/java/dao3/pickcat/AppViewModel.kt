@@ -206,6 +206,10 @@ class AppViewModel : ViewModel() {
         viewModelScope.launch { preferencesRepository.setCodeChatEnabled(enabled) }
     }
 
+    fun updateHomeWorksEnabled(enabled: Boolean) {
+        viewModelScope.launch { preferencesRepository.setHomeWorksEnabled(enabled) }
+    }
+
     fun updateUpdateSource(source: String) {
         viewModelScope.launch { preferencesRepository.setUpdateSource(source) }
     }

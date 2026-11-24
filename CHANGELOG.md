@@ -3,6 +3,13 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.63] - 2026-11-24
+
+### Added
+
+- Home now shows a "精选作品" row from the official featured works endpoint and a "关注的作品" row from the following works scope.
+- A settings switch under Appearance enables or disables both home works rows.
+
 ## [0.1.62] - 2026-11-24
 
 ### Changed
@@ -460,6 +467,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.63]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.63
 [0.1.62]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.62
 [0.1.61]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.61
 [0.1.60]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.60
