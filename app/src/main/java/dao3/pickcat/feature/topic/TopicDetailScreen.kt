@@ -1,5 +1,6 @@
 package dao3.pickcat.feature.topic
 
+import android.content.Intent
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -45,6 +46,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -80,6 +82,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -383,6 +386,7 @@ fun TopicDetailScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val threadedPosts = remember(state.posts) { buildThreadedPosts(state.posts) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
     val listState = rememberLazyListState()
     val composerFocusRequester = remember { FocusRequester() }
     var replyText by rememberSaveable(topicId) { mutableStateOf("") }
@@ -435,6 +439,25 @@ fun TopicDetailScreen(
                 },
                 actions = {
                     if (state.topic != null) {
+                        IconButton(
+                            onClick = {
+                                val title = state.topic?.title.orEmpty()
+                                val url = "https://pickcat.dao3.fun/forum/post/$topicId"
+                                val share = Intent(Intent.ACTION_SEND).apply {
+                                    type = "text/plain"
+                                    putExtra(
+                                        Intent.EXTRA_TEXT,
+                                        if (title.isBlank()) url else "$title\n$url",
+                                    )
+                                    putExtra(Intent.EXTRA_SUBJECT, title)
+                                }
+                                context.startActivity(
+                                    Intent.createChooser(share, "分享帖子"),
+                                )
+                            },
+                        ) {
+                            Icon(Icons.Default.Share, contentDescription = "分享帖子")
+                        }
                         IconButton(onClick = viewModel::toggleBookmark) {
                             AnimatedContent(
                                 targetState = state.bookmarkId != null,

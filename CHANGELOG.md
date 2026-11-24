@@ -3,6 +3,21 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.58] - 2026-11-24
+
+### Added
+
+- The home header no longer shows the avatar. It now shows a small time-based greeting above a single-line, larger nickname. Tapping the nickname opens the account switcher.
+- Topic detail pages now have a share action that opens the system share sheet with the official topic link.
+- The update prompt is a Material 3 bottom sheet instead of a dialog.
+- Text across the app can be selected and copied with a long press.
+
+### Fixed
+
+- Saved accounts are deduplicated by account id and cookie.
+- When a session expires, the account is removed from the saved account list and a "登录已过期" prompt is shown.
+- Switching to an expired saved account removes it and restores the previous account.
+
 ## [0.1.57] - 2026-11-23
 
 ### Added
@@ -419,6 +434,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.58]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.58
 [0.1.57]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.57
 [0.1.56]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.56
 [0.1.55]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.55

@@ -29,7 +29,9 @@ class AccountStore(context: Context) {
                 avatarUrl = user.avatar?.url,
                 cookie = cookie,
             ),
-        ) + _accounts.value.filterNot { it.id == user.id }).take(MAX_ACCOUNTS)
+        ) + _accounts.value.filterNot { it.id == user.id || it.cookie == cookie })
+            .distinctBy { it.id }
+            .take(MAX_ACCOUNTS)
         write(next)
         _accounts.value = next
     }
@@ -75,7 +77,7 @@ class AccountStore(context: Context) {
                         ),
                     )
                 }
-            }
+            }.distinctBy { it.id }
         }.getOrDefault(emptyList())
     }
 

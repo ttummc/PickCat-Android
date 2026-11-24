@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -52,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dao3.pickcat.core.ui.ErrorState
+import dao3.pickcat.feature.settings.UpdatePromptSheet
 import dao3.pickcat.feature.settings.UpdateViewModel
 import dao3.pickcat.feature.settings.launchUpdateInstaller
 import dao3.pickcat.feature.settings.openExternalUrl
@@ -63,6 +65,7 @@ private enum class RootStage { SPLASH, ERROR, MAINTENANCE, LOGIN, MAIN }
 @Composable
 fun PickCatRoot(viewModel: AppViewModel) {
     val session by viewModel.session.collectAsStateWithLifecycle()
+    val sessionExpired by viewModel.sessionExpired.collectAsStateWithLifecycle()
     val maintenance by viewModel.maintenance.collectAsStateWithLifecycle()
     val preferences by viewModel.preferences.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -91,8 +94,9 @@ fun PickCatRoot(viewModel: AppViewModel) {
         viewModel.messages.collectLatest { snackbarHostState.showSnackbar(it) }
     }
 
-    Box(Modifier.fillMaxSize()) {
-        val user = session.user
+    SelectionContainer(modifier = Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize()) {
+            val user = session.user
         val stage = when {
             maintenance -> RootStage.MAINTENANCE
             !session.ready -> RootStage.SPLASH
@@ -141,6 +145,20 @@ fun PickCatRoot(viewModel: AppViewModel) {
                     .padding(bottom = 96.dp),
             )
         }
+        }
+    }
+
+    if (sessionExpired && session.user == null) {
+        AlertDialog(
+            onDismissRequest = viewModel::consumeSessionExpired,
+            title = { Text("登录已过期") },
+            text = { Text("账号令牌已失效，请重新登录。") },
+            confirmButton = {
+                TextButton(onClick = viewModel::consumeSessionExpired) {
+                    Text("知道了")
+                }
+            },
+        )
     }
 
     val update = updateState.update
@@ -179,26 +197,10 @@ fun PickCatRoot(viewModel: AppViewModel) {
             confirmButton = {},
         )
     } else if (update != null) {
-        AlertDialog(
-            onDismissRequest = updateViewModel::dismiss,
-            title = { Text("发现新版本 ${update.tag}") },
-            text = {
-                Column(
-                    modifier = Modifier
-                        .heightIn(max = 260.dp)
-                        .verticalScroll(rememberScrollState()),
-                ) {
-                    Text(update.notes, style = MaterialTheme.typography.bodyMedium)
-                }
-            },
-            confirmButton = {
-                Button(onClick = { updateViewModel.download(context) }) {
-                    Text("立即更新")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = updateViewModel::dismiss) { Text("稍后") }
-            },
+        UpdatePromptSheet(
+            update = update,
+            onDownload = { updateViewModel.download(context) },
+            onDismiss = updateViewModel::dismiss,
         )
     }
 }

@@ -819,26 +819,10 @@ fun SettingsScreen(
             confirmButton = {},
         )
     } else if (update != null) {
-        AlertDialog(
-            onDismissRequest = updateViewModel::dismiss,
-            title = { Text("发现 ${update.tag}") },
-            text = {
-                Column(
-                    modifier = Modifier
-                        .heightIn(max = 260.dp)
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Text(update.title, style = MaterialTheme.typography.titleSmall)
-                    Text(update.notes, style = MaterialTheme.typography.bodyMedium)
-                }
-            },
-            confirmButton = {
-                Button(onClick = { updateViewModel.download(context) }) { Text("下载并安装") }
-            },
-            dismissButton = {
-                TextButton(onClick = updateViewModel::dismiss) { Text("稍后") }
-            },
+        UpdatePromptSheet(
+            update = update,
+            onDownload = { updateViewModel.download(context) },
+            onDismiss = updateViewModel::dismiss,
         )
     }
 
@@ -943,7 +927,7 @@ fun SettingsScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AccountSwitcherSheet(
+fun AccountSwitcherSheet(
     currentUserId: String?,
     accounts: List<SavedAccount>,
     onSelect: (SavedAccount) -> Unit,

@@ -3,6 +3,21 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.58] - 2026-11-24
+
+### 新增
+
+- 首页顶部不再显示头像。小号问候语在上，单行大号昵称在下；点击昵称直接打开账号切换面板。
+- 帖子详情页新增分享按钮，调用系统分享并发送官方帖子链接。
+- 更新提示改为 Material 3 底部面板，不再使用弹窗。
+- 全站长按文字可选中并复制。
+
+### 修复
+
+- 已保存账号按账号 ID 和 Cookie 去重。
+- 登录令牌失效后自动从账号列表移除，并显示“登录已过期”提示。
+- 切换到已过期账号时会删除该账号并恢复原账号。
+
 ## [0.1.57] - 2026-11-23
 
 ### 新增
@@ -419,6 +434,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.58]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.58
 [0.1.57]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.57
 [0.1.56]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.56
 [0.1.55]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.55

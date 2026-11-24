@@ -45,6 +45,9 @@ class AppViewModel : ViewModel() {
     private val _messages = MutableSharedFlow<String>(extraBufferCapacity = 4)
     val messages: SharedFlow<String> = _messages.asSharedFlow()
 
+    private val _sessionExpired = MutableStateFlow(false)
+    val sessionExpired: StateFlow<Boolean> = _sessionExpired.asStateFlow()
+
     private var announcedExpiry = false
     private var foreground = true
 
@@ -75,6 +78,7 @@ class AppViewModel : ViewModel() {
             session.collectLatest { state ->
                 if (state.user != null) {
                     announcedExpiry = false
+                    _sessionExpired.value = false
                     refreshUnread()
                 } else {
                     _unreadCount.value = 0
@@ -85,9 +89,12 @@ class AppViewModel : ViewModel() {
         viewModelScope.launch {
             container.authEvents.collect {
                 if (session.value.user != null) {
+                    val expiredUserId = session.value.user?.id
                     sessionRepository.expireSession()
+                    expiredUserId?.let { AppGraph.accountStore.remove(it) }
                     if (!announcedExpiry) {
                         announcedExpiry = true
+                        _sessionExpired.value = true
                         _messages.tryEmit("登录状态已失效，请重新登录")
                     }
                 }
@@ -139,11 +146,16 @@ class AppViewModel : ViewModel() {
         sessionRepository.replaceCookies(account.cookie)
         sessionRepository.retryRestore()
         if (session.value.user?.id != account.id) {
+            AppGraph.accountStore.remove(account.id)
             previousCookie?.let { sessionRepository.replaceCookies(it) }
             sessionRepository.retryRestore()
             return false
         }
         return true
+    }
+
+    fun consumeSessionExpired() {
+        _sessionExpired.value = false
     }
 
     suspend fun prepareAddAccount() {

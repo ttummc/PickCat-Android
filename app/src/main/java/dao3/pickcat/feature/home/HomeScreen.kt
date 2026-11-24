@@ -1,5 +1,8 @@
 package dao3.pickcat.feature.home
 
+import android.content.Intent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -10,6 +13,7 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,6 +34,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AssistChip
@@ -44,6 +49,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -55,11 +62,16 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -73,7 +85,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import dao3.pickcat.AppGraph
 import dao3.pickcat.AppViewModel
 import dao3.pickcat.LocalTabReselect
+import dao3.pickcat.LoginWebViewActivity
 import dao3.pickcat.R
+import dao3.pickcat.SavedAccount
 import dao3.pickcat.core.network.Tag
 import dao3.pickcat.core.network.Topic
 import dao3.pickcat.core.network.UserRef
@@ -83,13 +97,13 @@ import dao3.pickcat.core.ui.LoadingState
 import dao3.pickcat.core.ui.PagedFooter
 import dao3.pickcat.core.ui.TopicCard
 import dao3.pickcat.core.ui.TopicFeedSkeleton
-import dao3.pickcat.core.ui.UserAvatar
-import dao3.pickcat.core.ui.avatarUrl
 import dao3.pickcat.core.ui.greeting
 import dao3.pickcat.core.ui.rememberFabVisibleOnScroll
+import dao3.pickcat.feature.settings.AccountSwitcherSheet
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -234,7 +248,24 @@ fun HomeScreen(
     }
     val unread by appViewModel.unreadCount.collectAsStateWithLifecycle()
     val session by appViewModel.session.collectAsStateWithLifecycle()
+    val accounts by appViewModel.accounts.collectAsStateWithLifecycle()
     val currentUser = session.user
+    var showAccountSheet by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val addAccountLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        scope.launch {
+            if (result.resultCode == android.app.Activity.RESULT_OK) {
+                appViewModel.finishAddAccount()
+            } else {
+                appViewModel.cancelAddAccount()
+                snackbarHostState.showSnackbar("已取消添加账号")
+            }
+        }
+    }
     val listState = rememberLazyListState()
     val fabVisible = rememberFabVisibleOnScroll(listState)
     val tabReselect = LocalTabReselect.current
@@ -250,9 +281,14 @@ fun HomeScreen(
         if (user != null) appViewModel.refreshUnread()
     }
 
+    LaunchedEffect(currentUser?.id) {
+        if (currentUser != null) appViewModel.saveCurrentAccount()
+    }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -338,7 +374,7 @@ fun HomeScreen(
                 item(key = "home-greeting") {
                     HomeGreeting(
                         username = currentUser?.username ?: state.username,
-                        avatarUrl = avatarUrl(currentUser),
+                        onSwitchAccount = { showAccountSheet = true },
                     )
                 }
                 item(key = "home-filters") {
@@ -397,31 +433,75 @@ fun HomeScreen(
             }
         }
     }
+
+    if (showAccountSheet) {
+        AccountSwitcherSheet(
+            currentUserId = currentUser?.id,
+            accounts = accounts,
+            onSelect = { account ->
+                showAccountSheet = false
+                scope.launch {
+                    val switched = appViewModel.switchAccount(account)
+                    snackbarHostState.showSnackbar(
+                        if (switched) "已切换到 ${account.username}" else "切换账号失败，请重新登录",
+                    )
+                }
+            },
+            onAdd = {
+                showAccountSheet = false
+                scope.launch {
+                    appViewModel.prepareAddAccount()
+                    addAccountLauncher.launch(Intent(context, LoginWebViewActivity::class.java))
+                }
+            },
+            onDismiss = { showAccountSheet = false },
+        )
+    }
 }
 
 @Composable
 private fun HomeGreeting(
     username: String?,
-    avatarUrl: String?,
+    onSwitchAccount: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp, bottom = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    val greetingText by produceState(initialValue = greeting()) {
+        while (true) {
+            delay(60_000)
+            value = greeting()
+        }
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp, bottom = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Column(Modifier.weight(1f)) {
+        Text(
+            greetingText,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onSwitchAccount),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
-                "${greeting()}${username?.let { "，$it" }.orEmpty()}",
+                username ?: "未登录",
                 style = MaterialTheme.typography.headlineSmall,
-                maxLines = 2,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            Icon(
+                Icons.Default.KeyboardArrowDown,
+                contentDescription = "切换账号",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(22.dp),
             )
         }
-        Spacer(Modifier.width(16.dp))
-        UserAvatar(
-            name = username,
-            url = avatarUrl,
-            size = 52.dp,
-        )
     }
 }
 
