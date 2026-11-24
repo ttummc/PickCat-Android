@@ -4,10 +4,12 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
@@ -48,6 +50,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -74,6 +77,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.math.ln
@@ -306,8 +312,28 @@ private fun TopicFeedScaffold(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     val fabVisible = rememberFabVisibleOnScroll(listState)
+    var tagsVisible by remember { mutableStateOf(true) }
     val tabReselect = LocalTabReselect.current
     val haptics = LocalHapticFeedback.current
+
+    LaunchedEffect(listState) {
+        var previousIndex = listState.firstVisibleItemIndex
+        var previousOffset = listState.firstVisibleItemScrollOffset
+        snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
+            .distinctUntilChanged()
+            .collect { (index, offset) ->
+                val delta = (index - previousIndex) * 1_000 + (offset - previousOffset)
+                if (index == 0 && offset <= 0) {
+                    tagsVisible = true
+                } else if (delta > 8 && tagsVisible) {
+                    tagsVisible = false
+                } else if (delta < -8 && !tagsVisible) {
+                    tagsVisible = true
+                }
+                previousIndex = index
+                previousOffset = offset
+            }
+    }
 
     LaunchedEffect(tabReselect) {
         tabReselect?.collect { listState.animateScrollToItem(0) }
@@ -363,7 +389,11 @@ private fun TopicFeedScaffold(
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            if (showTags && state.tags.isNotEmpty()) {
+            AnimatedVisibility(
+                visible = showTags && tagsVisible && state.tags.isNotEmpty(),
+                enter = fadeIn(tween(160)) + expandVertically(tween(220)),
+                exit = fadeOut(tween(120)) + shrinkVertically(tween(180)),
+            ) {
                 LazyRow(
                     modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
