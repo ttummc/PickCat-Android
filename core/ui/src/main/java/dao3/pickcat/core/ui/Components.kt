@@ -447,6 +447,7 @@ fun WorkCard(
     work: Work,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    compact: Boolean = false,
 ) {
     val interactionSource = androidx.compose.runtime.remember {
         androidx.compose.foundation.interaction.MutableInteractionSource()
@@ -464,7 +465,7 @@ fun WorkCard(
                 PickCatImage(
                     url = work.coverUrl,
                     contentDescription = work.workName,
-                    modifier = Modifier.fillMaxWidth().aspectRatio(16f / 10f),
+                    modifier = Modifier.fillMaxWidth().aspectRatio(if (compact) 16f / 9f else 16f / 10f),
                     corner = 0.dp,
                 )
                 if (work.type.isNotBlank()) {
@@ -485,15 +486,15 @@ fun WorkCard(
             }
             Column(
                 Modifier.padding(
-                    horizontal = PickCatSpacing.Lg,
-                    vertical = PickCatSpacing.Md,
+                    horizontal = if (compact) PickCatSpacing.Md else PickCatSpacing.Lg,
+                    vertical = if (compact) PickCatSpacing.Sm else PickCatSpacing.Md,
                 ),
             ) {
                 Text(
                     work.workName,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    maxLines = 2,
+                    maxLines = if (compact) 1 else 2,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Spacer(Modifier.height(4.dp))
@@ -504,11 +505,13 @@ fun WorkCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Spacer(Modifier.height(8.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    StatIcon(Icons.Default.Visibility, work.viewCount)
-                    StatIcon(Icons.Default.FavoriteBorder, work.likeCount)
-                    StatIcon(Icons.Default.ChatBubbleOutline, work.commentCount)
+                if (!compact) {
+                    Spacer(Modifier.height(8.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        StatIcon(Icons.Default.Visibility, work.viewCount)
+                        StatIcon(Icons.Default.FavoriteBorder, work.likeCount)
+                        StatIcon(Icons.Default.ChatBubbleOutline, work.commentCount)
+                    }
                 }
             }
         }

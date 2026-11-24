@@ -85,8 +85,19 @@ class PickCatApi(
         ),
     )
 
-    suspend fun getTopicRecommendations(limit: Int = 20, cursor: String? = null): Page<Topic> =
-        getJson("/topic-recommendations", query = mapOf("limit" to limit.toString(), "cursor" to cursor))
+    suspend fun getTopicRecommendations(
+        limit: Int = 20,
+        cursor: String? = null,
+        scope: String = "all",
+    ): Page<Topic> =
+        getJson(
+            "/topic-recommendations",
+            query = mapOf(
+                "limit" to limit.toString(),
+                "cursor" to cursor,
+                "scope" to scope,
+            ),
+        )
 
     suspend fun getTopic(id: String): TopicDetail = getJson("/topics/$id")
 

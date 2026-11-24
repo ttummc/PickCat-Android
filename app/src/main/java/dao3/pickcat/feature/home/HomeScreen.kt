@@ -112,7 +112,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class HomeFeedKind { RECOMMENDED, LATEST }
+enum class HomeFeedKind { RECOMMENDED, LATEST, FOLLOWING }
 
 data class HomeUiState(
     val kind: HomeFeedKind = HomeFeedKind.RECOMMENDED,
@@ -211,10 +211,13 @@ class HomeViewModel : ViewModel() {
                 coroutineScope {
                     val kind = _state.value.kind
                     val pageDeferred = async {
-                        if (kind == HomeFeedKind.RECOMMENDED) {
-                            api.getTopicRecommendations(limit = 20)
-                        } else {
-                            api.getTopics(sort = "latest", limit = 20)
+                        when (kind) {
+                            HomeFeedKind.RECOMMENDED -> api.getTopicRecommendations(limit = 20)
+                            HomeFeedKind.FOLLOWING -> api.getTopicRecommendations(
+                                limit = 20,
+                                scope = "following",
+                            )
+                            HomeFeedKind.LATEST -> api.getTopics(sort = "latest", limit = 20)
                         }
                     }
                     val tagsDeferred = async {
@@ -255,10 +258,14 @@ class HomeViewModel : ViewModel() {
         viewModelScope.launch {
             _state.update { it.copy(loadingMore = true) }
             try {
-                val page = if (snapshot.kind == HomeFeedKind.RECOMMENDED) {
-                    api.getTopicRecommendations(limit = 20, cursor = cursor)
-                } else {
-                    api.getTopics(sort = "latest", limit = 20, cursor = cursor)
+                val page = when (snapshot.kind) {
+                    HomeFeedKind.RECOMMENDED -> api.getTopicRecommendations(limit = 20, cursor = cursor)
+                    HomeFeedKind.FOLLOWING -> api.getTopicRecommendations(
+                        limit = 20,
+                        cursor = cursor,
+                        scope = "following",
+                    )
+                    HomeFeedKind.LATEST -> api.getTopics(sort = "latest", limit = 20, cursor = cursor)
                 }
                 _state.update {
                     it.copy(
@@ -597,10 +604,11 @@ private fun HomeWorksRow(
         Spacer(Modifier.height(8.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             items(works, key = { it.id }) { work ->
-                Box(Modifier.width(232.dp)) {
+                Box(Modifier.width(176.dp)) {
                     WorkCard(
                         work = work,
                         onClick = { onOpenWork(work) },
+                        compact = true,
                     )
                 }
             }
@@ -623,7 +631,11 @@ private fun HomeFilters(
             modifier = Modifier.weight(1f),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            val options = listOf(HomeFeedKind.RECOMMENDED to "推荐", HomeFeedKind.LATEST to "最新")
+            val options = listOf(
+                HomeFeedKind.RECOMMENDED to "推荐",
+                HomeFeedKind.LATEST to "最新",
+                HomeFeedKind.FOLLOWING to "关注",
+            )
             options.forEach { (value, label) ->
                 FilterChip(
                     selected = kind == value,

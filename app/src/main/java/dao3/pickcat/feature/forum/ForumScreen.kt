@@ -85,7 +85,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.ln
 import kotlin.math.pow
 
-enum class TopicSort { LATEST, ACTIVE }
+enum class TopicSort { LATEST, ACTIVE, FOLLOWING }
 
 private enum class TopicFeedPageState { LOADING, ERROR, EMPTY, CONTENT }
 
@@ -167,11 +167,15 @@ class TopicFeedViewModel(private val fixedTag: String? = null) : ViewModel() {
                         )
                     }
                 } else {
-                    val page = api.getTopics(
-                        sort = "latest",
-                        tag = fixedTag,
-                        limit = 20,
-                    )
+                    val page = if (sort == TopicSort.FOLLOWING) {
+                        api.getTopicRecommendations(scope = "following", limit = 20)
+                    } else {
+                        api.getTopics(
+                            sort = "latest",
+                            tag = fixedTag,
+                            limit = 20,
+                        )
+                    }
                     _state.update {
                         it.copy(
                             items = page.items,
@@ -203,12 +207,20 @@ class TopicFeedViewModel(private val fixedTag: String? = null) : ViewModel() {
         viewModelScope.launch {
             _state.update { it.copy(loadingMore = true) }
             try {
-                val page = api.getTopics(
-                    sort = "latest",
-                    tag = fixedTag,
-                    limit = 20,
-                    cursor = cursor,
-                )
+                val page = if (snapshot.sort == TopicSort.FOLLOWING) {
+                    api.getTopicRecommendations(
+                        limit = 20,
+                        cursor = cursor,
+                        scope = "following",
+                    )
+                } else {
+                    api.getTopics(
+                        sort = "latest",
+                        tag = fixedTag,
+                        limit = 20,
+                        cursor = cursor,
+                    )
+                }
                 _state.update {
                     it.copy(
                         items = (it.items + page.items).distinctBy { topic -> topic.id },
@@ -477,7 +489,7 @@ private fun TopicFeedScaffold(
                                 )
                             }
                             item {
-                                if (state.sort == TopicSort.LATEST) {
+                                if (state.sort != TopicSort.ACTIVE) {
                                     LaunchedEffect(state.cursor, state.endReached) {
                                         if (!state.endReached) viewModel.loadMore()
                                     }
@@ -501,7 +513,11 @@ private fun SortSelector(
     onSort: (TopicSort) -> Unit,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-        val options = listOf(TopicSort.LATEST to "最新", TopicSort.ACTIVE to "活跃")
+        val options = listOf(
+            TopicSort.LATEST to "最新",
+            TopicSort.ACTIVE to "活跃",
+            TopicSort.FOLLOWING to "关注",
+        )
         options.forEach { (value, label) ->
             val selected = sort == value
             TextButton(

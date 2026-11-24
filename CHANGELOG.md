@@ -3,6 +3,15 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.64] - 2026-11-25
+
+### Changed
+
+- Home work cards are now compact: 176dp wide, 16:9 cover, one-line title, author only, and no statistics row.
+- Home topic filters now include "关注".
+- Forum sorting now includes "关注".
+- Works sorting now includes "关注", backed by the official following scope.
+
 ## [0.1.63] - 2026-11-24
 
 ### Added
@@ -467,6 +476,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.64]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.64
 [0.1.63]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.63
 [0.1.62]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.62
 [0.1.61]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.61

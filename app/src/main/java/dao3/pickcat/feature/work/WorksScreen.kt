@@ -72,7 +72,12 @@ import kotlinx.coroutines.launch
 enum class WorkSort(val apiValue: String, val label: String) {
     RECOMMENDED("recommended", "推荐"),
     LATEST("latest", "最新"),
+    FOLLOWING("following", "关注"),
 }
+
+private fun WorkSort.apiSort(): String = if (this == WorkSort.FOLLOWING) "recommended" else apiValue
+
+private fun WorkSort.apiScope(): String = if (this == WorkSort.FOLLOWING) "following" else "all"
 
 private enum class WorksPageState { LOADING, ERROR, EMPTY, CONTENT }
 
@@ -125,8 +130,8 @@ class WorksViewModel : ViewModel() {
                     }
                     val feedDeferred = async {
                         api.getWorkRecommendations(
-                            sort = _state.value.sort.apiValue,
-                            scope = "all",
+                            sort = _state.value.sort.apiSort(),
+                            scope = _state.value.sort.apiScope(),
                             limit = 12,
                         )
                     }
@@ -164,8 +169,8 @@ class WorksViewModel : ViewModel() {
             _state.update { it.copy(loadingMore = true) }
             try {
                 val page = api.getWorkRecommendations(
-                    sort = snapshot.sort.apiValue,
-                    scope = "all",
+                    sort = snapshot.sort.apiSort(),
+                    scope = snapshot.sort.apiScope(),
                     limit = 12,
                     cursor = cursor,
                 )
