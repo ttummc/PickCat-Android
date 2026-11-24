@@ -327,8 +327,6 @@ private fun TopicFeedScaffold(
                     tagsVisible = true
                 } else if (delta > 8 && tagsVisible) {
                     tagsVisible = false
-                } else if (delta < -8 && !tagsVisible) {
-                    tagsVisible = true
                 }
                 previousIndex = index
                 previousOffset = offset
@@ -390,39 +388,43 @@ private fun TopicFeedScaffold(
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             AnimatedVisibility(
-                visible = showTags && tagsVisible && state.tags.isNotEmpty(),
+                visible = tagsVisible,
                 enter = fadeIn(tween(160)) + expandVertically(tween(220)),
                 exit = fadeOut(tween(120)) + shrinkVertically(tween(180)),
             ) {
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 4.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    items(state.tags, key = { it.id }) { tag ->
-                        AssistChip(
-                            onClick = { onOpenCategory(tag) },
-                            label = { Text("#${tag.name}") },
+                Column {
+                    if (showTags && state.tags.isNotEmpty()) {
+                        LazyRow(
+                            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            items(state.tags, key = { it.id }) { tag ->
+                                AssistChip(
+                                    onClick = { onOpenCategory(tag) },
+                                    label = { Text("#${tag.name}") },
+                                )
+                            }
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        if (!showTags) {
+                            Text(
+                                "排序",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                        }
+                        SortSelector(
+                            sort = state.sort,
+                            onSort = viewModel::setSort,
                         )
                     }
                 }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End,
-            ) {
-                if (!showTags) {
-                    Text(
-                        "排序",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.width(8.dp))
-                }
-                SortSelector(
-                    sort = state.sort,
-                    onSort = viewModel::setSort,
-                )
             }
             PullToRefreshBox(
                 isRefreshing = state.refreshing,

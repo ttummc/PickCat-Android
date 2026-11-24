@@ -3,6 +3,19 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.61] - 2026-11-24
+
+### Changed
+
+- Forum tags and the "最新 / 活跃" selector now collapse on downward scroll and only expand after the list returns to the very top.
+
+## [0.1.60] - 2026-11-24
+
+### Changed
+
+- The forum sort selector ("最新 / 活跃") now collapses and expands together with the category tags on scroll.
+- The bottom navigation bar is restored to its standard Material 3 height.
+
 ## [0.1.59] - 2026-11-24
 
 ### Changed
@@ -441,6 +454,8 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.61]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.61
+[0.1.60]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.60
 [0.1.59]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.59
 [0.1.58]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.58
 [0.1.57]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.57
