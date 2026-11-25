@@ -441,12 +441,6 @@ fun HomeScreen(
                         onSwitchAccount = { showAccountSheet = true },
                     )
                 }
-                item(key = "home-filters") {
-                    HomeFilters(
-                        kind = state.kind,
-                        onKind = viewModel::selectKind,
-                    )
-                }
                 if (preferences.homeWorksEnabled) {
                     if (state.featuredWorks.isNotEmpty()) {
                         item(key = "home-featured-works") {
@@ -466,6 +460,12 @@ fun HomeScreen(
                             )
                         }
                     }
+                }
+                item(key = "home-filters") {
+                    HomeFilters(
+                        kind = state.kind,
+                        onKind = viewModel::selectKind,
+                    )
                 }
                 when {
                     state.loading && state.items.isEmpty() -> item {

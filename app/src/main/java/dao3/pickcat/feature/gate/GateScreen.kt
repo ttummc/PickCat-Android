@@ -44,7 +44,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dao3.pickcat.AppGraph
 import dao3.pickcat.R
-import dao3.pickcat.core.network.ApiException
 import dao3.pickcat.core.network.Post
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -112,7 +111,7 @@ val GATE_COMMENTS = listOf(
 data class GateUiState(
     val busy: Boolean = false,
     val error: String? = null,
-    val quotaExemptOffered: Boolean = false,
+    val exemptOffered: Boolean = false,
 )
 
 class GateViewModel : ViewModel() {
@@ -159,48 +158,20 @@ class GateViewModel : ViewModel() {
                 onCompleted()
                 _state.update { it.copy(busy = false) }
             } catch (error: Exception) {
-                if (error.isQuotaInsufficient()) {
-                    _state.update {
-                        it.copy(
-                            busy = false,
-                            error = null,
-                            quotaExemptOffered = true,
-                        )
-                    }
-                } else {
-                    _state.update {
-                        it.copy(
-                            busy = false,
-                            error = error.message ?: "体验确认失败，请重试",
-                        )
-                    }
+                _state.update {
+                    it.copy(
+                        busy = false,
+                        error = null,
+                        exemptOffered = true,
+                    )
                 }
             }
         }
     }
 
-    fun dismissQuotaOffer() {
-        _state.update { it.copy(quotaExemptOffered = false) }
+    fun dismissExemptOffer() {
+        _state.update { it.copy(exemptOffered = false) }
     }
-}
-
-private fun Throwable.isQuotaInsufficient(): Boolean {
-    val apiError = this as? ApiException ?: return false
-    val text = "${apiError.code.orEmpty()} ${apiError.message}".lowercase()
-    return listOf(
-        "quota",
-        "额度",
-        "配额",
-        "token",
-        "积分",
-        "次数",
-        "不足",
-        "insufficient",
-        "exceeded",
-        "rate limit",
-        "participation",
-        "level",
-    ).any { keyword -> text.contains(keyword) }
 }
 
 private fun List<Post>.containsGateComment(userId: String): Boolean =
@@ -213,7 +184,7 @@ private fun List<Post>.containsGateComment(userId: String): Boolean =
 fun GateScreen(
     currentUserId: String,
     onCompleted: () -> Unit,
-    onQuotaExempt: () -> Unit,
+    onExempt: () -> Unit,
 ) {
     BackHandler(enabled = true) {}
     val viewModel: GateViewModel = viewModel()
@@ -313,21 +284,21 @@ fun GateScreen(
         }
     }
 
-    if (state.quotaExemptOffered) {
+    if (state.exemptOffered) {
         AlertDialog(
-            onDismissRequest = viewModel::dismissQuotaOffer,
-            title = { Text("额度不足") },
+            onDismissRequest = viewModel::dismissExemptOffer,
+            title = { Text("体验未完成") },
             text = {
-                Text("当前账号额度不足，无法完成关注、点赞或评论。可以豁免 3 天后继续使用。")
+                Text("关注、点赞或评论未能完成，可以豁免 10 天后继续使用。")
             },
             confirmButton = {
                 Button(onClick = {
-                    viewModel.dismissQuotaOffer()
-                    onQuotaExempt()
-                }) { Text("豁免 3 天") }
+                    viewModel.dismissExemptOffer()
+                    onExempt()
+                }) { Text("豁免 10 天") }
             },
             dismissButton = {
-                TextButton(onClick = viewModel::dismissQuotaOffer) {
+                TextButton(onClick = viewModel::dismissExemptOffer) {
                     Text("稍后重试")
                 }
             },

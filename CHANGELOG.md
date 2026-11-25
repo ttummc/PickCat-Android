@@ -3,6 +3,18 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.66] - 2026-11-26
+
+### Changed
+
+- Rebuilt the Settings page with a concise Material 3 layout: top app bar, account header, section labels, standard list items, switches, and inset dividers. All account, security, appearance, content, integration, update, and sign-out actions are preserved.
+- The experience gate now offers a 10-day exemption after any follow, like, or comment failure, not only quota failures.
+
+### Fixed
+
+- The login WebView now applies status bar, cutout, and IME insets explicitly, so the official login page no longer overlaps the status bar.
+- The topic reply composer now draws its background across the navigation-bar and keyboard inset area, removing the transparent gap that showed comments underneath.
+
 ## [0.1.65] - 2026-11-26
 
 ### Added
@@ -484,6 +496,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.66]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.66
 [0.1.65]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.65
 [0.1.64]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.64
 [0.1.63]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.63

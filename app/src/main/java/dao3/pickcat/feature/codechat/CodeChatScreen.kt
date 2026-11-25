@@ -324,9 +324,7 @@ fun CodeChatScreen(
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .windowInsetsPadding(
-                            WindowInsets.navigationBars.union(WindowInsets.ime),
-                        ),
+                        .imePadding(),
                     color = MaterialTheme.colorScheme.surfaceContainer,
                     tonalElevation = 3.dp,
                 ) {

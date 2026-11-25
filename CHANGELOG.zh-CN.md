@@ -3,6 +3,18 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.66] - 2026-11-26
+
+### 变更
+
+- 设置页使用简洁的 Material 3 布局重做：顶部栏、账号头部、分组标题、标准列表项、开关和缩进分割线。账号、安全、外观、内容、互联、更新和退出功能全部保留。
+- 体验门槛在关注、点赞或评论任意一步失败后都提供 10 天豁免，不再只处理额度失败。
+
+### 修复
+
+- 登录 WebView 显式应用状态栏、刘海和输入法安全区，官方登录页不再与状态栏重叠。
+- 帖子回复输入栏的背景完整覆盖导航栏和键盘 inset，不再出现透出评论内容的空隙。
+
 ## [0.1.65] - 2026-11-26
 
 ### 新增
@@ -485,6 +497,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.66]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.66
 [0.1.65]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.65
 [0.1.64]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.64
 [0.1.63]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.63

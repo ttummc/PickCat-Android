@@ -141,8 +141,8 @@ fun PickCatRoot(viewModel: AppViewModel) {
                     onCompleted = {
                         user?.id?.let(viewModel::completeGate)
                     },
-                    onQuotaExempt = {
-                        user?.id?.let(viewModel::exemptGateForThreeDays)
+                    onExempt = {
+                        user?.id?.let(viewModel::exemptGateForTenDays)
                     },
                 )
                 RootStage.MAIN -> PickCatMainShell(

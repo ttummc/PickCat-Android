@@ -65,6 +65,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -706,32 +707,26 @@ private fun ReplyComposer(
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .windowInsetsPadding(
-                WindowInsets.navigationBars.union(WindowInsets.ime),
-            ),
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 3.dp,
     ) {
-        BottomAppBar(
+        Box(
             modifier = Modifier.fillMaxWidth(),
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-            tonalElevation = 3.dp,
-            contentPadding = PaddingValues(0.dp),
-            windowInsets = WindowInsets(0, 0, 0, 0),
+            contentAlignment = Alignment.Center,
         ) {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center,
+            Row(
+                modifier = Modifier
+                    .widthIn(max = 860.dp)
+                    .fillMaxWidth()
+                    .windowInsetsPadding(
+                        WindowInsets.navigationBars.union(WindowInsets.ime),
+                    )
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Row(
-                    modifier = Modifier
-                        .widthIn(max = 860.dp)
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
                 PickCatTextField(
                     value = replyText,
                     onValueChange = onTextChange,
@@ -778,7 +773,6 @@ private fun ReplyComposer(
             }
         }
     }
-}
 }
 
 @Composable

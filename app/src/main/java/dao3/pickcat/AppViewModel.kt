@@ -214,11 +214,11 @@ class AppViewModel : ViewModel() {
         viewModelScope.launch { preferencesRepository.markGateCompleted(userId) }
     }
 
-    fun exemptGateForThreeDays(userId: String) {
+    fun exemptGateForTenDays(userId: String) {
         viewModelScope.launch {
             preferencesRepository.grantGateExemption(
                 userId,
-                System.currentTimeMillis() + 3L * 24 * 60 * 60 * 1000,
+                System.currentTimeMillis() + 10L * 24 * 60 * 60 * 1000,
             )
         }
     }
