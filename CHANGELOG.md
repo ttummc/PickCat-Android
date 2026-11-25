@@ -3,6 +3,14 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.65] - 2026-11-26
+
+### Added
+
+- Restored the one-time experience gate for signed-in users: follow Kitter Support, like the designated topic, and publish one experience comment.
+- The experience comment is chosen at random from 50 presets instead of always using the same text.
+- Accounts that cannot complete the actions because of quota or participation limits can take a three-day exemption.
+
 ## [0.1.64] - 2026-11-25
 
 ### Changed
@@ -476,6 +484,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.65]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.65
 [0.1.64]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.64
 [0.1.63]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.63
 [0.1.62]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.62

@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dao3.pickcat.core.ui.ErrorState
+import dao3.pickcat.feature.gate.GateScreen
+import dao3.pickcat.feature.gate.KITTER_SUPPORT_ID
 import dao3.pickcat.feature.settings.UpdatePromptSheet
 import dao3.pickcat.feature.settings.UpdateViewModel
 import dao3.pickcat.feature.settings.launchUpdateInstaller
@@ -60,7 +62,7 @@ import dao3.pickcat.feature.settings.openExternalUrl
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-private enum class RootStage { SPLASH, ERROR, MAINTENANCE, LOGIN, MAIN }
+private enum class RootStage { SPLASH, ERROR, MAINTENANCE, LOGIN, GATE, MAIN }
 
 @Composable
 fun PickCatRoot(viewModel: AppViewModel) {
@@ -102,6 +104,10 @@ fun PickCatRoot(viewModel: AppViewModel) {
             !session.ready -> RootStage.SPLASH
             user == null && session.error != null -> RootStage.ERROR
             user == null -> RootStage.LOGIN
+            user.id == KITTER_SUPPORT_ID -> RootStage.MAIN
+            user.id !in preferences.gateCompletedUserIds &&
+                (preferences.gateExemptUntil[user.id] ?: 0L) <= System.currentTimeMillis() ->
+                RootStage.GATE
             else -> RootStage.MAIN
         }
         AnimatedContent(
@@ -130,6 +136,15 @@ fun PickCatRoot(viewModel: AppViewModel) {
                     },
                 )
                 RootStage.LOGIN -> LoginLauncher()
+                RootStage.GATE -> GateScreen(
+                    currentUserId = user?.id.orEmpty(),
+                    onCompleted = {
+                        user?.id?.let(viewModel::completeGate)
+                    },
+                    onQuotaExempt = {
+                        user?.id?.let(viewModel::exemptGateForThreeDays)
+                    },
+                )
                 RootStage.MAIN -> PickCatMainShell(
                     appViewModel = viewModel,
                     snackbarHostState = snackbarHostState,
