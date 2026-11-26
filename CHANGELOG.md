@@ -3,6 +3,16 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.70] - 2026-11-26
+
+### Removed
+
+- Removed CodeChat entirely: its package, navigation entry, routes, settings switch and password dialog, profile private-chat entry, preference fields, and project documentation.
+
+### Fixed
+
+- Adding a second account no longer removes the original account when the old session receives a temporary 401 during the account transition.
+
 ## [0.1.69] - 2026-11-26
 
 ### Added
@@ -526,6 +536,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.70]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.70
 [0.1.69]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.69
 [0.1.68]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.68
 [0.1.67]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.67

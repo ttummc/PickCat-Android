@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Home
@@ -35,8 +34,6 @@ import androidx.compose.material.icons.outlined.Forum
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.VideoLibrary
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -99,7 +96,6 @@ import dao3.pickcat.feature.work.WorkDetailScreen
 import dao3.pickcat.feature.work.WorksScreen
 import dao3.pickcat.core.ui.EmptyState
 import dao3.pickcat.core.ui.OfflineBanner
-import dao3.pickcat.feature.codechat.CodeChatScreen
 
 private object Routes {
     const val HOME = "home"
@@ -121,8 +117,6 @@ private object Routes {
     const val GALLERY = "gallery"
     const val LIBRARY = "library"
     const val ACCOUNT_SECURITY = "account-security"
-    const val CODECHAT = "codechat"
-    const val CODECHAT_PEER = "codechat?peerUid={peerUid}"
 
     fun category(slug: String) = "category/$slug"
     fun topic(id: String, postNumber: Int? = null) =
@@ -130,7 +124,6 @@ private object Routes {
     fun work(id: String) = "work/$id"
     fun profile(id: String) = "profile/$id"
     fun collection(id: String) = "collection/$id"
-    fun codeChat(peerUid: String) = "codechat?peerUid=$peerUid"
 }
 
 private data class MainDestination(
@@ -138,7 +131,6 @@ private data class MainDestination(
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
     val route: String,
-    val badgeCount: Int = 0,
 )
 
 @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
@@ -149,9 +141,7 @@ fun PickCatMainShell(
 ) {
     val navController = rememberNavController()
     val session by appViewModel.session.collectAsStateWithLifecycle()
-    val preferences by appViewModel.preferences.collectAsStateWithLifecycle()
     val isOnline by appViewModel.isOnline.collectAsStateWithLifecycle()
-    val codeChatState by AppGraph.codeChat.state.collectAsStateWithLifecycle()
     var offlineBannerDismissed by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(isOnline) {
         if (isOnline) offlineBannerDismissed = false
@@ -189,17 +179,6 @@ fun PickCatMainShell(
                 route = Routes.FORUM,
             ),
         )
-        if (preferences.codeChatEnabled) {
-            add(
-                MainDestination(
-                    label = "CodeChat",
-                    selectedIcon = Icons.Filled.Chat,
-                    unselectedIcon = Icons.Filled.ChatBubbleOutline,
-                    route = Routes.CODECHAT,
-                    badgeCount = codeChatState.unreadByPeer.values.sum(),
-                ),
-            )
-        }
         add(
             MainDestination(
                 label = "作品",
@@ -220,8 +199,7 @@ fun PickCatMainShell(
 
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
-    val isTopLevel = currentRoute?.startsWith(Routes.CODECHAT) == true ||
-        currentRoute == Routes.HOME ||
+    val isTopLevel = currentRoute == Routes.HOME ||
         currentRoute == Routes.FORUM ||
         currentRoute == Routes.WORKS ||
         currentRoute == Routes.ME
@@ -235,17 +213,6 @@ fun PickCatMainShell(
             }
             launchSingleTop = true
             restoreState = true
-        }
-    }
-
-    LaunchedEffect(preferences.codeChatEnabled, currentUser?.id) {
-        if (preferences.codeChatEnabled && currentUser != null) {
-            AppGraph.codeChat.connect()
-        } else {
-            AppGraph.codeChat.disconnect()
-            if (navController.currentDestination?.route?.startsWith(Routes.CODECHAT) == true) {
-                navigateTopLevel(Routes.HOME)
-            }
         }
     }
 
@@ -364,28 +331,6 @@ fun PickCatMainShell(
                     onPublished = {
                         navController.popBackStack()
                     },
-                )
-            }
-            composable(Routes.CODECHAT) {
-                CodeChatScreen(
-                    onOpenProfile = { userId -> navController.navigate(Routes.profile(userId)) },
-                    onLeave = { navigateTopLevel(Routes.HOME) },
-                )
-            }
-            composable(
-                route = Routes.CODECHAT_PEER,
-                arguments = listOf(
-                    navArgument("peerUid") {
-                        type = NavType.StringType
-                        nullable = true
-                        defaultValue = null
-                    },
-                ),
-            ) { entry ->
-                CodeChatScreen(
-                    initialPeerUid = entry.arguments?.getString("peerUid"),
-                    onOpenProfile = { userId -> navController.navigate(Routes.profile(userId)) },
-                    onLeave = { navigateTopLevel(Routes.HOME) },
                 )
             }
             composable(Routes.WORKS) {
@@ -551,11 +496,7 @@ fun PickCatMainShell(
                 ) {
                     Spacer(Modifier.weight(1f))
                     destinations.forEach { destination ->
-                        val selected = if (destination.route == Routes.CODECHAT) {
-                            selectedRoute?.startsWith(Routes.CODECHAT) == true
-                        } else {
-                            selectedRoute == destination.route
-                        }
+                        val selected = selectedRoute == destination.route
                         NavigationRailItem(
                             selected = selected,
                             onClick = {
@@ -604,11 +545,7 @@ fun PickCatMainShell(
                         containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     ) {
                         destinations.forEach { destination ->
-                            val selected = if (destination.route == Routes.CODECHAT) {
-                                selectedRoute?.startsWith(Routes.CODECHAT) == true
-                            } else {
-                                selectedRoute == destination.route
-                            }
+                            val selected = selectedRoute == destination.route
                             NavigationBarItem(
                                 selected = selected,
                                 onClick = {
@@ -736,28 +673,16 @@ private fun WorksTwoPane(
 
 @Composable
 private fun DestinationIcon(destination: MainDestination, selected: Boolean) {
-    BadgedBox(
-        badge = {
-            if (destination.badgeCount > 0) {
-                Badge {
-                    Text(
-                        if (destination.badgeCount > 99) "99+" else destination.badgeCount.toString(),
-                    )
-                }
-            }
+    AnimatedContent(
+        targetState = selected,
+        transitionSpec = {
+            fadeIn(tween(180)) togetherWith fadeOut(tween(120))
         },
-    ) {
-        AnimatedContent(
-            targetState = selected,
-            transitionSpec = {
-                fadeIn(tween(180)) togetherWith fadeOut(tween(120))
-            },
-            label = "bottom-navigation-icon",
-        ) { active ->
-            Icon(
-                imageVector = if (active) destination.selectedIcon else destination.unselectedIcon,
-                contentDescription = destination.label,
-            )
-        }
+        label = "bottom-navigation-icon",
+    ) { active ->
+        Icon(
+            imageVector = if (active) destination.selectedIcon else destination.unselectedIcon,
+            contentDescription = destination.label,
+        )
     }
 }

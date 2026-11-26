@@ -20,7 +20,6 @@ data class AppPreferences(
     val backgroundNotifications: Boolean = true,
     val updateSource: String = "mirror",
     val homeWorksEnabled: Boolean = true,
-    val codeChatEnabled: Boolean = false,
     val gateCompletedUserIds: Set<String> = emptySet(),
     val gateExemptUntil: Map<String, Long> = emptyMap(),
     val gatePromptMutedUserIds: Set<String> = emptySet(),
@@ -36,7 +35,6 @@ class UserPreferences(private val context: Context) {
             backgroundNotifications = values[KEY_BACKGROUND_NOTIFICATIONS] ?: true,
             updateSource = values[KEY_UPDATE_SOURCE] ?: "mirror",
             homeWorksEnabled = values[KEY_HOME_WORKS_ENABLED] ?: true,
-            codeChatEnabled = values[KEY_CODECHAT_ENABLED] ?: false,
             gateCompletedUserIds = values[KEY_GATE_COMPLETED] ?: emptySet(),
             gateExemptUntil = parseGateExemptions(values[KEY_GATE_EXEMPT]),
             gatePromptMutedUserIds = values[KEY_GATE_PROMPT_MUTED] ?: emptySet(),
@@ -65,10 +63,6 @@ class UserPreferences(private val context: Context) {
 
     suspend fun setHomeWorksEnabled(enabled: Boolean) {
         store.edit { it[KEY_HOME_WORKS_ENABLED] = enabled }
-    }
-
-    suspend fun setCodeChatEnabled(enabled: Boolean) {
-        store.edit { it[KEY_CODECHAT_ENABLED] = enabled }
     }
 
     suspend fun markGateCompleted(userId: String) {
@@ -129,7 +123,6 @@ class UserPreferences(private val context: Context) {
         val KEY_UPDATE_SOURCE = stringPreferencesKey("update_source")
         val KEY_SEARCH_HISTORY = stringPreferencesKey("search_history")
         val KEY_HOME_WORKS_ENABLED = booleanPreferencesKey("home_works_enabled")
-        val KEY_CODECHAT_ENABLED = booleanPreferencesKey("codechat_enabled")
         val KEY_GATE_COMPLETED = stringSetPreferencesKey("gate_completed_user_ids")
         val KEY_GATE_EXEMPT = stringSetPreferencesKey("gate_exempt_until")
         val KEY_GATE_PROMPT_MUTED = stringSetPreferencesKey("gate_prompt_muted_user_ids")

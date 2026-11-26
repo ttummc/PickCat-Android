@@ -220,10 +220,6 @@ class AppViewModel : ViewModel() {
         viewModelScope.launch { preferencesRepository.setHomeWorksEnabled(enabled) }
     }
 
-    fun updateCodeChatEnabled(enabled: Boolean) {
-        viewModelScope.launch { preferencesRepository.setCodeChatEnabled(enabled) }
-    }
-
     fun completeGate(userId: String) {
         viewModelScope.launch { preferencesRepository.markGateCompleted(userId) }
     }

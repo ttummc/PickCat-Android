@@ -3,6 +3,16 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.70] - 2026-11-26
+
+### 移除
+
+- 完全移除 CodeChat：代码包、底部导航入口、路由、设置开关与密码弹窗、个人主页私聊入口、偏好字段和项目内相关文档。
+
+### 修复
+
+- 添加第二个账号时，旧会话的临时 401 不再误删原账号。
+
 ## [0.1.69] - 2026-11-26
 
 ### 新增
@@ -527,6 +537,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.70]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.70
 [0.1.69]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.69
 [0.1.68]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.68
 [0.1.67]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.67
