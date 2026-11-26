@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SwitchAccount
@@ -73,6 +74,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -180,6 +182,7 @@ fun SettingsScreen(
     var showThemeSheet by remember { mutableStateOf(false) }
     var showUpdateSourceSheet by remember { mutableStateOf(false) }
     var showAccountSheet by remember { mutableStateOf(false) }
+    var query by rememberSaveable { mutableStateOf("") }
     var email by remember { mutableStateOf<String?>(null) }
     var officialAccount by remember { mutableStateOf<OfficialAccount?>(null) }
     var showCodeChatPassword by remember { mutableStateOf(false) }
@@ -572,6 +575,24 @@ fun SettingsScreen(
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
+        val visibleSections = remember(query, sections) {
+            if (query.isBlank()) {
+                sections
+            } else {
+                sections.mapNotNull { section ->
+                    val sectionMatches = section.title.contains(query, ignoreCase = true)
+                    val items = if (sectionMatches) {
+                        section.items
+                    } else {
+                        section.items.filter { item ->
+                            item.title.contains(query, ignoreCase = true) ||
+                                item.summary.orEmpty().contains(query, ignoreCase = true)
+                        }
+                    }
+                    if (items.isEmpty()) null else section.copy(items = items)
+                }
+            }
+        }
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(
@@ -581,6 +602,19 @@ fun SettingsScreen(
                 bottom = 32.dp,
             ),
         ) {
+            item(key = "settings-search") {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    placeholder = { Text("搜索设置") },
+                    leadingIcon = {
+                        Icon(Icons.Default.Search, contentDescription = null)
+                    },
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.large,
+                )
+            }
             item(key = "settings-account-header") {
                 SettingsAccountHeader(
                     user = user,
@@ -589,7 +623,7 @@ fun SettingsScreen(
                 )
             }
 
-            sections.forEach { section ->
+            visibleSections.forEach { section ->
                 item(key = "section-${section.id}") {
                     SectionTitle(section.title)
                 }
@@ -607,6 +641,16 @@ fun SettingsScreen(
                 }
                 section.footer?.let { footer ->
                     item(key = "footer-${section.id}") { footer() }
+                }
+            }
+            if (query.isNotBlank() && visibleSections.isEmpty()) {
+                item(key = "settings-empty") {
+                    Text(
+                        "没有找到设置",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
+                    )
                 }
             }
 

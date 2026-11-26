@@ -708,7 +708,7 @@ private fun ReplyComposer(
     modifier: Modifier = Modifier,
 ) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().imePadding(),
         color = MaterialTheme.colorScheme.surfaceContainer,
         tonalElevation = 3.dp,
     ) {
@@ -720,9 +720,6 @@ private fun ReplyComposer(
                 modifier = Modifier
                     .widthIn(max = 860.dp)
                     .fillMaxWidth()
-                    .windowInsetsPadding(
-                        WindowInsets.navigationBars.union(WindowInsets.ime),
-                    )
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),

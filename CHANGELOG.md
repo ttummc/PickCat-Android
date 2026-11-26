@@ -3,6 +3,16 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.67] - 2026-11-26
+
+### Changed
+
+- The rebuilt Material 3 settings page now keeps a simple search field and filters sections and rows by title or summary.
+
+### Fixed
+
+- The topic reply composer now uses a single IME inset so its background reaches the keyboard without an extra navigation-bar gap.
+
 ## [0.1.66] - 2026-11-26
 
 ### Changed
@@ -496,6 +506,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.67]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.67
 [0.1.66]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.66
 [0.1.65]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.65
 [0.1.64]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.64

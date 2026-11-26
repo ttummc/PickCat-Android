@@ -3,6 +3,16 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.67] - 2026-11-26
+
+### 变更
+
+- 重做后的 Material 3 设置页补回简洁搜索框，可按标题或摘要过滤分组和设置项。
+
+### 修复
+
+- 帖子回复输入栏只应用 IME inset，背景完整覆盖到键盘，不再因重复导航栏 inset 产生空隙。
+
 ## [0.1.66] - 2026-11-26
 
 ### 变更
@@ -497,6 +507,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.67]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.67
 [0.1.66]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.66
 [0.1.65]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.65
 [0.1.64]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.64

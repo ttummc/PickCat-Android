@@ -30,6 +30,7 @@ class LoginWebViewActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).isAppearanceLightStatusBars = true
         window.statusBarColor = Color.WHITE
+        window.navigationBarColor = Color.WHITE
         webView = WebView(this).apply {
             fitsSystemWindows = false
             setBackgroundColor(Color.WHITE)
