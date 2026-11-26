@@ -182,12 +182,12 @@ fun SettingsScreen(
     var showThemeSheet by remember { mutableStateOf(false) }
     var showUpdateSourceSheet by remember { mutableStateOf(false) }
     var showAccountSheet by remember { mutableStateOf(false) }
-    var query by rememberSaveable { mutableStateOf("") }
-    var email by remember { mutableStateOf<String?>(null) }
-    var officialAccount by remember { mutableStateOf<OfficialAccount?>(null) }
     var showCodeChatPassword by remember { mutableStateOf(false) }
     var codeChatPassword by remember { mutableStateOf("") }
     var codeChatPasswordError by remember { mutableStateOf(false) }
+    var query by rememberSaveable { mutableStateOf("") }
+    var email by remember { mutableStateOf<String?>(null) }
+    var officialAccount by remember { mutableStateOf<OfficialAccount?>(null) }
 
     val user = session.user
     val versionName = remember {
@@ -789,30 +789,6 @@ fun SettingsScreen(
         )
     }
 
-    if (showAccountSheet) {
-        AccountSwitcherSheet(
-            currentUserId = user?.id,
-            accounts = accounts,
-            onSelect = { account ->
-                showAccountSheet = false
-                scope.launch {
-                    val switched = appViewModel.switchAccount(account)
-                    snackbarHostState.showSnackbar(
-                        if (switched) "已切换到 ${account.username}" else "切换账号失败，请重新登录",
-                    )
-                }
-            },
-            onAdd = {
-                showAccountSheet = false
-                scope.launch {
-                    appViewModel.prepareAddAccount()
-                    addAccountLauncher.launch(Intent(context, LoginWebViewActivity::class.java))
-                }
-            },
-            onDismiss = { showAccountSheet = false },
-        )
-    }
-
     if (showCodeChatPassword) {
         AlertDialog(
             onDismissRequest = {
@@ -867,6 +843,30 @@ fun SettingsScreen(
                     },
                 ) { Text("取消") }
             },
+        )
+    }
+
+    if (showAccountSheet) {
+        AccountSwitcherSheet(
+            currentUserId = user?.id,
+            accounts = accounts,
+            onSelect = { account ->
+                showAccountSheet = false
+                scope.launch {
+                    val switched = appViewModel.switchAccount(account)
+                    snackbarHostState.showSnackbar(
+                        if (switched) "已切换到 ${account.username}" else "切换账号失败，请重新登录",
+                    )
+                }
+            },
+            onAdd = {
+                showAccountSheet = false
+                scope.launch {
+                    appViewModel.prepareAddAccount()
+                    addAccountLauncher.launch(Intent(context, LoginWebViewActivity::class.java))
+                }
+            },
+            onDismiss = { showAccountSheet = false },
         )
     }
 }

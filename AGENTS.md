@@ -23,3 +23,10 @@ These rules are mandatory for every UI change in this repository.
 - No Emoji characters.
 - No separator characters between parallel labels.
 - Build and lint pass before delivery.
+
+## Release process
+
+- The GitHub release APK must be built with `:app:assembleRelease`, not `assembleDebug`.
+- Before tagging a release, add `release-notes/vX.Y.Z.md` with concise Chinese, user-facing release notes.
+- The release workflow uses that file as the GitHub Release body; do not rely on generated notes.
+

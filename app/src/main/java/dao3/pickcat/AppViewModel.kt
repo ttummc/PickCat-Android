@@ -30,6 +30,7 @@ class AppViewModel : ViewModel() {
     val session = container.session.state
     val accounts = AppGraph.accountStore.accounts
     private var previousAccount: SavedAccount? = null
+    private var changingAccount = false
     val isOnline: StateFlow<Boolean> = container.networkMonitor.isOnline
     val maintenance: StateFlow<Boolean> = container.maintenance
     val preferences: StateFlow<AppPreferences> = container.preferences.preferences
@@ -88,7 +89,7 @@ class AppViewModel : ViewModel() {
         }
         viewModelScope.launch {
             container.authEvents.collect {
-                if (session.value.user != null) {
+                if (session.value.user != null && !changingAccount) {
                     val expiredUserId = session.value.user?.id
                     sessionRepository.expireSession()
                     expiredUserId?.let { AppGraph.accountStore.remove(it) }
@@ -143,15 +144,20 @@ class AppViewModel : ViewModel() {
     suspend fun switchAccount(account: SavedAccount): Boolean {
         val previousCookie = sessionRepository.currentCookieHeader()
         saveCurrentAccount()
-        sessionRepository.replaceCookies(account.cookie)
-        sessionRepository.retryRestore()
-        if (session.value.user?.id != account.id) {
-            AppGraph.accountStore.remove(account.id)
-            previousCookie?.let { sessionRepository.replaceCookies(it) }
+        changingAccount = true
+        try {
+            sessionRepository.replaceCookies(account.cookie)
             sessionRepository.retryRestore()
-            return false
+            if (session.value.user?.id != account.id) {
+                AppGraph.accountStore.remove(account.id)
+                previousCookie?.let { sessionRepository.replaceCookies(it) }
+                sessionRepository.retryRestore()
+                return false
+            }
+            return true
+        } finally {
+            changingAccount = false
         }
-        return true
     }
 
     fun consumeSessionExpired() {
@@ -161,6 +167,7 @@ class AppViewModel : ViewModel() {
     suspend fun prepareAddAccount() {
         val user = session.value.user ?: return
         val cookie = sessionRepository.currentCookieHeader() ?: return
+        changingAccount = true
         previousAccount = SavedAccount(
             id = user.id,
             username = user.username,
@@ -172,14 +179,21 @@ class AppViewModel : ViewModel() {
     }
 
     suspend fun cancelAddAccount() {
-        val previous = previousAccount ?: return
-        previousAccount = null
-        sessionRepository.replaceCookies(previous.cookie)
-        sessionRepository.retryRestore()
+        val previous = previousAccount
+        try {
+            if (previous != null) {
+                sessionRepository.replaceCookies(previous.cookie)
+                sessionRepository.retryRestore()
+            }
+        } finally {
+            previousAccount = null
+            changingAccount = false
+        }
     }
 
     fun finishAddAccount() {
         previousAccount = null
+        changingAccount = false
     }
 
     fun updateTheme(mode: ThemeMode) {
@@ -202,12 +216,12 @@ class AppViewModel : ViewModel() {
         viewModelScope.launch { preferencesRepository.setBackgroundNotifications(enabled) }
     }
 
-    fun updateCodeChatEnabled(enabled: Boolean) {
-        viewModelScope.launch { preferencesRepository.setCodeChatEnabled(enabled) }
-    }
-
     fun updateHomeWorksEnabled(enabled: Boolean) {
         viewModelScope.launch { preferencesRepository.setHomeWorksEnabled(enabled) }
+    }
+
+    fun updateCodeChatEnabled(enabled: Boolean) {
+        viewModelScope.launch { preferencesRepository.setCodeChatEnabled(enabled) }
     }
 
     fun completeGate(userId: String) {

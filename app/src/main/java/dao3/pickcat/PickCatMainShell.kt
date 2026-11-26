@@ -238,17 +238,15 @@ fun PickCatMainShell(
         }
     }
 
-    LaunchedEffect(preferences.codeChatEnabled) {
-        if (!preferences.codeChatEnabled) {
+    LaunchedEffect(preferences.codeChatEnabled, currentUser?.id) {
+        if (preferences.codeChatEnabled && currentUser != null) {
+            AppGraph.codeChat.connect()
+        } else {
             AppGraph.codeChat.disconnect()
             if (navController.currentDestination?.route?.startsWith(Routes.CODECHAT) == true) {
                 navigateTopLevel(Routes.HOME)
             }
         }
-    }
-
-    LaunchedEffect(currentUser?.id) {
-        if (currentUser == null) AppGraph.codeChat.disconnect()
     }
 
     var lastHomeBackAt by remember { mutableLongStateOf(0L) }
@@ -439,10 +437,6 @@ fun PickCatMainShell(
                     onOpenCollection = { collection ->
                         navController.navigate(Routes.collection(collection.id))
                     },
-                    onOpenCodeChat = { ccUid, name, avatar ->
-                        AppGraph.codeChat.ensureDmSession(ccUid, name, avatar)
-                        navController.navigate(Routes.codeChat(ccUid))
-                    },
                 )
             }
             composable(
@@ -474,7 +468,6 @@ fun PickCatMainShell(
                     onOpenCollection = { collection ->
                         navController.navigate(Routes.collection(collection.id))
                     },
-                    onOpenCodeChat = { _, _, _ -> },
                 )
             }
             composable(Routes.NOTIFICATIONS) {

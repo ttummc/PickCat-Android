@@ -44,35 +44,50 @@ jobs:
       - name: Make Gradle executable
         run: chmod +x gradlew
 
-      - name: Build and lint
+      - name: Build release and lint
         run: |
           for attempt in 1 2 3; do
             echo "Build attempt ${attempt}"
-            if ./gradlew :app:assembleDebug :app:lintDebug --no-daemon; then
+            if ./gradlew :app:assembleRelease :app:lintRelease --no-daemon; then
               exit 0
             fi
             sleep 20
           done
-          echo "::error::Build and lint failed after retries."
+          echo "::error::Release build and lint failed after retries."
           exit 1
 
       - name: Name APK
         run: |
-          cp app/build/outputs/apk/debug/app-debug.apk \
-            "PickCat-Android-${GITHUB_REF_NAME}-debug.apk"
+          cp app/build/outputs/apk/release/app-release.apk \
+            "PickCat-Android-${GITHUB_REF_NAME}.apk"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: PickCat-Android-${{ github.ref_name }}
-          path: PickCat-Android-${{ github.ref_name }}-debug.apk
+          path: PickCat-Android-${{ github.ref_name }}.apk
+
+      - name: Prepare release notes
+        run: |
+          NOTES="release-notes/${GITHUB_REF_NAME}.md"
+          if [ -f "$NOTES" ]; then
+            cp "$NOTES" /tmp/pickcat-release-notes.md
+          else
+            {
+              echo "## ${GITHUB_REF_NAME}"
+              echo
+              echo "请查看 CHANGELOG 获取完整变更。"
+            } > /tmp/pickcat-release-notes.md
+            echo "::warning::No release note file at ${NOTES}; using fallback notes."
+          fi
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           name: PickCat Android ${{ github.ref_name }}
-          files: PickCat-Android-${{ github.ref_name }}-debug.apk
-          generate_release_notes: true
+          body_path: /tmp/pickcat-release-notes.md
+          files: PickCat-Android-${{ github.ref_name }}.apk
+          generate_release_notes: false
           fail_on_unmatched_files: true
           draft: false
           prerelease: false
