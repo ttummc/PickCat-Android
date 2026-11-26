@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -180,106 +181,107 @@ private fun List<Post>.containsGateComment(userId: String): Boolean =
             post.children.containsGateComment(userId)
     }
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-fun GateScreen(
+fun GateSheet(
     currentUserId: String,
     onCompleted: () -> Unit,
     onExempt: () -> Unit,
+    onDismiss: () -> Unit,
+    onMute: () -> Unit,
 ) {
-    BackHandler(enabled = true) {}
     val viewModel: GateViewModel = viewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val sheetState = androidx.compose.material3.rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+    )
 
-    Scaffold { padding ->
-        Box(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentAlignment = Alignment.Center,
+    androidx.compose.material3.ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .widthIn(max = 440.dp)
-                    .verticalScroll(rememberScrollState())
-                    .padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
+            Text(
+                "参与体验确认",
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                "以下操作完全自愿。完成体验确认可以帮助我们改进 PickCat，也可以随时关闭。",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surfaceContainer,
             ) {
-                Image(
-                    painter = painterResource(R.drawable.pickcat_logo),
-                    contentDescription = "PickCat",
-                    modifier = Modifier.size(72.dp),
-                    contentScale = ContentScale.Fit,
-                )
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    "开始使用 PickCat",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(6.dp))
-                Text(
-                    "完成以下体验确认后即可继续",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(20.dp))
-
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.large,
-                    color = MaterialTheme.colorScheme.surfaceContainerLow,
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                    ) {
-                        GateStep(
-                            icon = Icons.Default.PersonAdd,
-                            title = "关注 Kitter支持",
-                            description = "关注官方支持账号",
-                        )
-                        GateStep(
-                            icon = Icons.Default.Favorite,
-                            title = "点赞指定帖子",
-                            description = "为指定帖子点赞",
-                        )
-                        GateStep(
-                            icon = Icons.Default.ChatBubbleOutline,
-                            title = "发布体验评论",
-                            description = "从预选评论中随机发布一条",
-                        )
-                    }
-                }
-
-                Spacer(Modifier.height(20.dp))
-                Button(
-                    onClick = {
-                        viewModel.complete(currentUserId) {
-                            onCompleted()
-                        }
-                    },
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    enabled = !state.busy,
-                ) {
-                    if (state.busy) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp,
-                        )
-                    } else {
-                        Text("一键完成并进入")
-                    }
-                }
-                if (state.error != null) {
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        state.error.orEmpty(),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center,
+                    GateStep(
+                        icon = Icons.Default.PersonAdd,
+                        title = "关注 Kitter支持",
+                        description = "关注官方支持账号",
+                    )
+                    GateStep(
+                        icon = Icons.Default.Favorite,
+                        title = "点赞指定帖子",
+                        description = "为指定帖子点赞",
+                    )
+                    GateStep(
+                        icon = Icons.Default.ChatBubbleOutline,
+                        title = "发布体验评论",
+                        description = "从预选评论中随机发布一条",
                     )
                 }
+            }
+            Button(
+                onClick = {
+                    viewModel.complete(currentUserId) {
+                        onCompleted()
+                        onDismiss()
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                enabled = !state.busy,
+            ) {
+                if (state.busy) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        strokeWidth = 2.dp,
+                    )
+                } else {
+                    Text("一键执行")
+                }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text("再想想")
+                }
+                TextButton(onClick = onMute) {
+                    Text("不再提示")
+                }
+            }
+            if (state.error != null) {
+                Text(
+                    state.error.orEmpty(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
             }
         }
     }
@@ -288,24 +290,22 @@ fun GateScreen(
         AlertDialog(
             onDismissRequest = viewModel::dismissExemptOffer,
             title = { Text("体验未完成") },
-            text = {
-                Text("关注、点赞或评论未能完成，可以豁免 10 天后继续使用。")
-            },
+            text = { Text("关注、点赞或评论未能完成，可以豁免 10 天后继续使用。") },
             confirmButton = {
                 Button(onClick = {
                     viewModel.dismissExemptOffer()
                     onExempt()
+                    onDismiss()
                 }) { Text("豁免 10 天") }
             },
             dismissButton = {
                 TextButton(onClick = viewModel::dismissExemptOffer) {
-                    Text("稍后重试")
+                    Text("再想想")
                 }
             },
         )
     }
 }
-
 @Composable
 private fun GateStep(
     icon: androidx.compose.ui.graphics.vector.ImageVector,

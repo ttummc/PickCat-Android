@@ -3,6 +3,14 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.68] - 2026-11-26
+
+### 变更
+
+- 体验门槛不再强制拦截。登录后以 Material 3 底部面板询问用户，提供“一键执行”“再想想”“不再提示”三个选择。
+- “不再提示”按账号持久化，之后不再弹出。“再想想”只在本次使用中关闭。
+- 关注、点赞或评论任一步失败时，仍提供 10 天豁免。
+
 ## [0.1.67] - 2026-11-26
 
 ### 变更
@@ -507,6 +515,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.68]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.68
 [0.1.67]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.67
 [0.1.66]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.66
 [0.1.65]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.65

@@ -223,6 +223,10 @@ class AppViewModel : ViewModel() {
         }
     }
 
+    fun muteGatePrompt(userId: String) {
+        viewModelScope.launch { preferencesRepository.muteGatePrompt(userId) }
+    }
+
     fun updateUpdateSource(source: String) {
         viewModelScope.launch { preferencesRepository.setUpdateSource(source) }
     }

@@ -40,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,7 +54,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dao3.pickcat.core.ui.ErrorState
-import dao3.pickcat.feature.gate.GateScreen
+import dao3.pickcat.feature.gate.GateSheet
 import dao3.pickcat.feature.gate.KITTER_SUPPORT_ID
 import dao3.pickcat.feature.settings.UpdatePromptSheet
 import dao3.pickcat.feature.settings.UpdateViewModel
@@ -62,7 +63,7 @@ import dao3.pickcat.feature.settings.openExternalUrl
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-private enum class RootStage { SPLASH, ERROR, MAINTENANCE, LOGIN, GATE, MAIN }
+private enum class RootStage { SPLASH, ERROR, MAINTENANCE, LOGIN, MAIN }
 
 @Composable
 fun PickCatRoot(viewModel: AppViewModel) {
@@ -73,6 +74,13 @@ fun PickCatRoot(viewModel: AppViewModel) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val user = session.user
+    var gateSheetDismissed by rememberSaveable(user?.id) { mutableStateOf(false) }
+    val gateNeeded = user != null &&
+        user.id != KITTER_SUPPORT_ID &&
+        user.id !in preferences.gateCompletedUserIds &&
+        user.id !in preferences.gatePromptMutedUserIds &&
+        (preferences.gateExemptUntil[user.id] ?: 0L) <= System.currentTimeMillis()
     val updateViewModel: UpdateViewModel = viewModel()
     val updateState by updateViewModel.state.collectAsStateWithLifecycle()
 
@@ -98,16 +106,11 @@ fun PickCatRoot(viewModel: AppViewModel) {
 
     SelectionContainer(modifier = Modifier.fillMaxSize()) {
         Box(Modifier.fillMaxSize()) {
-            val user = session.user
         val stage = when {
             maintenance -> RootStage.MAINTENANCE
             !session.ready -> RootStage.SPLASH
             user == null && session.error != null -> RootStage.ERROR
             user == null -> RootStage.LOGIN
-            user.id == KITTER_SUPPORT_ID -> RootStage.MAIN
-            user.id !in preferences.gateCompletedUserIds &&
-                (preferences.gateExemptUntil[user.id] ?: 0L) <= System.currentTimeMillis() ->
-                RootStage.GATE
             else -> RootStage.MAIN
         }
         AnimatedContent(
@@ -136,15 +139,6 @@ fun PickCatRoot(viewModel: AppViewModel) {
                     },
                 )
                 RootStage.LOGIN -> LoginLauncher()
-                RootStage.GATE -> GateScreen(
-                    currentUserId = user?.id.orEmpty(),
-                    onCompleted = {
-                        user?.id?.let(viewModel::completeGate)
-                    },
-                    onExempt = {
-                        user?.id?.let(viewModel::exemptGateForTenDays)
-                    },
-                )
                 RootStage.MAIN -> PickCatMainShell(
                     appViewModel = viewModel,
                     snackbarHostState = snackbarHostState,
@@ -161,6 +155,23 @@ fun PickCatRoot(viewModel: AppViewModel) {
             )
         }
         }
+    }
+
+    if (gateNeeded && !gateSheetDismissed && updateState.update == null && !updateState.downloading) {
+        GateSheet(
+            currentUserId = user?.id.orEmpty(),
+            onCompleted = {
+                user?.id?.let(viewModel::completeGate)
+            },
+            onExempt = {
+                user?.id?.let(viewModel::exemptGateForTenDays)
+            },
+            onDismiss = { gateSheetDismissed = true },
+            onMute = {
+                user?.id?.let(viewModel::muteGatePrompt)
+                gateSheetDismissed = true
+            },
+        )
     }
 
     if (sessionExpired && session.user == null) {

@@ -3,6 +3,14 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.68] - 2026-11-26
+
+### Changed
+
+- The experience gate is no longer mandatory. After login it appears as a Material 3 bottom sheet with three choices: run the one-click confirmation, think about it later, or never show the prompt again.
+- "不再提示" is persisted per account and prevents the sheet from appearing again. "再想想" only dismisses it for the current session.
+- Any failed follow, like, or comment step still offers a 10-day exemption.
+
 ## [0.1.67] - 2026-11-26
 
 ### Changed
@@ -506,6 +514,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.68]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.68
 [0.1.67]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.67
 [0.1.66]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.66
 [0.1.65]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.65

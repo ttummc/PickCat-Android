@@ -23,6 +23,7 @@ data class AppPreferences(
     val homeWorksEnabled: Boolean = true,
     val gateCompletedUserIds: Set<String> = emptySet(),
     val gateExemptUntil: Map<String, Long> = emptyMap(),
+    val gatePromptMutedUserIds: Set<String> = emptySet(),
 )
 
 class UserPreferences(private val context: Context) {
@@ -38,6 +39,7 @@ class UserPreferences(private val context: Context) {
             homeWorksEnabled = values[KEY_HOME_WORKS_ENABLED] ?: true,
             gateCompletedUserIds = values[KEY_GATE_COMPLETED] ?: emptySet(),
             gateExemptUntil = parseGateExemptions(values[KEY_GATE_EXEMPT]),
+            gatePromptMutedUserIds = values[KEY_GATE_PROMPT_MUTED] ?: emptySet(),
         )
     }
 
@@ -85,6 +87,13 @@ class UserPreferences(private val context: Context) {
         }
     }
 
+    suspend fun muteGatePrompt(userId: String) {
+        store.edit { values ->
+            values[KEY_GATE_PROMPT_MUTED] =
+                (values[KEY_GATE_PROMPT_MUTED] ?: emptySet()) + userId
+        }
+    }
+
     suspend fun recordSearch(query: String) {
         val trimmed = query.trim()
         if (trimmed.isEmpty()) return
@@ -123,6 +132,7 @@ class UserPreferences(private val context: Context) {
         val KEY_HOME_WORKS_ENABLED = booleanPreferencesKey("home_works_enabled")
         val KEY_GATE_COMPLETED = stringSetPreferencesKey("gate_completed_user_ids")
         val KEY_GATE_EXEMPT = stringSetPreferencesKey("gate_exempt_until")
+        val KEY_GATE_PROMPT_MUTED = stringSetPreferencesKey("gate_prompt_muted_user_ids")
     }
 }
 
