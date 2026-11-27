@@ -1,8 +1,11 @@
 package dao3.pickcat.core.ui
 
 import android.text.Html
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
@@ -157,8 +160,49 @@ fun htmlToAnnotated(html: String?): AnnotatedString {
     }
 }
 
-fun extractImageUrls(html: String?): List<String> {
-    if (html.isNullOrBlank()) return emptyList()
+/**
+ * Turns the `URL` string annotations produced by [htmlToAnnotated] into real
+ * Compose links, so tapping a link opens it instead of only being selectable.
+ */
+fun linkifyAnnotated(
+    source: AnnotatedString,
+    linkColor: Color,
+    onClick: (String) -> Unit,
+): AnnotatedString {
+    if (source.isEmpty()) return source
+    val urls = source.getStringAnnotations("URL", 0, source.length).toList()
+    if (urls.isEmpty()) return source
+    return buildAnnotatedString {
+        append(source)
+        urls.forEach { annotation ->
+            val url = annotation.item
+            val start = annotation.start.coerceIn(0, length)
+            val end = annotation.end.coerceIn(start, length)
+            if (start >= end) return@forEach
+            addStyle(
+                SpanStyle(color = linkColor, textDecoration = TextDecoration.Underline),
+                start,
+                end,
+            )
+            addLink(
+                LinkAnnotation.Clickable(
+                    tag = url,
+                    styles = TextLinkStyles(
+                        style = SpanStyle(
+                            color = linkColor,
+                            textDecoration = TextDecoration.Underline,
+                        ),
+                    ),
+                    linkInteractionListener = { onClick(url) },
+                ),
+                start,
+                end,
+            )
+        }
+    }
+}
+
+fun extractImageUrls(html: String?): List<String> {    if (html.isNullOrBlank()) return emptyList()
     return IMAGE_PATTERN.findAll(html)
         .mapNotNull { it.groupValues.getOrNull(1) }
         .mapNotNull { absoluteUrl(it) }

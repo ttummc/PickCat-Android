@@ -95,7 +95,9 @@ import dao3.pickcat.feature.topic.TopicDetailScreen
 import dao3.pickcat.feature.work.WorkDetailScreen
 import dao3.pickcat.feature.work.WorksScreen
 import dao3.pickcat.core.ui.EmptyState
+import dao3.pickcat.core.ui.LocalOpenLink
 import dao3.pickcat.core.ui.OfflineBanner
+import dao3.pickcat.feature.settings.openExternalUrl
 
 private object Routes {
     const val HOME = "home"
@@ -241,7 +243,17 @@ fun PickCatMainShell(
         }
     }
 
+    val openLink: (String) -> Unit = { url ->
+        val route = resolveDeepLinkRoute(url)
+        when {
+            route == null -> openExternalUrl(context, url)
+            route.startsWith("top:") -> navigateTopLevel(route.removePrefix("top:"))
+            else -> navController.navigate(route) { launchSingleTop = true }
+        }
+    }
+
     val content: @Composable () -> Unit = {
+        CompositionLocalProvider(LocalOpenLink provides openLink) {
         NavHost(
             navController = navController,
             startDestination = Routes.HOME,
@@ -496,6 +508,7 @@ fun PickCatMainShell(
                     onOpenTopic = { topic -> navController.navigate(Routes.topic(topic.id)) },
                 )
             }
+        }
         }
     }
 

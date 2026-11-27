@@ -47,12 +47,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -679,6 +681,12 @@ fun UserRow(
     }
 }
 
+/**
+ * Handles links tapped inside rendered post content. The app installs a handler
+ * that keeps PickCat links inside the app and sends external links elsewhere.
+ */
+val LocalOpenLink = staticCompositionLocalOf<((String) -> Unit)?> { null }
+
 @Composable
 fun RichContent(
     html: String?,
@@ -686,14 +694,29 @@ fun RichContent(
 ) {
     val parts = androidx.compose.runtime.remember(html) { parseRichParts(html) }
     var previewUrl by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+    val openLink = LocalOpenLink.current
+    val uriHandler = LocalUriHandler.current
+    val linkColor = MaterialTheme.colorScheme.primary
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         parts.forEach { part ->
             when (part) {
-                is RichPart.Text -> Text(
-                    part.annotated,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
+                is RichPart.Text -> {
+                    val annotated = remember(part.annotated, openLink, linkColor) {
+                        linkifyAnnotated(part.annotated, linkColor) { url ->
+                            val handler = openLink
+                            if (handler != null) {
+                                handler(url)
+                            } else {
+                                runCatching { uriHandler.openUri(url) }
+                            }
+                        }
+                    }
+                    Text(
+                        annotated,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                }
                 is RichPart.Image -> PickCatImage(
                     url = part.url,
                     contentDescription = if (part.emoji) "表情" else "帖子图片",
