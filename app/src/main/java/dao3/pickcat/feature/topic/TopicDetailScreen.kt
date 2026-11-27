@@ -569,12 +569,18 @@ fun TopicDetailScreen(
                         Spacer(Modifier.width(10.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             val options = listOf("hot" to "热评", "latest" to "最新")
-                            options.forEach { (value, label) ->
-                                FilterChip(
-                                    selected = state.postsSort == value,
-                                    onClick = { viewModel.setPostsSort(value) },
-                                    label = { Text(label) },
-                                )
+                            SingleChoiceSegmentedButtonRow {
+                                options.forEachIndexed { index, (value, label) ->
+                                    SegmentedButton(
+                                        selected = state.postsSort == value,
+                                        onClick = { viewModel.setPostsSort(value) },
+                                        shape = SegmentedButtonDefaults.itemShape(
+                                            index = index,
+                                            count = options.size,
+                                        ),
+                                        label = { Text(label) },
+                                    )
+                                }
                             }
                         }
                     }
