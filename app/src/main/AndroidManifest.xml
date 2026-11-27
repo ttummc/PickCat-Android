@@ -38,11 +38,61 @@
             android:name=".MainActivity"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode"
             android:exported="true"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.PickCat"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="pickcat.dao3.fun"
+                    android:pathPrefix="/forum/post/" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="pickcat.dao3.fun"
+                    android:pathPrefix="/profile/" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="pickcat.dao3.fun"
+                    android:pathPrefix="/works/" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="https"
+                    android:host="pickcat.dao3.fun"
+                    android:path="/forum" />
+                <data
+                    android:scheme="https"
+                    android:host="pickcat.dao3.fun"
+                    android:path="/works" />
+                <data
+                    android:scheme="https"
+                    android:host="pickcat.dao3.fun"
+                    android:path="/settings" />
+                <data
+                    android:scheme="https"
+                    android:host="pickcat.dao3.fun"
+                    android:path="/notifications" />
             </intent-filter>
         </activity>
 

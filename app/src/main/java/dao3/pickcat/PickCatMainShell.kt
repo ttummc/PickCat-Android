@@ -138,6 +138,8 @@ private data class MainDestination(
 fun PickCatMainShell(
     appViewModel: AppViewModel,
     snackbarHostState: androidx.compose.material3.SnackbarHostState,
+    deepLink: String? = null,
+    onDeepLinkConsumed: () -> Unit = {},
 ) {
     val navController = rememberNavController()
     val session by appViewModel.session.collectAsStateWithLifecycle()
@@ -214,6 +216,18 @@ fun PickCatMainShell(
             launchSingleTop = true
             restoreState = true
         }
+    }
+
+    LaunchedEffect(deepLink) {
+        val link = deepLink ?: return@LaunchedEffect
+        resolveDeepLinkRoute(link)?.let { route ->
+            if (route.startsWith("top:")) {
+                navigateTopLevel(route.removePrefix("top:"))
+            } else {
+                navController.navigate(route) { launchSingleTop = true }
+            }
+        }
+        onDeepLinkConsumed()
     }
 
     var lastHomeBackAt by remember { mutableLongStateOf(0L) }
@@ -668,6 +682,30 @@ private fun WorksTwoPane(
                 }
             }
         }
+    }
+}
+
+private fun resolveDeepLinkRoute(link: String): String? {
+    val uri = runCatching { android.net.Uri.parse(link) }.getOrNull() ?: return null
+    if (uri.host != "pickcat.dao3.fun") return null
+    val segments = uri.pathSegments.orEmpty()
+    val postNumber = uri.fragment
+        ?.takeIf { it.startsWith("post-") }
+        ?.removePrefix("post-")
+        ?.toIntOrNull()
+    return when {
+        segments.isEmpty() -> "top:${Routes.HOME}"
+        segments[0] == "forum" && segments.size >= 3 && segments[1] == "post" ->
+            Routes.topic(segments[2], postNumber)
+        segments[0] == "profile" && segments.size >= 2 ->
+            Routes.profile(segments[1])
+        segments[0] == "works" && segments.size >= 2 ->
+            Routes.work(segments[1])
+        segments[0] == "forum" -> "top:${Routes.FORUM}"
+        segments[0] == "works" -> "top:${Routes.WORKS}"
+        segments[0] == "settings" -> Routes.SETTINGS
+        segments[0] == "notifications" -> Routes.NOTIFICATIONS
+        else -> null
     }
 }
 

@@ -3,6 +3,14 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.71] - 2026-11-27
+
+### 新增
+
+- 支持用 PickCat 打开 `https://pickcat.dao3.fun` 官方链接，系统中选中或点击该域名链接时会出现 PickCat 选项。
+- 支持的链接包括帖子（含 `#post-N` 楼层定位）、用户主页、作品、论坛、作品列表、设置和通知。
+- 未登录时会保留链接，登录完成后自动跳转。
+
 ## [0.1.70] - 2026-11-26
 
 ### 移除
@@ -537,6 +545,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.71]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.71
 [0.1.70]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.70
 [0.1.69]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.69
 [0.1.68]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.68

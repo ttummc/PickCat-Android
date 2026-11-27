@@ -66,7 +66,11 @@ import kotlinx.coroutines.launch
 private enum class RootStage { SPLASH, ERROR, MAINTENANCE, LOGIN, MAIN }
 
 @Composable
-fun PickCatRoot(viewModel: AppViewModel) {
+fun PickCatRoot(
+    viewModel: AppViewModel,
+    deepLink: String? = null,
+    onDeepLinkConsumed: () -> Unit = {},
+) {
     val session by viewModel.session.collectAsStateWithLifecycle()
     val sessionExpired by viewModel.sessionExpired.collectAsStateWithLifecycle()
     val maintenance by viewModel.maintenance.collectAsStateWithLifecycle()
@@ -142,6 +146,8 @@ fun PickCatRoot(viewModel: AppViewModel) {
                 RootStage.MAIN -> PickCatMainShell(
                     appViewModel = viewModel,
                     snackbarHostState = snackbarHostState,
+                    deepLink = deepLink,
+                    onDeepLinkConsumed = onDeepLinkConsumed,
                 )
             }
         }
