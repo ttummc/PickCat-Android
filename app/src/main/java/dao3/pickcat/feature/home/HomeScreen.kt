@@ -539,6 +539,10 @@ fun HomeScreen(
                 }
             },
             onDismiss = { showAccountSheet = false },
+            onSignOut = {
+                showAccountSheet = false
+                appViewModel.logoutToGuest()
+            },
         )
     }
 }

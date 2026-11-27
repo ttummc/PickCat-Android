@@ -3,6 +3,16 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.74] - 2026-11-27
+
+### 新增
+
+- 支持游客浏览：未登录也可以浏览社区、论坛、作品和帖子详情。
+- 首次使用新增欢迎页，可选择登录或“不登录，先逛一逛”。
+- 游客状态下“我的”页面显示登录入口。
+- 账号切换面板新增“退出当前账号”，退出后以游客身份继续浏览，已保存账号仍保留在本机。
+- 游客进行发帖等写操作时会提示先登录。
+
 ## [0.1.73] - 2026-11-27
 
 ### 新增
@@ -564,6 +574,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.74]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.74
 [0.1.73]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.73
 [0.1.72]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.72
 [0.1.71]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.71

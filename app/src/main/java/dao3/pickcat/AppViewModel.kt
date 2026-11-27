@@ -93,11 +93,14 @@ class AppViewModel : ViewModel() {
                     val expiredUserId = session.value.user?.id
                     sessionRepository.expireSession()
                     expiredUserId?.let { AppGraph.accountStore.remove(it) }
+                    preferencesRepository.setGuestMode(true)
                     if (!announcedExpiry) {
                         announcedExpiry = true
                         _sessionExpired.value = true
                         _messages.tryEmit("登录状态已失效，请重新登录")
                     }
+                } else if (session.value.user == null) {
+                    _messages.tryEmit("请先登录 PickCat 账号")
                 }
             }
         }
@@ -131,8 +134,20 @@ class AppViewModel : ViewModel() {
     fun logout() {
         viewModelScope.launch {
             val confirmed = sessionRepository.signOut()
+            preferencesRepository.setGuestMode(true)
             _messages.tryEmit(if (confirmed) "已退出登录" else "已退出登录（服务器未确认）")
         }
+    }
+
+    /** Leaves the signed-in account and keeps browsing as a guest. */
+    fun logoutToGuest() = logout()
+
+    fun continueAsGuest() {
+        viewModelScope.launch { preferencesRepository.setGuestMode(true) }
+    }
+
+    fun leaveGuestMode() {
+        viewModelScope.launch { preferencesRepository.setGuestMode(false) }
     }
 
     suspend fun saveCurrentAccount() {

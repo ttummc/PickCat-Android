@@ -785,6 +785,10 @@ fun SettingsScreen(
                 }
             },
             onDismiss = { showAccountSheet = false },
+            onSignOut = {
+                showAccountSheet = false
+                appViewModel.logoutToGuest()
+            },
         )
     }
 }
@@ -959,6 +963,7 @@ fun AccountSwitcherSheet(
     accounts: List<SavedAccount>,
     onSelect: (SavedAccount) -> Unit,
     onAdd: () -> Unit,
+    onSignOut: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -1033,6 +1038,30 @@ fun AccountSwitcherSheet(
                     .clickable(onClick = onAdd)
                     .padding(horizontal = 8.dp),
             )
+            if (accounts.isNotEmpty() && currentUserId != null) {
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            "退出当前账号",
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    },
+                    supportingContent = { Text("退出后以游客身份继续浏览，账号仍保存在本机") },
+                    leadingContent = {
+                        Icon(
+                            Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                        )
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = onSignOut)
+                        .padding(horizontal = 8.dp),
+                )
+            }
         }
     }
 }

@@ -84,6 +84,7 @@ import dao3.pickcat.feature.library.LibraryScreen
 import dao3.pickcat.feature.media.FileStateTab
 import dao3.pickcat.feature.media.MediaScreen
 import dao3.pickcat.feature.notifications.LikesScreen
+import dao3.pickcat.feature.account.GuestAccountScreen
 import dao3.pickcat.feature.notifications.NotificationsScreen
 import dao3.pickcat.feature.profile.CollectionScreen
 import dao3.pickcat.feature.profile.ProfileScreen
@@ -259,6 +260,14 @@ fun PickCatMainShell(
         }
     }
 
+    fun requireLogin(action: () -> Unit) {
+        if (currentUser == null) {
+            scope.launch { snackbarHostState.showSnackbar("请先登录 PickCat 账号后再操作") }
+        } else {
+            action()
+        }
+    }
+
     val content: @Composable () -> Unit = {
         CompositionLocalProvider(
             LocalOpenLink provides openLink,
@@ -323,7 +332,7 @@ fun PickCatMainShell(
                     onOpenCategory = { tag -> navController.navigate(Routes.category(tag.slug)) },
                     onOpenUser = { user -> navController.navigate(Routes.profile(user.id)) },
                     onOpenWork = { work -> navController.navigate(Routes.work(work.id)) },
-                    onCompose = { navController.navigate(Routes.COMPOSER) },
+                    onCompose = { requireLogin { navController.navigate(Routes.COMPOSER) } },
                     onSearch = { navController.navigate(Routes.SEARCH) },
                     onNotifications = { navigateTopLevel(Routes.NOTIFICATIONS) },
                 )
@@ -331,7 +340,7 @@ fun PickCatMainShell(
             composable(Routes.FORUM) {                if (widthSizeClass == WindowWidthSizeClass.Expanded) {
                     ForumTwoPane(
                         onOpenCategory = { tag -> navController.navigate(Routes.category(tag.slug)) },
-                        onCompose = { navController.navigate(Routes.COMPOSER) },
+                        onCompose = { requireLogin { navController.navigate(Routes.COMPOSER) } },
                         onSearch = { navController.navigate(Routes.SEARCH) },
                         onOpenUser = { user -> navController.navigate(Routes.profile(user.id)) },
                     )
@@ -340,7 +349,7 @@ fun PickCatMainShell(
                         onOpenTopic = { topic -> navController.navigate(Routes.topic(topic.id)) },
                         onOpenCategory = { tag -> navController.navigate(Routes.category(tag.slug)) },
                         onOpenUser = { user -> navController.navigate(Routes.profile(user.id)) },
-                        onCompose = { navController.navigate(Routes.COMPOSER) },
+                        onCompose = { requireLogin { navController.navigate(Routes.COMPOSER) } },
                         onSearch = { navController.navigate(Routes.SEARCH) },
                     )
                 }
@@ -354,7 +363,7 @@ fun PickCatMainShell(
                     onBack = { navController.popBackStack() },
                     onOpenTopic = { topic -> navController.navigate(Routes.topic(topic.id)) },
                     onOpenUser = { user -> navController.navigate(Routes.profile(user.id)) },
-                    onCompose = { navController.navigate(Routes.COMPOSER) },
+                    onCompose = { requireLogin { navController.navigate(Routes.COMPOSER) } },
                 )
             }
             composable(
@@ -446,6 +455,12 @@ fun PickCatMainShell(
                 )
             }
             composable(Routes.ME) {
+                if (currentUser == null) {
+                    GuestAccountScreen(
+                        onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                    )
+                    return@composable
+                }
                 val userId = currentUser?.id.orEmpty()
                 ProfileScreen(
                     userId = userId,

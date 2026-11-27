@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
@@ -29,6 +30,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -114,6 +116,7 @@ fun PickCatRoot(
             maintenance -> RootStage.MAINTENANCE
             !session.ready -> RootStage.SPLASH
             user == null && session.error != null -> RootStage.ERROR
+            user == null && preferences.guestMode -> RootStage.MAIN
             user == null -> RootStage.LOGIN
             else -> RootStage.MAIN
         }
@@ -142,7 +145,10 @@ fun PickCatRoot(
                         openExternalUrl(context, "https://pickcat.dao3.fun")
                     },
                 )
-                RootStage.LOGIN -> LoginLauncher()
+                RootStage.LOGIN -> WelcomeScreen(
+                    onLogin = { viewModel.leaveGuestMode() },
+                    onContinueAsGuest = { viewModel.continueAsGuest() },
+                )
                 RootStage.MAIN -> PickCatMainShell(
                     appViewModel = viewModel,
                     snackbarHostState = snackbarHostState,
@@ -306,17 +312,15 @@ private fun MaintenanceScreen(
 }
 
 @Composable
-private fun LoginLauncher() {
+private fun WelcomeScreen(
+    onLogin: () -> Unit,
+    onContinueAsGuest: () -> Unit,
+) {
     val context = LocalContext.current
-    var launched by remember { mutableStateOf(false) }
 
     fun openLogin() {
-        launched = true
+        onLogin()
         context.startActivity(Intent(context, LoginWebViewActivity::class.java))
-    }
-
-    LaunchedEffect(Unit) {
-        if (!launched) openLogin()
     }
 
     Surface(
@@ -324,7 +328,10 @@ private fun LoginLauncher() {
         color = MaterialTheme.colorScheme.background,
     ) {
         Box(
-            modifier = Modifier.fillMaxSize().padding(32.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding()
+                .padding(horizontal = 32.dp, vertical = 24.dp),
             contentAlignment = Alignment.Center,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -336,14 +343,30 @@ private fun LoginLauncher() {
                 )
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    "正在打开官方登录页",
+                    "登录后可发帖、回复、收藏并同步账号数据",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Spacer(Modifier.height(24.dp))
-                Button(onClick = ::openLogin) {
-                    Text("重新打开登录页")
+                Spacer(Modifier.height(40.dp))
+                Button(
+                    onClick = ::openLogin,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("登录 PickCat 账号")
                 }
+                Spacer(Modifier.height(12.dp))
+                OutlinedButton(
+                    onClick = onContinueAsGuest,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("不登录，先逛一逛")
+                }
+                Spacer(Modifier.height(16.dp))
+                Text(
+                    "以游客身份可以浏览社区、论坛和作品，写操作需要登录。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }

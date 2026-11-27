@@ -23,6 +23,7 @@ data class AppPreferences(
     val gateCompletedUserIds: Set<String> = emptySet(),
     val gateExemptUntil: Map<String, Long> = emptyMap(),
     val gatePromptMutedUserIds: Set<String> = emptySet(),
+    val guestMode: Boolean = false,
 )
 
 class UserPreferences(private val context: Context) {
@@ -38,6 +39,7 @@ class UserPreferences(private val context: Context) {
             gateCompletedUserIds = values[KEY_GATE_COMPLETED] ?: emptySet(),
             gateExemptUntil = parseGateExemptions(values[KEY_GATE_EXEMPT]),
             gatePromptMutedUserIds = values[KEY_GATE_PROMPT_MUTED] ?: emptySet(),
+            guestMode = values[KEY_GUEST_MODE] ?: false,
         )
     }
 
@@ -88,6 +90,10 @@ class UserPreferences(private val context: Context) {
         }
     }
 
+    suspend fun setGuestMode(enabled: Boolean) {
+        store.edit { it[KEY_GUEST_MODE] = enabled }
+    }
+
     suspend fun recordSearch(query: String) {
         val trimmed = query.trim()
         if (trimmed.isEmpty()) return
@@ -126,6 +132,7 @@ class UserPreferences(private val context: Context) {
         val KEY_GATE_COMPLETED = stringSetPreferencesKey("gate_completed_user_ids")
         val KEY_GATE_EXEMPT = stringSetPreferencesKey("gate_exempt_until")
         val KEY_GATE_PROMPT_MUTED = stringSetPreferencesKey("gate_prompt_muted_user_ids")
+        val KEY_GUEST_MODE = booleanPreferencesKey("guest_mode")
     }
 }
 
