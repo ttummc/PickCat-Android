@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.FormatItalic
 import androidx.compose.material.icons.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.FormatQuote
 import androidx.compose.material.icons.filled.Functions
+import androidx.compose.material.icons.filled.AlternateEmail
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Send
@@ -93,6 +94,8 @@ import dao3.pickcat.core.network.PickCatApi
 import dao3.pickcat.core.network.Tag
 import dao3.pickcat.core.ui.MarkdownPreview
 import dao3.pickcat.core.ui.PickCatTextField
+import dao3.pickcat.feature.mention.MentionPickerSheet
+import dao3.pickcat.feature.mention.insertMention
 import dao3.pickcat.core.ui.relativeTime
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -294,6 +297,7 @@ fun ComposerScreen(
         mutableStateOf(TextFieldValue(""))
     }
     var imageInsertRange by remember { mutableStateOf<TextRange?>(null) }
+    var showMentionPicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { snackbarHostState.showSnackbar(it) }
@@ -479,6 +483,7 @@ fun ComposerScreen(
                         onLink = {
                             applyEdit { value -> wrapValue(value, "[", "](https://)", "链接文字") }
                         },
+                        onMention = { showMentionPicker = true },
                         onImage = {
                             imageInsertRange = fieldValue.selection
                             picker.launch("image/*")
@@ -577,6 +582,24 @@ fun ComposerScreen(
         }
     }
 
+    if (showMentionPicker) {
+        MentionPickerSheet(
+            onPick = { user ->
+                showMentionPicker = false
+                applyEdit { value ->
+                    val (updated, caret) = insertMention(
+                        text = value.text,
+                        selectionStart = value.selection.start,
+                        selectionEnd = value.selection.end,
+                        userId = user.id,
+                    )
+                    value.copy(text = updated, selection = TextRange(caret))
+                }
+            },
+            onDismiss = { showMentionPicker = false },
+        )
+    }
+
     if (state.submitted) {
         AlertDialog(
             onDismissRequest = {
@@ -609,6 +632,7 @@ private fun MarkdownToolbar(
     onTable: () -> Unit,
     onFormula: () -> Unit,
     onLink: () -> Unit,
+    onMention: () -> Unit,
     onImage: () -> Unit,
     uploading: Int,
 ) {
@@ -635,6 +659,7 @@ private fun MarkdownToolbar(
             ToolButton(Icons.Default.TableChart, "表格", onTable)
             ToolButton(Icons.Default.Functions, "公式", onFormula)
             ToolButton(Icons.Default.Link, "链接", onLink)
+            ToolButton(Icons.Default.AlternateEmail, "提及用户", onMention)
             Spacer(Modifier.width(6.dp))
             if (uploading > 0) {
                 CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)

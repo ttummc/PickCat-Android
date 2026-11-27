@@ -687,6 +687,9 @@ fun UserRow(
  */
 val LocalOpenLink = staticCompositionLocalOf<((String) -> Unit)?> { null }
 
+/** Handles taps on `@昵称` mentions inside rendered content. */
+val LocalOpenMention = staticCompositionLocalOf<((String) -> Unit)?> { null }
+
 @Composable
 fun RichContent(
     html: String?,
@@ -695,14 +698,15 @@ fun RichContent(
     val parts = androidx.compose.runtime.remember(html) { parseRichParts(html) }
     var previewUrl by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
     val openLink = LocalOpenLink.current
+    val openMention = LocalOpenMention.current
     val uriHandler = LocalUriHandler.current
     val linkColor = MaterialTheme.colorScheme.primary
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         parts.forEach { part ->
             when (part) {
                 is RichPart.Text -> {
-                    val annotated = remember(part.annotated, openLink, linkColor) {
-                        linkifyAnnotated(part.annotated, linkColor) { url ->
+                    val annotated = remember(part.annotated, openLink, openMention, linkColor) {
+                        val withLinks = linkifyAnnotated(part.annotated, linkColor) { url ->
                             val handler = openLink
                             if (handler != null) {
                                 handler(url)
@@ -710,6 +714,12 @@ fun RichContent(
                                 runCatching { uriHandler.openUri(url) }
                             }
                         }
+                        mentionifyAnnotated(
+                            source = withLinks,
+                            mentionColor = linkColor,
+                            fontWeight = FontWeight.Medium,
+                            onClick = openMention,
+                        )
                     }
                     Text(
                         annotated,

@@ -96,6 +96,7 @@ import dao3.pickcat.feature.work.WorkDetailScreen
 import dao3.pickcat.feature.work.WorksScreen
 import dao3.pickcat.core.ui.EmptyState
 import dao3.pickcat.core.ui.LocalOpenLink
+import dao3.pickcat.core.ui.LocalOpenMention
 import dao3.pickcat.core.ui.OfflineBanner
 import dao3.pickcat.feature.settings.openExternalUrl
 
@@ -244,8 +245,14 @@ fun PickCatMainShell(
     }
 
     val openLink: (String) -> Unit = { url ->
+        val mentionUserId = url.removePrefix("pickcat://user/")
         val route = resolveDeepLinkRoute(url)
         when {
+            url.startsWith("pickcat://user/") &&
+                mentionUserId.isNotBlank() &&
+                mentionUserId != url -> navController.navigate(Routes.profile(mentionUserId)) {
+                launchSingleTop = true
+            }
             route == null -> openExternalUrl(context, url)
             route.startsWith("top:") -> navigateTopLevel(route.removePrefix("top:"))
             else -> navController.navigate(route) { launchSingleTop = true }
@@ -253,7 +260,25 @@ fun PickCatMainShell(
     }
 
     val content: @Composable () -> Unit = {
-        CompositionLocalProvider(LocalOpenLink provides openLink) {
+        CompositionLocalProvider(
+            LocalOpenLink provides openLink,
+            LocalOpenMention provides { target ->
+                if (target.matches(Regex("""\d+|[0-9a-fA-F-]{8,36}"""))) {
+                    navController.navigate(Routes.profile(target)) { launchSingleTop = true }
+                } else {
+                    scope.launch {
+                        val user = runCatching {
+                            AppGraph.container.api.searchUsers(target, limit = 1).items.firstOrNull()
+                        }.getOrNull()
+                        if (user != null) {
+                            navController.navigate(Routes.profile(user.id)) { launchSingleTop = true }
+                        } else {
+                            snackbarHostState.showSnackbar("没有找到用户 $target")
+                        }
+                    }
+                }
+            },
+        ) {
         NavHost(
             navController = navController,
             startDestination = Routes.HOME,

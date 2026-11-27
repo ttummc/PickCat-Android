@@ -202,6 +202,65 @@ fun linkifyAnnotated(
     }
 }
 
+/** PickCat mentions are written as `@<user uuid>`; plain `@昵称` is also highlighted. */
+private val MENTION_PATTERN = Regex(
+    """(?<![\w@])@([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|[\w\u4e00-\u9fa5-]{1,32})""",
+)
+
+internal fun isUserIdMention(value: String): Boolean =
+    Regex("""^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$""")
+        .matches(value)
+
+/**
+ * Highlights `@用户ID` mentions (and legacy `@昵称`) and makes them tappable.
+ * Mentions already inside a URL range are skipped so links are not touched.
+ */
+fun mentionifyAnnotated(
+    source: AnnotatedString,
+    mentionColor: Color,
+    fontWeight: FontWeight,
+    onClick: ((String) -> Unit)?,
+): AnnotatedString {
+    if (source.isEmpty()) return source
+    val urlRanges = source.getStringAnnotations("URL", 0, source.length)
+        .map { it.start..it.end }
+    val matches = MENTION_PATTERN.findAll(source.text).toList()
+    if (matches.isEmpty()) return source
+    return buildAnnotatedString {
+        append(source)
+        matches.forEach { match ->
+            val start = match.range.first
+            val end = match.range.last + 1
+            if (urlRanges.any { overlap -> start < overlap.last && end > overlap.first }) {
+                return@forEach
+            }
+            addStyle(
+                SpanStyle(color = mentionColor, fontWeight = fontWeight),
+                start,
+                end,
+            )
+            val target = match.groupValues[1]
+            if (onClick != null) {
+                addLink(
+                    LinkAnnotation.Clickable(
+                        tag = "mention:$target",
+                        styles = TextLinkStyles(
+                            style = SpanStyle(
+                                color = mentionColor,
+                                fontWeight = fontWeight,
+                                textDecoration = TextDecoration.None,
+                            ),
+                        ),
+                        linkInteractionListener = { onClick(target) },
+                    ),
+                    start,
+                    end,
+                )
+            }
+        }
+    }
+}
+
 fun extractImageUrls(html: String?): List<String> {    if (html.isNullOrBlank()) return emptyList()
     return IMAGE_PATTERN.findAll(html)
         .mapNotNull { it.groupValues.getOrNull(1) }

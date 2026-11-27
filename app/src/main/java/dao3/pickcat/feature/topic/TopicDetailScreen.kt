@@ -42,6 +42,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.ChatBubbleOutline
+import androidx.compose.material.icons.filled.AlternateEmail
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -104,6 +105,10 @@ import dao3.pickcat.core.ui.ErrorState
 import dao3.pickcat.core.ui.LoadingState
 import dao3.pickcat.core.ui.PostContent
 import dao3.pickcat.core.ui.PickCatTextField
+import dao3.pickcat.core.ui.RichContent
+import dao3.pickcat.feature.mention.MentionPickerSheet
+import dao3.pickcat.feature.mention.appendMention
+import dao3.pickcat.feature.mention.rememberMentionHtml
 import dao3.pickcat.core.ui.TagCloud
 import dao3.pickcat.core.ui.ThreadedReply
 import dao3.pickcat.core.ui.compactNumber
@@ -697,6 +702,12 @@ fun TopicDetailScreen(
 }
 
 @Composable
+private fun MentionAwareContent(post: Post) {
+    val html = rememberMentionHtml(post.cookedHtml)
+    RichContent(html = html)
+}
+
+@Composable
 private fun ReplyComposer(
     replyText: String,
     replyTo: Post?,
@@ -707,6 +718,16 @@ private fun ReplyComposer(
     onSubmit: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    var showMentionPicker by remember { mutableStateOf(false) }
+    if (showMentionPicker) {
+        MentionPickerSheet(
+            onPick = { user ->
+                showMentionPicker = false
+                onTextChange(appendMention(replyText, user.id))
+            },
+            onDismiss = { showMentionPicker = false },
+        )
+    }
     Surface(
         modifier = modifier.fillMaxWidth().imePadding(),
         color = MaterialTheme.colorScheme.surfaceContainer,
@@ -747,13 +768,23 @@ private fun ReplyComposer(
                         null
                     },
                 )
+                IconButton(
+                    onClick = { showMentionPicker = true },
+                    enabled = !submitting,
+                    modifier = Modifier.size(40.dp),
+                ) {
+                    Icon(
+                        Icons.Default.AlternateEmail,
+                        contentDescription = "提及用户",
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
                 FilledIconButton(
                     onClick = onSubmit,
                     enabled = replyText.isNotBlank() && !submitting,
                     modifier = Modifier.size(56.dp),
                     shape = MaterialTheme.shapes.medium,
-                ) {
-                    if (submitting) {
+                ) {                    if (submitting) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
                             strokeWidth = 2.dp,
@@ -808,7 +839,7 @@ private fun CommentRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         } else {
-            PostContent(post)
+            MentionAwareContent(post)
         }
         if (post.replyToPostNumber != null) {
             Text(
@@ -898,7 +929,7 @@ private fun PostCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         } else {
-            PostContent(post)
+            MentionAwareContent(post)
         }
         if (post.replyToPostNumber != null) {
             Text(
