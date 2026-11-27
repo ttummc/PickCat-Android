@@ -8,6 +8,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -1039,28 +1040,19 @@ fun AccountSwitcherSheet(
                     .padding(horizontal = 8.dp),
             )
             if (accounts.isNotEmpty() && currentUserId != null) {
-                HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                ListItem(
-                    headlineContent = {
+                HorizontalDivider(Modifier.padding(top = 8.dp))
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    TextButton(onClick = onSignOut) {
                         Text(
-                            "退出当前账号",
-                            color = MaterialTheme.colorScheme.error,
+                            "退出账号",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                    },
-                    supportingContent = { Text("退出后以游客身份继续浏览，账号仍保存在本机") },
-                    leadingContent = {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Logout,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.error,
-                        )
-                    },
-                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(onClick = onSignOut)
-                        .padding(horizontal = 8.dp),
-                )
+                    }
+                }
             }
         }
     }

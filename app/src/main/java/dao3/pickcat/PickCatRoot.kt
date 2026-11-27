@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -327,14 +329,25 @@ private fun WelcomeScreen(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .safeDrawingPadding()
-                .padding(horizontal = 32.dp, vertical = 24.dp),
-            contentAlignment = Alignment.Center,
+                .padding(horizontal = 24.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Image(
+                    painter = painterResource(R.drawable.pickcat_logo),
+                    contentDescription = "PickCat",
+                    modifier = Modifier.size(96.dp),
+                    contentScale = ContentScale.Fit,
+                )
+                Spacer(Modifier.height(24.dp))
                 Text(
                     "PickCat",
                     style = MaterialTheme.typography.headlineMedium.copy(
@@ -343,30 +356,28 @@ private fun WelcomeScreen(
                 )
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    "登录后可发帖、回复、收藏并同步账号数据",
+                    "登录后可发布内容、参与互动并同步账号数据",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
                 )
-                Spacer(Modifier.height(40.dp))
-                Button(
-                    onClick = ::openLogin,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("登录 PickCat 账号")
-                }
-                Spacer(Modifier.height(12.dp))
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
                 OutlinedButton(
                     onClick = onContinueAsGuest,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.weight(1f),
                 ) {
-                    Text("不登录，先逛一逛")
+                    Text("游客浏览")
                 }
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    "以游客身份可以浏览社区、论坛和作品，写操作需要登录。",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Button(
+                    onClick = ::openLogin,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text("登录账号")
+                }
             }
         }
     }

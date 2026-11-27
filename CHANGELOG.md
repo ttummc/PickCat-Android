@@ -3,6 +3,16 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.75] - 2026-11-27
+
+### Changed
+
+- The welcome screen now shows the PickCat logo.
+- Welcome copy is more formal and concise.
+- The small explanatory line at the bottom was removed.
+- Both welcome actions sit side by side at the bottom: guest browsing on the left, sign in on the right.
+- The sign-out entry in the account switcher is now a subdued text button at the bottom instead of a prominent red row.
+
 ## [0.1.74] - 2026-11-27
 
 ### Added
@@ -573,6 +583,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.75]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.75
 [0.1.74]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.74
 [0.1.73]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.73
 [0.1.72]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.72

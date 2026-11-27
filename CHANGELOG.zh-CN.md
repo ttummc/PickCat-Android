@@ -3,6 +3,16 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.75] - 2026-11-27
+
+### 优化
+
+- 欢迎页新增 PickCat 标识。
+- 欢迎页文案改为更严谨的表述。
+- 移除欢迎页底部说明小字。
+- 欢迎页按钮改为底部并排：左侧“游客浏览”，右侧“登录账号”。
+- 账号切换面板的退出入口改为底部弱化的文字按钮，不再使用醒目的红色条目。
+
 ## [0.1.74] - 2026-11-27
 
 ### 新增
@@ -574,6 +584,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.75]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.75
 [0.1.74]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.74
 [0.1.73]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.73
 [0.1.72]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.72

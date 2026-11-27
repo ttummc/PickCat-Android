@@ -64,7 +64,7 @@ fun GuestAccountScreen(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "登录后可发帖、回复、收藏作品并同步账号数据。",
+                "登录后可发布内容、参与互动并同步账号数据。",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
