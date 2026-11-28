@@ -31,7 +31,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.AlternateEmail
 import androidx.compose.material.icons.filled.ChatBubbleOutline
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.MonetizationOn
@@ -43,6 +46,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -50,10 +54,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedCard
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -89,6 +93,8 @@ import dao3.pickcat.core.ui.PickCatTextField
 import dao3.pickcat.core.ui.RichContent
 import dao3.pickcat.core.ui.ThreadedReply
 import dao3.pickcat.core.ui.WorkCard
+import dao3.pickcat.feature.mention.MentionPickerSheet
+import dao3.pickcat.feature.mention.appendMention
 import dao3.pickcat.core.ui.compactNumber
 import dao3.pickcat.core.ui.relativeTime
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -339,7 +345,7 @@ fun WorkDetailScreen(
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize().imePadding(),
+        modifier = Modifier.fillMaxSize(),
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
@@ -381,7 +387,7 @@ fun WorkDetailScreen(
                     ) {
                         LazyColumn(
                             modifier = Modifier.widthIn(max = 860.dp).fillMaxWidth().fillMaxHeight(),
-                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
+                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                     item {
@@ -567,66 +573,16 @@ fun WorkDetailScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                "评论",
+                                "全部评论",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 modifier = Modifier.weight(1f),
                             )
                             Text(
-                                compactNumber(work.commentCount),
+                                compactNumber(threadedComments.size),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
-                        }
-                    }
-                    item {
-                        Card(
-                            shape = MaterialTheme.shapes.large,
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-                            ),
-                        ) {
-                            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                if (replyTo != null) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(
-                                            "回复 #$replyTo",
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = MaterialTheme.colorScheme.primary,
-                                            modifier = Modifier.weight(1f),
-                                        )
-                                        TextButton(onClick = { replyTo = null }) { Text("取消") }
-                                    }
-                                }
-                                PickCatTextField(
-                                    value = commentText,
-                                    onValueChange = { commentText = it },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    placeholder = "写评论，支持 Markdown…",
-                                    minLines = 2,
-                                    maxLines = 6,
-                                )
-                                Row {
-                                    Spacer(Modifier.weight(1f))
-                                    TextButton(
-                                        enabled = commentText.isNotBlank() && !state.submitting,
-                                        onClick = {
-                                            viewModel.submitComment(commentText, replyTo) {
-                                                commentText = ""
-                                                replyTo = null
-                                            }
-                                        },
-                                    ) {
-                                        if (state.submitting) {
-                                            CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                                        } else {
-                                            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, modifier = Modifier.size(18.dp))
-                                            Spacer(Modifier.width(6.dp))
-                                            Text("发表评论")
-                                        }
-                                    }
-                                }
-                            }
                         }
                     }
                     if (threadedComments.isEmpty()) {
@@ -641,7 +597,7 @@ fun WorkDetailScreen(
                         items(threadedComments, key = { it.comment.commentNumber }) { item ->
                             val comment = item.comment
                             ThreadedReply(depth = item.depth) {
-                                WorkCommentCard(
+                                WorkCommentRow(
                                     comment = comment,
                                     liked = comment.commentNumber in state.commentLikes,
                                     likeCount = state.commentLikeCounts[comment.commentNumber] ?: comment.likeCount,
@@ -650,11 +606,28 @@ fun WorkDetailScreen(
                                     onReply = { replyTo = comment.commentNumber },
                                     onDelete = { viewModel.deleteComment(comment) },
                                     onOpenAuthor = { onOpenAuthor(comment.author) },
+                                    showDivider = item.depth == 0,
                                 )
                             }
                         }
                     }
                 }
+                WorkCommentComposer(
+                    modifier = Modifier.align(Alignment.BottomCenter),
+                    text = commentText,
+                    replyTo = replyTo,
+                    submitting = state.submitting,
+                    onTextChange = { commentText = it },
+                    onCancelReply = { replyTo = null },
+                    onSubmit = {
+                        if (commentText.isNotBlank() && !state.submitting) {
+                            viewModel.submitComment(commentText, replyTo) {
+                                commentText = ""
+                                replyTo = null
+                            }
+                        }
+                    },
+                )
             }
         }
     }
@@ -713,7 +686,7 @@ private fun WorkStat(icon: androidx.compose.ui.graphics.vector.ImageVector, text
 }
 
 @Composable
-private fun WorkCommentCard(
+private fun WorkCommentRow(
     comment: WorkComment,
     liked: Boolean,
     likeCount: Int,
@@ -722,63 +695,178 @@ private fun WorkCommentCard(
     onReply: () -> Unit,
     onDelete: () -> Unit,
     onOpenAuthor: () -> Unit,
+    showDivider: Boolean,
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            AuthorRow(
-                user = comment.author,
-                time = comment.createdAt,
-                modifier = Modifier.clickable { onOpenAuthor() },
-                trailing = {
-                    Text(
-                        "#${comment.commentNumber}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                },
-            )
-            if (comment.replyToCommentNumber != null) {
+        AuthorRow(
+            user = comment.author,
+            time = comment.createdAt,
+            modifier = Modifier.clickable { onOpenAuthor() },
+            trailing = {
                 Text(
-                    "回复 #${comment.replyToCommentNumber}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-            }
-            if (comment.deleted) {
-                Text(
-                    "该评论已删除",
-                    style = MaterialTheme.typography.bodyMedium,
+                    "#${comment.commentNumber}",
+                    style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-            } else {
-                RichContent(html = comment.displayHtml)
+            },
+        )
+        if (comment.replyToCommentNumber != null) {
+            Text(
+                "回复 #${comment.replyToCommentNumber}",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        if (comment.deleted) {
+            Text(
+                "该评论已删除",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            RichContent(html = comment.displayHtml)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+            TextButton(
+                onClick = onLike,
+                contentPadding = PaddingValues(horizontal = 8.dp),
+            ) {
+                AnimatedContent(
+                    targetState = liked,
+                    transitionSpec = {
+                        fadeIn(tween(160)) togetherWith fadeOut(tween(100))
+                    },
+                    label = "comment-like-icon",
+                ) { active ->
+                    Icon(
+                        if (active) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                Spacer(Modifier.width(4.dp))
+                Text(compactNumber(likeCount))
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                TextButton(onClick = onLike) {
-                    AnimatedContent(
-                        targetState = liked,
-                        transitionSpec = {
-                            fadeIn(tween(160)) togetherWith fadeOut(tween(100))
-                        },
-                        label = "comment-like-icon",
-                    ) { active ->
+            TextButton(
+                onClick = onReply,
+                contentPadding = PaddingValues(horizontal = 8.dp),
+            ) {
+                Icon(Icons.Default.ChatBubbleOutline, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
+                Text("回复")
+            }
+            if (canDelete) {
+                TextButton(
+                    onClick = onDelete,
+                    contentPadding = PaddingValues(horizontal = 8.dp),
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("删除")
+                }
+            }
+        }
+        if (showDivider) {
+            HorizontalDivider(
+                modifier = Modifier.padding(top = 4.dp),
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun WorkCommentComposer(
+    text: String,
+    replyTo: Int?,
+    submitting: Boolean,
+    onTextChange: (String) -> Unit,
+    onCancelReply: () -> Unit,
+    onSubmit: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var showMentionPicker by remember { mutableStateOf(false) }
+    if (showMentionPicker) {
+        MentionPickerSheet(
+            onPick = { user ->
+                showMentionPicker = false
+                onTextChange(appendMention(text, user.id))
+            },
+            onDismiss = { showMentionPicker = false },
+        )
+    }
+    Surface(
+        modifier = modifier.fillMaxWidth().imePadding(),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        tonalElevation = 3.dp,
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Row(
+                modifier = Modifier
+                    .widthIn(max = 860.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                PickCatTextField(
+                    value = text,
+                    onValueChange = onTextChange,
+                    modifier = Modifier.weight(1f),
+                    placeholder = if (replyTo == null) "写评论" else "回复 #$replyTo",
+                    singleLine = true,
+                    minLines = 1,
+                    maxLines = 1,
+                    enabled = !submitting,
+                    trailingIcon = if (replyTo != null) {
+                        {
+                            IconButton(onClick = onCancelReply) {
+                                Icon(Icons.Default.Close, contentDescription = "取消回复")
+                            }
+                        }
+                    } else {
+                        null
+                    },
+                )
+                IconButton(
+                    onClick = { showMentionPicker = true },
+                    enabled = !submitting,
+                    modifier = Modifier.size(40.dp),
+                ) {
+                    Icon(
+                        Icons.Default.AlternateEmail,
+                        contentDescription = "提及用户",
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
+                FilledIconButton(
+                    onClick = onSubmit,
+                    enabled = text.isNotBlank() && !submitting,
+                    modifier = Modifier.size(56.dp),
+                    shape = MaterialTheme.shapes.medium,
+                ) {
+                    if (submitting) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                            color = MaterialTheme.colorScheme.onPrimary,
+                        )
+                    } else {
                         Icon(
-                            if (active) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint = if (active) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                            Icons.AutoMirrored.Filled.Send,
+                            contentDescription = "发送评论",
+                            modifier = Modifier.size(20.dp),
                         )
                     }
-                    Spacer(Modifier.width(4.dp))
-                    Text(compactNumber(likeCount))
-                }
-                TextButton(onClick = onReply) { Text("回复") }
-                if (canDelete) {
-                    TextButton(onClick = onDelete) { Text("删除") }
                 }
             }
         }

@@ -3,6 +3,15 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.77] - 2026-11-28
+
+### Changed
+
+- The work detail comment section now matches the topic detail comment section.
+- Comments use a flat list layout with the same author row, body, and action buttons as topic replies.
+- The comment input is pinned to the bottom with reply targeting, mention support, and sending state.
+- The list reserves space for the input bar so the last comment is not covered.
+
 ## [0.1.76] - 2026-11-27
 
 ### Changed
@@ -591,6 +600,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.77]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.77
 [0.1.76]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.76
 [0.1.75]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.75
 [0.1.74]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.74

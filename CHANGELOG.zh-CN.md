@@ -3,6 +3,16 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.77] - 2026-11-28
+
+### 界面
+
+- 作品详情页评论区改为与帖子详情页一致的样式。
+- 评论区标题统一为“全部评论”，并显示评论数量。
+- 评论改为扁平列表样式，作者信息、正文和操作按钮排列与帖子回复一致。
+- 评论输入框固定在页面底部，支持回复指定评论、提及用户和发送状态提示。
+- 评论列表预留输入栏高度，最后一条评论不会被遮挡。
+
 ## [0.1.76] - 2026-11-27
 
 ### 界面
@@ -593,6 +603,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.77]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.77
 [0.1.76]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.76
 [0.1.75]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.75
 [0.1.74]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.74
