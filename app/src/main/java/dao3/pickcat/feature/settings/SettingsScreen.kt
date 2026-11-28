@@ -28,9 +28,11 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
@@ -38,14 +40,18 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Password
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SwitchAccount
 import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material.icons.filled.Web
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -285,7 +291,7 @@ fun SettingsScreen(
                     ),
                     SettingsItemSpec(
                         key = "home-display",
-                        icon = Icons.Default.Link,
+                        icon = Icons.Default.Web,
                         title = "主页展示",
                         summary = "精选帖子、作品和徽章，在官网管理",
                         onClick = { openExternalUrl(context, OFFICIAL_SETTINGS_URL) },
@@ -317,7 +323,7 @@ fun SettingsScreen(
                     ),
                     SettingsItemSpec(
                         key = "security-center",
-                        icon = Icons.Default.Security,
+                        icon = Icons.Default.Password,
                         title = "登录与安全",
                         summary = "邮箱、手机号、密码和实名认证，在官网管理",
                         onClick = { openExternalUrl(context, OFFICIAL_SETTINGS_URL) },
@@ -325,7 +331,7 @@ fun SettingsScreen(
                     ),
                     SettingsItemSpec(
                         key = "authorized-apps",
-                        icon = Icons.Default.Security,
+                        icon = Icons.Default.Apps,
                         title = "授权应用",
                         summary = "查看并撤销第三方应用，在官网管理",
                         onClick = { openExternalUrl(context, OFFICIAL_SETTINGS_URL) },
@@ -408,7 +414,7 @@ fun SettingsScreen(
                 items = listOf(
                     SettingsItemSpec(
                         key = "media",
-                        icon = Icons.Default.PhotoLibrary,
+                        icon = Icons.Default.CloudUpload,
                         title = "个人图盘",
                         summary = "上传图片、查看已用容量",
                         onClick = onOpenMedia,
@@ -498,7 +504,7 @@ fun SettingsScreen(
                     ),
                     SettingsItemSpec(
                         key = "update-source",
-                        icon = Icons.Default.Refresh,
+                        icon = Icons.Default.Public,
                         title = "更新来源",
                         summary = updateSourceLabel(preferences.updateSource),
                         onClick = { showUpdateSourceSheet = true },
@@ -506,7 +512,7 @@ fun SettingsScreen(
                     ),
                     SettingsItemSpec(
                         key = "login-method",
-                        icon = Icons.Default.Badge,
+                        icon = Icons.Default.Login,
                         title = "登录方式",
                         summary = "官方登录页完成验证与 Cookie 会话",
                     ),
