@@ -3,6 +3,14 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.81] - 2026-11-28
+
+### Reverted
+
+- Settings screen restored to its previous layout; the card-based redesign from 0.1.80 was withdrawn.
+- Phone profile restored to its previous layout; the cover header and sticky tab bar from 0.1.80 were withdrawn.
+- All account, settings, follow, and comment behavior is unchanged.
+
 ## [0.1.80] - 2026-11-28
 
 ### Changed
@@ -628,6 +636,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.81]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.81
 [0.1.80]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.80
 [0.1.79]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.79
 [0.1.78]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.78
