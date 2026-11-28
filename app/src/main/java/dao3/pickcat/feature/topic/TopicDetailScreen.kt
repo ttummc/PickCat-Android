@@ -61,9 +61,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -569,18 +566,12 @@ fun TopicDetailScreen(
                         Spacer(Modifier.width(10.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             val options = listOf("hot" to "热评", "latest" to "最新")
-                            SingleChoiceSegmentedButtonRow {
-                                options.forEachIndexed { index, (value, label) ->
-                                    SegmentedButton(
-                                        selected = state.postsSort == value,
-                                        onClick = { viewModel.setPostsSort(value) },
-                                        shape = SegmentedButtonDefaults.itemShape(
-                                            index = index,
-                                            count = options.size,
-                                        ),
-                                        label = { Text(label) },
-                                    )
-                                }
+                            options.forEach { (value, label) ->
+                                FilterChip(
+                                    selected = state.postsSort == value,
+                                    onClick = { viewModel.setPostsSort(value) },
+                                    label = { Text(label) },
+                                )
                             }
                         }
                     }

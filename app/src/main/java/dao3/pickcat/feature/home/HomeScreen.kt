@@ -50,9 +50,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -633,17 +631,16 @@ private fun HomeFilters(
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier.weight(1f),
         )
-        SingleChoiceSegmentedButtonRow {
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             val options = listOf(
                 HomeFeedKind.RECOMMENDED to "推荐",
                 HomeFeedKind.LATEST to "最新",
                 HomeFeedKind.FOLLOWING to "关注",
             )
-            options.forEachIndexed { index, (value, label) ->
-                SegmentedButton(
+            options.forEach { (value, label) ->
+                FilterChip(
                     selected = kind == value,
                     onClick = { onKind(value) },
-                    shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
                     label = { Text(label) },
                 )
             }
