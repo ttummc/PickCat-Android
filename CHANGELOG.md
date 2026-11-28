@@ -3,6 +3,15 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.78] - 2026-11-28
+
+### Fixed
+
+- Mentions no longer render as raw user IDs. PickCat stores mentions as `@{user id}`, which the parser previously missed.
+- Mentions in post bodies, topic replies, and work comments now display the user nickname and open the profile when tapped.
+- New mentions are inserted in the official `@{user id}` format.
+- Failed nickname lookups show a shortened label instead of the full ID.
+
 ## [0.1.77] - 2026-11-28
 
 ### Changed
@@ -600,6 +609,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.78]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.78
 [0.1.77]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.77
 [0.1.76]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.76
 [0.1.75]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.75

@@ -13,7 +13,7 @@ import kotlinx.coroutines.coroutineScope
 import java.util.concurrent.ConcurrentHashMap
 
 private val MENTION_USER_ID = Regex(
-    """@([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})""",
+    """@\{?([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\}?""",
 )
 
 /** Cache of `ccUid`/user id to nickname for mention rendering. */
@@ -74,9 +74,16 @@ fun rememberMentionHtml(html: String?): String? {
         } else {
             MENTION_USER_ID.replace(html) { match ->
                 val id = match.groupValues[1]
-                val name = names[id] ?: return@replace match.value
-                """<a href="pickcat://user/$id">@$name</a>"""
+                val name = names[id] ?: MentionNameCache.get(id)
+                val label = if (name != null) "@${escapeHtml(name)}" else "@用户 ${id.take(8)}"
+                """<a href="pickcat://user/$id">$label</a>"""
             }
         }
     }
 }
+
+private fun escapeHtml(value: String): String = value
+    .replace("&", "&amp;")
+    .replace("<", "&lt;")
+    .replace(">", "&gt;")
+    .replace("\"", "&quot;")

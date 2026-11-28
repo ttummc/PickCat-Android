@@ -95,6 +95,7 @@ import dao3.pickcat.core.ui.ThreadedReply
 import dao3.pickcat.core.ui.WorkCard
 import dao3.pickcat.feature.mention.MentionPickerSheet
 import dao3.pickcat.feature.mention.appendMention
+import dao3.pickcat.feature.mention.rememberMentionHtml
 import dao3.pickcat.core.ui.compactNumber
 import dao3.pickcat.core.ui.relativeTime
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -729,7 +730,7 @@ private fun WorkCommentRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         } else {
-            RichContent(html = comment.displayHtml)
+            RichContent(html = rememberMentionHtml(comment.displayHtml))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
             TextButton(

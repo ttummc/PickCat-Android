@@ -164,7 +164,7 @@ fun MentionPickerSheet(
 }
 
 /** Text inserted into a draft when a mention is chosen. PickCat mentions use the user id. */
-fun mentionText(userId: String): String = "@$userId "
+fun mentionText(userId: String): String = "@{$userId} "
 
 /** Appends a mention to the end of the current draft. */
 fun appendMention(current: String, userId: String): String {

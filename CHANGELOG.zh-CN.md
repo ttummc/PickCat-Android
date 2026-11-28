@@ -3,6 +3,15 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.78] - 2026-11-28
+
+### 修复
+
+- 提及不再显示原始用户 UUID。官方格式为 `@{用户UUID}`，此前解析未覆盖花括号。
+- 帖子正文、帖子回复和作品评论中的提及统一显示昵称，点击进入用户主页。
+- 新插入的提及改为官方花括号格式。
+- 昵称查询失败时显示简化标识，不再显示完整 UUID。
+
 ## [0.1.77] - 2026-11-28
 
 ### 界面
@@ -603,6 +612,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.78]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.78
 [0.1.77]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.77
 [0.1.76]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.76
 [0.1.75]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.75

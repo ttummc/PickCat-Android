@@ -202,14 +202,20 @@ fun linkifyAnnotated(
     }
 }
 
-/** PickCat mentions are written as `@<user uuid>`; plain `@昵称` is also highlighted. */
+/** PickCat mentions are `@<user uuid>` or `@{<user uuid>}`; plain `@昵称` is also highlighted. */
 private val MENTION_PATTERN = Regex(
-    """(?<![\w@])@([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|[\w\u4e00-\u9fa5-]{1,32})""",
+    """(?<![0-9A-Za-z_@])@(\{[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}|[\w\u4e00-\u9fa5-]{1,32})""",
 )
+
+internal fun mentionTargetOrNull(raw: String): String? {
+    val value = raw.trim().removeSurrounding("{", "}")
+    if (value.isBlank()) return null
+    return value
+}
 
 internal fun isUserIdMention(value: String): Boolean =
     Regex("""^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$""")
-        .matches(value)
+        .matches(value.trim().removeSurrounding("{", "}"))
 
 /**
  * Highlights `@用户ID` mentions (and legacy `@昵称`) and makes them tappable.
@@ -239,7 +245,7 @@ fun mentionifyAnnotated(
                 start,
                 end,
             )
-            val target = match.groupValues[1]
+            val target = mentionTargetOrNull(match.groupValues[1]) ?: return@forEach
             if (onClick != null) {
                 addLink(
                     LinkAnnotation.Clickable(
