@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Delete
@@ -48,6 +49,8 @@ import androidx.compose.material.icons.filled.SwitchAccount
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -59,6 +62,7 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -201,6 +205,13 @@ fun SettingsScreen(
                 appViewModel.cancelAddAccount()
                 snackbarHostState.showSnackbar("已取消添加账号")
             }
+        }
+    }
+
+    fun openAddAccount() {
+        scope.launch {
+            appViewModel.prepareAddAccount()
+            addAccountLauncher.launch(Intent(context, LoginWebViewActivity::class.java))
         }
     }
 
@@ -513,24 +524,6 @@ fun SettingsScreen(
                 ),
             ),
         )
-        if (user != null) {
-            add(
-                SettingsSectionSpec(
-                    id = "session",
-                    title = "账户",
-                    items = listOf(
-                        SettingsItemSpec(
-                            key = "sign-out",
-                            icon = Icons.AutoMirrored.Filled.Logout,
-                            title = "退出登录",
-                            summary = "清除本地会话与 Cookie",
-                            onClick = { confirmSignOut = true },
-                            tint = MaterialTheme.colorScheme.error,
-                        ),
-                    ),
-                ),
-            )
-        }
     }
 
     Scaffold(
@@ -577,47 +570,51 @@ fun SettingsScreen(
                 top = 4.dp,
                 bottom = 32.dp,
             ),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             item(key = "settings-search") {
                 OutlinedTextField(
                     value = query,
                     onValueChange = { query = it },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                     placeholder = { Text("搜索设置") },
                     leadingIcon = {
                         Icon(Icons.Default.Search, contentDescription = null)
                     },
+                    trailingIcon = if (query.isNotBlank()) {
+                        {
+                            IconButton(onClick = { query = "" }) {
+                                Icon(Icons.Default.Close, contentDescription = "清除搜索")
+                            }
+                        }
+                    } else {
+                        null
+                    },
                     singleLine = true,
-                    shape = MaterialTheme.shapes.large,
+                    shape = MaterialTheme.shapes.extraLarge,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    ),
                 )
             }
             item(key = "settings-account-header") {
-                SettingsAccountHeader(
+                SettingsAccountCard(
                     user = user,
                     email = email,
-                    onClick = if (user != null) onEditProfile else null,
+                    levelProgress = settingsState.levelProgress,
+                    onClick = {
+                        if (user != null) {
+                            showAccountSheet = true
+                        } else {
+                            openAddAccount()
+                        }
+                    },
                 )
-            }
-
-            visibleSections.forEach { section ->
-                item(key = "section-${section.id}") {
-                    SectionTitle(section.title)
-                }
-                itemsIndexed(
-                    items = section.items,
-                    key = { _, item -> "${section.id}-${item.key}" },
-                ) { index, item ->
-                    SettingsRow(item)
-                    if (index < section.items.lastIndex) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(start = 56.dp, end = 16.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f),
-                        )
-                    }
-                }
-                section.footer?.let { footer ->
-                    item(key = "footer-${section.id}") { footer() }
-                }
             }
             if (query.isNotBlank() && visibleSections.isEmpty()) {
                 item(key = "settings-empty") {
@@ -625,23 +622,77 @@ fun SettingsScreen(
                         "没有找到设置",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp),
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 24.dp),
                     )
+                }
+            }
+
+            visibleSections.forEach { section ->
+                item(key = "section-${section.id}") {
+                    SectionTitle(section.title)
+                }
+                item(key = "card-${section.id}") {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        shape = MaterialTheme.shapes.extraLarge,
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                        ),
+                    ) {
+                        Column {
+                            section.items.forEachIndexed { index, item ->
+                                SettingsRow(item)
+                                if (index < section.items.lastIndex) {
+                                    HorizontalDivider(
+                                        modifier = Modifier.padding(start = 56.dp, end = 20.dp),
+                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
+                                    )
+                                }
+                            }
+                            section.footer?.let { footer ->
+                                footer()
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (user != null) {
+                item(key = "settings-sign-out") {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        TextButton(onClick = { confirmSignOut = true }) {
+                            Text(
+                                "退出登录",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                 }
             }
 
             item(key = "settings-footer") {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 24.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(2.dp),
                 ) {
                     Text(
-                        "非官方客户端",
+                        if (versionName.isBlank()) "开发版" else "PickCat Android v$versionName",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Text(
-                        "接口来自 pickcat.dao3.fun",
+                        "非官方客户端，接口来自 pickcat.dao3.fun",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -780,10 +831,7 @@ fun SettingsScreen(
             },
             onAdd = {
                 showAccountSheet = false
-                scope.launch {
-                    appViewModel.prepareAddAccount()
-                    addAccountLauncher.launch(Intent(context, LoginWebViewActivity::class.java))
-                }
+                openAddAccount()
             },
             onDismiss = { showAccountSheet = false },
             onSignOut = {
@@ -807,10 +855,9 @@ private fun Chevron() {
 private fun SectionTitle(text: String) {
     Text(
         text,
-        style = MaterialTheme.typography.titleSmall,
-        fontWeight = FontWeight.Medium,
+        style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 6.dp),
+        modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 8.dp),
     )
 }
 
@@ -856,67 +903,88 @@ private fun SettingsRow(item: SettingsItemSpec) {
 }
 
 @Composable
-private fun SettingsAccountHeader(
+private fun SettingsAccountCard(
     user: SessionUser?,
     email: String?,
-    onClick: (() -> Unit)?,
+    levelProgress: LevelProgress?,
+    onClick: () -> Unit,
 ) {
-    ListItem(
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        leadingContent = {
-            if (user != null) {
-                UserAvatar(
-                    name = user.username,
-                    url = avatarUrl(user),
-                    size = 52.dp,
-                )
-            } else {
-                Icon(
-                    Icons.Default.AccountCircle,
-                    contentDescription = null,
-                    modifier = Modifier.size(52.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-        headlineContent = {
-            Text(
-                user?.username ?: "未登录",
-                style = MaterialTheme.typography.titleMedium,
-            )
-        },
-        supportingContent = {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                if (!email.isNullOrBlank()) {
-                    Text(
-                        email,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (user != null) {
-                    Text(
-                        "Lv.${user.level.current}  ${compactNumber(user.tokenBalance)} 猫币",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-        },
-        trailingContent = if (onClick != null) {
-            { Chevron() }
-        } else {
-            null
-        },
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
-            .padding(top = 4.dp),
-    )
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        shape = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        ),
+        onClick = onClick,
+    ) {
+        Column {
+            ListItem(
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                leadingContent = {
+                    if (user != null) {
+                        UserAvatar(
+                            name = user.username,
+                            url = avatarUrl(user),
+                            size = 56.dp,
+                        )
+                    } else {
+                        Icon(
+                            Icons.Default.AccountCircle,
+                            contentDescription = null,
+                            modifier = Modifier.size(56.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                },
+                headlineContent = {
+                    Text(
+                        user?.username ?: "未登录",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                },
+                supportingContent = {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        if (!email.isNullOrBlank()) {
+                            Text(
+                                email,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        if (user != null) {
+                            Text(
+                                "Lv.${user.level.current} ${compactNumber(user.tokenBalance)} 猫币",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        } else {
+                            Text(
+                                "登录后可同步账号数据",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                },
+                trailingContent = { Chevron() },
+            )
+            if (user != null && levelProgress != null) {
+                LevelProgressRow(
+                    progress = levelProgress,
+                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 16.dp),
+                )
+            }
+        }
+    }
 }
 
 @Composable
-private fun LevelProgressRow(progress: LevelProgress) {
+private fun LevelProgressRow(
+    progress: LevelProgress,
+    modifier: Modifier = Modifier,
+) {
     val percent = remember(progress) {
         val next = progress.nextLevel ?: return@remember 0
         val requirements = (next.scores.values + next.familiarity.values)
@@ -930,7 +998,7 @@ private fun LevelProgressRow(progress: LevelProgress) {
         }
     }
     Column(
-        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -949,10 +1017,26 @@ private fun LevelProgressRow(progress: LevelProgress) {
             progress = { percent / 100f },
             modifier = Modifier.fillMaxWidth(),
         )
+        Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+            LevelScore("能力", progress.scores.ability)
+            LevelScore("责任", progress.scores.responsibility)
+            LevelScore("关怀", progress.scores.care)
+        }
+    }
+}
+
+@Composable
+private fun LevelScore(label: String, value: Int) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(
-            "能力 ${progress.scores.ability}  责任 ${progress.scores.responsibility}  关怀 ${progress.scores.care}",
+            label,
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            value.toString(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface,
         )
     }
 }

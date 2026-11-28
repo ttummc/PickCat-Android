@@ -3,6 +3,18 @@
 All notable changes to PickCat for Android are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and releases use [Semantic Versioning](https://semver.org/).
 
+## [0.1.80] - 2026-11-28
+
+### Changed
+
+- Settings screen rebuilt around a mainstream layout: search field, account card, grouped setting cards, and a subdued sign-out entry at the bottom.
+- The account card shows avatar, nickname, email, level, and coin balance; tapping it opens the account switcher.
+- Level progress moved into the account card with separate ability, responsibility, and care metrics.
+- Settings groups render inside individual cards with inset dividers and consistent spacing.
+- Phone profile header redesigned with a cover area and overlapping avatar, larger nickname hierarchy, stacked region and join date, and four-column stats.
+- Own profile hides the top app bar and places settings and more actions beside the profile details; other profiles keep the back bar.
+- The profile tab row is now sticky while scrolling.
+
 ## [0.1.79] - 2026-11-28
 
 ### Changed
@@ -616,6 +628,7 @@ First public release.
 - Material 3 adaptive UI, dynamic color, dark theme, NavigationRail, two-pane layouts, and motion.
 - Versioned release builds published from Git tags.
 
+[0.1.80]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.80
 [0.1.79]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.79
 [0.1.78]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.78
 [0.1.77]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.77

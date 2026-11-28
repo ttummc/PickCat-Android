@@ -3,6 +3,18 @@
 记录 PickCat for Android 的重要变更。
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.1.80] - 2026-11-28
+
+### 界面
+
+- 设置页按主流应用版式重排：顶部搜索框、账号卡片、分组设置卡片、底部弱化退出入口。
+- 账号卡片展示头像、昵称、邮箱、等级与猫币，点击打开账号切换面板。
+- 等级进度移入账号卡片，能力、责任、关怀三个指标分行排列。
+- 各分组改为独立卡片容器，分割线缩进对齐，间距统一。
+- 手机版个人主页改为封面加头像的资料头布局，昵称突出，地区与加入时间分行展示，统计改为四列。
+- 本人主页隐藏顶部标题栏，设置与更多入口位于资料区右侧；他人主页保留返回栏。
+- 个人主页标签栏改为吸顶显示。
+
 ## [0.1.79] - 2026-11-28
 
 ### 调整
@@ -619,6 +631,7 @@
 - Material 3 自适应界面、动态取色、深色主题、NavigationRail、双栏布局和动效。
 - 基于 Git 标签自动构建并发布版本。
 
+[0.1.80]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.80
 [0.1.79]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.79
 [0.1.78]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.78
 [0.1.77]: https://github.com/ttummc/PickCat-Android/releases/tag/v0.1.77
